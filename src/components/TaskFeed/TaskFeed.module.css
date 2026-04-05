@@ -1,0 +1,135 @@
+/* hecate/src/components/TaskFeed/TaskFeed.module.css */
+
+.feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--bone-600);
+  font-size: 11px;
+  gap: 12px;
+}
+.emptyIcon { font-size: 28px; opacity: 0.3; color: var(--crimson-500); }
+.loading, .noTasks { color: var(--bone-600); font-size: 10px; padding: 12px 0; text-align: center; }
+
+/* ── Task block ── */
+.taskBlock {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.taskBlock.running { border-color: var(--border-strong); }
+
+/* ── Header: meta row (timestamp / T-id / operator / C-id) ── */
+.taskHeader {
+  padding: 5px 12px;
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  gap: 8px;
+}
+.taskHeader:hover { background: var(--bg-hover); }
+
+.taskMeta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.taskTimestamp { font-size: 9px; color: var(--bone-600); flex-shrink: 0; }
+.taskSep       { font-size: 9px; color: var(--bone-800); }
+.taskIdLabel   { font-size: 9px; color: var(--crimson-300); font-weight: 700; }
+.taskOperator  { font-size: 9px; color: var(--bone-400); }
+.taskCallback  { font-size: 9px; color: var(--bone-600); }
+
+.taskHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.expandChevron { font-size: 9px; color: var(--bone-800); }
+
+/* ── Command line ── */
+.taskCommand {
+  padding: 6px 12px;
+  background: var(--bg-base);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.taskPrompt { color: var(--crimson-400); font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.taskCmd    { color: var(--bone-100); font-size: 11px; font-weight: 700; }
+.taskParams { color: var(--bone-600); font-size: 10px; word-break: break-all; }
+
+/* ── Output ── */
+.taskOutput {
+  padding: 10px 12px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--bg-void);
+}
+.taskOutput pre {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.75;
+  color: var(--bone-400);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ── Running indicator ── */
+.taskRunning {
+  padding: 8px 12px;
+  font-size: 9px;
+  color: var(--bone-600);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-void);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 8px; height: 8px;
+  border: 1px solid var(--border-default);
+  border-top-color: var(--crimson-400);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── Collapsed preview ── */
+.taskCollapsed {
+  padding: 5px 12px;
+  font-size: 9px;
+  color: var(--bone-800);
+  font-family: var(--font-mono);
+  background: var(--bg-void);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Task breakdown (RightPanel) ── */
+.taskBreakdown { display: flex; flex-direction: column; gap: 4px; }
+.taskBreakdownRow { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
+.tbLabel { font-size: 9px; color: var(--bone-600); }
+.tbCount { font-size: 11px; font-weight: 700; font-family: var(--font-mono); }

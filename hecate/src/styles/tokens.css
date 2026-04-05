@@ -1,0 +1,68 @@
+/* ═══════════════════════════════════════════════════
+   hecate/src/styles/tokens.css
+   WhisperGate palette — single source of truth
+   ═══════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@400;600&display=swap');
+
+:root {
+  /* ── Backgrounds (darkest → lightest) ── */
+  --bg-void:    #0a0604;   /* deepest black, page bg        */
+  --bg-base:    #0e0806;   /* main panel bg                 */
+  --bg-raised:  #140a08;   /* topbar, sidebar, right panel  */
+  --bg-elevated:#1a0e0a;   /* task headers, section headers */
+  --bg-hover:   #200f0b;   /* hover state surfaces          */
+
+  /* ── Crimson ramp ── */
+  --crimson-900:#3a0808;   /* deepest, almost invisible      */
+  --crimson-700:#6a1212;   /* borders, dividers              */
+  --crimson-600:#8b1a1a;   /* primary border, active         */
+  --crimson-500:#a52020;   /* hover borders                  */
+  --crimson-400:#c03030;   /* accent text, active labels     */
+  --crimson-300:#d04848;   /* bright accent                  */
+
+  /* ── Bone / parchment ramp ── */
+  --bone-100:   #ede0c8;   /* primary bright text            */
+  --bone-200:   #e8d8b8;   /* headings, active labels        */
+  --bone-400:   #c8b898;   /* body text                      */
+  --bone-600:   #a09880;   /* muted text, secondary labels   */
+  --bone-800:   #6a5a48;   /* dimmed text, placeholders      */
+  --bone-900:   #3a2e20;   /* barely visible                 */
+
+  /* ── Semantic colours (kept minimal, within palette) ── */
+  --status-alive:  #c05828;          /* pulsing amber-red dot    */
+  --status-alive-glow: rgba(192,88,40,0.6);
+  --status-idle:   #7a5018;          /* muted amber              */
+  --status-dead:   #4a1818;          /* dark red                 */
+  --status-ok:     #507840;          /* muted green for success  */
+  --status-ok-text:#80b870;
+  --status-warn:   #806030;
+  --status-warn-text:#b08848;
+  --status-err:    #903030;
+  --status-err-text:#d06060;
+
+  /* ── Typography ── */
+  --font-mono:  'Space Mono', 'Courier New', monospace;
+  --font-serif: 'Cinzel', Georgia, serif;   /* logo only */
+
+  /* ── Borders ── */
+  --border-subtle:  rgba(139,26,26,0.18);
+  --border-default: rgba(139,26,26,0.30);
+  --border-strong:  rgba(139,26,26,0.55);
+
+  /* ── Glows / overlays ── */
+  --glow-crimson:   rgba(139,26,26,0.10);
+  --glow-crimson-md:rgba(139,26,26,0.20);
+
+  /* ── Layout ── */
+  --topbar-h:    48px;
+  --rail-w:      44px;
+  --sidebar-w:   210px;
+  --right-w:     272px;
+  --radius-sm:   2px;
+  --radius-md:   3px;
+
+  /* ── Transitions ── */
+  --t-fast: 0.12s ease;
+  --t-mid:  0.22s ease;
+}

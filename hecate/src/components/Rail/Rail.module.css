@@ -1,0 +1,50 @@
+/* hecate/src/components/Rail/Rail.module.css */
+
+.rail {
+  background: var(--bg-raised);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+  gap: 3px;
+}
+
+.btn {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--bone-800);
+  opacity: 0.4;
+  transition: opacity var(--t-fast), background var(--t-fast), border-color var(--t-fast);
+}
+
+.btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.btn:hover {
+  opacity: 0.8;
+  background: var(--glow-crimson);
+}
+
+.btn.active {
+  opacity: 1;
+  color: var(--crimson-400);
+  background: rgba(139,26,26,0.18);
+  border-color: var(--border-default);
+}
+
+.sep {
+  width: 20px;
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 5px 0;
+}

@@ -1,0 +1,49 @@
+# hecate/docker-compose.yml
+#
+# Runs Hecate alongside your existing Mythic stack.
+#
+# Usage:
+#   docker compose up -d
+#
+# Then open http://localhost:3100 in your browser.
+# Hecate proxies /graphql and /auth to mythic-backend:7443.
+#
+# If Mythic is running on the HOST (not in Docker):
+#   change mythic-backend hostname to host.docker.internal
+
+version: "3.9"
+
+services:
+
+  hecate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Only needed if you want the host baked into the JS bundle.
+        # For runtime proxy (nginx.conf) this is not required.
+        MYTHIC_HOST: localhost:7443
+    container_name: hecate
+    restart: unless-stopped
+    ports:
+      - "3100:80"          # Access Hecate at http://localhost:3100
+    networks:
+      - hecate-net
+    depends_on:
+      - mythic-backend-proxy
+
+  # ── Thin TCP proxy so hecate can reach a host-bound Mythic ──
+  # Remove this service if Mythic is already in Docker on the same network.
+  mythic-backend-proxy:
+    image: alpine/socat
+    container_name: hecate-mythic-proxy
+    restart: unless-stopped
+    command: >
+      TCP-LISTEN:7443,fork,reuseaddr
+      TCP:host.docker.internal:7443
+    networks:
+      - hecate-net
+
+networks:
+  hecate-net:
+    driver: bridge

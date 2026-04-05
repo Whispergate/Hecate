@@ -1,0 +1,94 @@
+/* hecate/src/components/Sidebar/Sidebar.module.css */
+
+.sidebar {
+  background: var(--bg-raised);
+  border-right: 1px solid var(--border-subtle);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.section {
+  padding: 12px 14px 8px;
+}
+
+.detail {
+  flex: 1;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.empty {
+  font-size: 9px;
+  color: var(--bone-800);
+  padding: 8px 0;
+  text-align: center;
+}
+
+/* ── Callback item ── */
+.callbackItem {
+  position: relative;
+  padding: 7px 9px 7px 18px;
+  margin-bottom: 2px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+
+.callbackItem:hover {
+  background: var(--glow-crimson);
+  border-color: var(--border-subtle);
+}
+
+.callbackItem.active {
+  background: rgba(139,26,26,0.15);
+  border-color: var(--border-default);
+}
+
+.statusDot {
+  position: absolute;
+  top: 12px;
+  left: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.alive {
+  background: var(--status-alive);
+  box-shadow: 0 0 5px var(--status-alive-glow);
+  animation: pulse 2.2s ease-in-out infinite;
+}
+
+.idle { background: var(--status-idle); }
+
+.dead {
+  background: var(--status-dead);
+  border: 1px solid #5a2828;
+}
+
+.cbHost {
+  color: var(--bone-100);
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.cbMeta {
+  color: var(--bone-800);
+  font-size: 9px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ── Agent detail rows ── */
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(139,26,26,0.07);
+}
+
+.infoKey { color: var(--bone-800); font-size: 9px; }
+.infoVal { color: var(--bone-400); font-size: 9px; }
+.infoVal.hiVal { color: var(--crimson-400); }

@@ -1,0 +1,54 @@
+/* hecate/src/components/CommandBar/CommandBar.module.css */
+
+.cmdBar {
+  padding: 10px 18px;
+  border-top: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-raised);
+  flex-shrink: 0;
+}
+
+.prefix {
+  font-size: 11px;
+  color: var(--crimson-400);
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bone-100);
+  caret-color: transparent; /* we show our own cursor */
+}
+
+.input::placeholder {
+  color: var(--bone-800);
+}
+
+.input:disabled {
+  opacity: 0.4;
+}
+
+.cursor {
+  display: inline-block;
+  width: 7px;
+  height: 12px;
+  background: var(--crimson-400);
+  animation: blink 1s step-end infinite;
+  flex-shrink: 0;
+}
+
+.sending {
+  font-size: 9px;
+  color: var(--bone-800);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}

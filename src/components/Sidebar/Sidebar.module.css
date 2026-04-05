@@ -1,0 +1,84 @@
+/* hecate/src/components/Sidebar/Sidebar.module.css */
+
+.sidebar {
+  background: var(--bg-raised);
+  border-right: 1px solid var(--border-default);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.section { padding: 12px 14px 8px; }
+
+.detail {
+  flex: 1;
+  border-top: 1px solid var(--border-default);
+}
+
+.empty {
+  font-size: 9px;
+  color: var(--bone-600);
+  padding: 8px 0;
+  text-align: center;
+}
+
+/* ── Callback items ── */
+.callbackItem {
+  position: relative;
+  padding: 8px 9px 8px 20px;
+  margin-bottom: 3px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.callbackItem:hover {
+  background: var(--glow-crimson);
+  border-color: var(--border-default);
+}
+.callbackItem.active {
+  background: rgba(155,32,32,0.2);
+  border-color: var(--border-strong);
+}
+
+.statusDot {
+  position: absolute;
+  top: 13px; left: 8px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.alive {
+  background: var(--status-alive);
+  box-shadow: 0 0 6px var(--status-alive-glow);
+  animation: pulse 2s ease-in-out infinite;
+}
+.idle  { background: var(--status-idle); }
+.dead  { background: var(--status-dead); border: 1px solid #6a2828; }
+
+/* Host name — most important, needs to be bright */
+.cbHost {
+  color: var(--bone-100);
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 3px;
+  letter-spacing: 0.02em;
+}
+
+.cbMeta {
+  color: var(--bone-600);
+  font-size: 9px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ── Agent detail rows ── */
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(155,32,32,0.12);
+}
+.infoKey { color: var(--bone-600); font-size: 9px; }
+.infoVal { color: var(--bone-200); font-size: 9px; text-align: right; }
+.infoVal.hiVal { color: var(--crimson-300); font-weight: 700; }

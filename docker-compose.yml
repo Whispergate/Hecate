@@ -1,0 +1,32 @@
+# hecate/docker-compose.yml
+#
+# Joins Mythic's own Docker network so nginx can reach
+# mythic_nginx directly by container name — no proxies,
+# no host bridging, no socat.
+#
+# Usage:
+#   docker compose up -d
+#   → http://localhost:3100
+#
+# Requires Mythic to be running first (creates mythic_default network).
+# Verify the network name with: docker network ls | grep mythic
+
+services:
+  hecate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hecate
+    restart: unless-stopped
+    ports:
+      - "3100:80"
+    networks:
+      - hecate-own
+      - mythic-net  # join Mythic's network to reach mythic_nginx directly
+
+networks:
+  hecate-own:
+    driver: bridge
+  mythic-net:
+    external: true
+    name: mythic_default  # Mythic's network — created by Mythic's docker-compose

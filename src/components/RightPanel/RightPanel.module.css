@@ -1,0 +1,96 @@
+/* hecate/src/components/RightPanel/RightPanel.module.css */
+
+.panel {
+  background: var(--bg-raised);
+  border-left: 1px solid var(--border-default);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.section {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+/* ── Stats ── */
+.statGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.statCard {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+}
+.statVal {
+  font-size: 22px;
+  color: var(--bone-100);
+  font-family: var(--font-mono);
+  line-height: 1.1;
+  font-weight: 700;
+}
+.statVal.cr   { color: var(--crimson-300); }
+.statVal.ok   { color: var(--status-ok-text); }
+.statVal.warn { color: var(--status-warn-text); }
+
+.statLbl {
+  font-size: 8px;
+  color: var(--bone-600);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-top: 3px;
+}
+
+/* ── Network SVG ── */
+.netSvg { width: 100%; margin: 4px 0; }
+
+/* ── Info table ── */
+.infoTable { width: 100%; border-collapse: collapse; }
+.tdKey { font-size: 9px; color: var(--bone-600); padding: 4px 0; }
+.tdVal { font-size: 9px; color: var(--bone-200); text-align: right; padding: 4px 0; }
+
+/* ── MITRE tags ── */
+.tags { display: flex; flex-wrap: wrap; gap: 3px; }
+
+.tag {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(155,32,32,0.2);
+  color: var(--crimson-200);
+  border: 1px solid var(--border-strong);
+}
+
+/* ── Coverage bar ── */
+.miniBar {
+  height: 3px;
+  background: var(--border-subtle);
+  border-radius: 1px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+.miniFill {
+  height: 100%;
+  background: var(--crimson-500);
+  border-radius: 1px;
+}
+.coverageLbl {
+  font-size: 9px;
+  color: var(--bone-600);
+  margin-top: 4px;
+}
+
+/* ── Task breakdown ── */
+.taskBreakdown { display: flex; flex-direction: column; gap: 4px; }
+
+.taskBreakdownRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+}
+
+.tbLabel { font-size: 9px; color: var(--bone-600); }
+.tbCount { font-size: 11px; font-weight: 700; font-family: var(--font-mono); }

@@ -1,0 +1,69 @@
+/* ═══════════════════════════════════════════════════
+   hecate/src/styles/tokens.css
+   WhisperGate palette — boosted contrast
+   ═══════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@400;600&display=swap');
+
+:root {
+  /* ── Backgrounds ── */
+  --bg-void:    #080604;
+  --bg-base:    #0d0806;
+  --bg-raised:  #120a07;
+  --bg-elevated:#1c0f0a;
+  --bg-hover:   #241208;
+
+  /* ── Crimson ramp — pushed brighter for visibility ── */
+  --crimson-900:#4a0a0a;
+  --crimson-700:#7a1818;
+  --crimson-600:#9b2020;
+  --crimson-500:#b52828;
+  --crimson-400:#d03838;   /* primary accent — brighter */
+  --crimson-300:#e05050;   /* bright accent */
+  --crimson-200:#f07070;   /* highlight */
+
+  /* ── Bone / parchment — much higher contrast ── */
+  --bone-100:   #f5ecd8;   /* primary bright text — near white */
+  --bone-200:   #ede0c4;   /* headings */
+  --bone-400:   #d8c8a4;   /* body text — was too dark */
+  --bone-600:   #b8a880;   /* secondary labels */
+  --bone-800:   #887860;   /* dimmed — was near-invisible */
+  --bone-900:   #584838;   /* placeholders */
+
+  /* ── Semantic ── */
+  --status-alive:      #e06020;
+  --status-alive-glow: rgba(224,96,32,0.7);
+  --status-idle:       #9a6820;
+  --status-dead:       #6a2020;
+  --status-ok:         #508850;
+  --status-ok-text:    #90d880;
+  --status-warn:       #907030;
+  --status-warn-text:  #d0a848;
+  --status-err:        #a03030;
+  --status-err-text:   #f07070;
+
+  /* ── Typography ── */
+  --font-mono:  'Space Mono', 'Courier New', monospace;
+  --font-serif: 'Cinzel', Georgia, serif;
+
+  /* ── Borders — more visible ── */
+  --border-subtle:  rgba(160,40,40,0.25);
+  --border-default: rgba(160,40,40,0.45);
+  --border-strong:  rgba(160,40,40,0.70);
+
+  /* ── Glows ── */
+  --glow-crimson:   rgba(155,32,32,0.15);
+  --glow-crimson-md:rgba(155,32,32,0.28);
+
+  /* ── Layout ── */
+  --topbar-h:  48px;
+  --rail-w:    44px;
+  --sidebar-w: 220px;
+  --right-w:   280px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+
+  /* ── Transitions ── */
+  --t-fast: 0.12s ease;
+  --t-mid:  0.22s ease;
+}

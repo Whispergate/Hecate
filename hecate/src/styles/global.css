@@ -1,0 +1,129 @@
+/* ═══════════════════════════════════════════════════
+   hecate/src/styles/global.css
+   ═══════════════════════════════════════════════════ */
+
+@import './tokens.css';
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg-void);
+  color: var(--bone-400);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbars ── */
+::-webkit-scrollbar        { width: 3px; height: 3px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--border-default); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+/* ── Selection ── */
+::selection {
+  background: var(--crimson-700);
+  color: var(--bone-100);
+}
+
+/* ── Focus ── */
+:focus-visible {
+  outline: 1px solid var(--crimson-500);
+  outline-offset: 1px;
+}
+
+/* ── Scanline overlay ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.035) 2px,
+    rgba(0,0,0,0.035) 4px
+  );
+  z-index: 9999;
+}
+
+/* ── Crimson top stripe ── */
+.crimson-stripe {
+  height: 2px;
+  background: var(--crimson-600);
+  flex-shrink: 0;
+}
+
+/* ── Shared section label ── */
+.sec-label {
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--bone-800);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sec-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* ── Status badge ── */
+.badge {
+  padding: 1px 7px;
+  border-radius: var(--radius-sm);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 1px solid transparent;
+}
+.badge--done { background: rgba(40,80,50,0.2); color: var(--status-ok-text);   border-color: rgba(60,120,70,0.3); }
+.badge--run  { background: var(--glow-crimson);  color: var(--crimson-400);     border-color: var(--border-default); }
+.badge--err  { background: rgba(100,20,20,0.25); color: var(--status-err-text); border-color: rgba(160,40,40,0.35); }
+
+/* ── Button ── */
+.btn {
+  padding: 4px 11px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--bone-400);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+.btn:hover {
+  background: var(--glow-crimson);
+  border-color: var(--crimson-500);
+  color: var(--bone-100);
+}
+.btn--primary {
+  border-color: var(--crimson-500);
+  color: var(--crimson-400);
+}
+.btn--primary:hover {
+  background: var(--glow-crimson-md);
+  color: var(--bone-200);
+}
+
+/* ── Animations ── */
+@keyframes blink  { 0%,100%{opacity:1} 50%{opacity:0} }
+@keyframes pulse  { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.78)} }
