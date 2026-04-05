@@ -1,0 +1,116 @@
+/* src/components/TaskFeed/TaskList.module.css */
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 0;
+  background: var(--bg-base);
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--bone-800);
+  letter-spacing: 0.05em;
+}
+
+/* ── Row ── */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 8px;
+  border: none;
+  border-left: 3px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  text-align: left;
+  width: 100%;
+  transition: background var(--t-fast), border-color var(--t-fast);
+  min-width: 0;
+}
+
+.row:hover {
+  background: var(--bg-elevated);
+}
+
+.rowSelected {
+  background: var(--bg-elevated) !important;
+}
+
+/* Status left-border tints */
+.row.rowDone    { border-left-color: var(--status-ok); }
+.row.rowErr     { border-left-color: var(--status-err-text); }
+.row.rowQueued  { border-left-color: var(--bone-800); }
+.row.rowRunning { border-left-color: var(--crimson-400); }
+
+/* Selected accent */
+.rowSelected.rowDone    { background: rgba(40,80,50,0.1) !important; }
+.rowSelected.rowErr     { background: rgba(100,20,20,0.15) !important; }
+.rowSelected.rowRunning { background: var(--glow-crimson) !important; }
+
+/* ── Status dot ── */
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--bone-900);
+}
+.dot.rowDone    { background: var(--status-ok); }
+.dot.rowErr     { background: var(--status-err-text); }
+.dot.rowQueued  { background: var(--bone-800); }
+.dot.rowRunning { background: var(--crimson-400); }
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.7); }
+}
+.dotPulse { animation: dotPulse 1.4s ease-in-out infinite; }
+
+/* ── Row body ── */
+.rowBody {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px;
+}
+
+.rowCmd {
+  color: var(--bone-200);
+  font-weight: 700;
+}
+
+.rowArgs {
+  color: var(--bone-600);
+  font-size: 9px;
+}
+
+/* ── Right side: time + id ── */
+.rowRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.rowTime {
+  font-size: 8px;
+  color: var(--bone-800);
+  letter-spacing: 0.03em;
+}
+
+.rowId {
+  font-size: 8px;
+  color: var(--bone-900);
+}

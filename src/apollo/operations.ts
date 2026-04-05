@@ -114,15 +114,17 @@ export const SUB_TASKS = gql`
 
 // Responses for a single task — fetched separately, streamed live
 // response field contains base64-encoded output
+// Column is response_text; aliased to response to match Mythic's schema.
+// Cursor must be on timestamp (Hasura streaming requirement — id cursor rejected).
 export const SUB_TASK_RESPONSES = gql`
   subscription SubTaskResponses($task_id: Int!) {
     response_stream(
       batch_size: 50
-      cursor: { initial_value: { id: 0 } }
+      cursor: { initial_value: { timestamp: "1970-01-01" } }
       where: { task_id: { _eq: $task_id } }
     ) {
       id
-      response
+      response: response_text
       timestamp
     }
   }

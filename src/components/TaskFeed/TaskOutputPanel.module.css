@@ -1,0 +1,221 @@
+/* src/components/TaskFeed/TaskOutputPanel.module.css */
+
+/* ── Panel shell ── */
+.panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-left: 1px solid var(--border-subtle);
+  background: var(--bg-void);
+}
+
+/* ── Empty state ── */
+.emptyPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-left: 1px solid var(--border-subtle);
+  background: var(--bg-void);
+}
+
+.emptyIcon {
+  font-size: 24px;
+  opacity: 0.15;
+  color: var(--crimson-500);
+}
+
+.emptyText {
+  font-size: 10px;
+  color: var(--bone-800);
+  letter-spacing: 0.06em;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-default);
+  flex-shrink: 0;
+}
+
+.headerPrompt {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.promptOp {
+  color: var(--crimson-400);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.promptDollar {
+  color: var(--bone-800);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.promptCmd {
+  color: var(--bone-100);
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.promptArgs {
+  color: var(--bone-400);
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Tag chips ── */
+.tag {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  background: color-mix(in srgb, var(--tag-color, #808080) 18%, transparent);
+  color: var(--tag-color, var(--bone-600));
+  border: 1px solid color-mix(in srgb, var(--tag-color, #808080) 35%, transparent);
+}
+
+/* ── Status pill ── */
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 7px;
+  border-radius: 2px;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  border: 1px solid transparent;
+}
+.statusDone    { color: var(--status-ok-text);  border-color: rgba(60,120,70,0.3);  background: rgba(40,80,50,0.2);  }
+.statusErr     { color: var(--status-err-text); border-color: rgba(160,40,40,0.35); background: rgba(100,20,20,0.25); }
+.statusQueued  { color: var(--bone-600);        border-color: var(--border-subtle); background: transparent;          }
+.statusRunning { color: var(--crimson-400);     border-color: var(--border-default);background: var(--glow-crimson);  }
+
+.statusDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--crimson-400);
+  animation: blink 1.2s step-start infinite;
+}
+
+/* ── Copy button ── */
+.copyBtn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bone-800);
+  padding: 2px 7px;
+  transition: color var(--t-fast), background var(--t-fast), border-color var(--t-fast);
+}
+.copyBtn:hover {
+  color: var(--bone-200);
+  background: var(--glow-crimson);
+  border-color: var(--border-default);
+}
+
+/* ── Meta row ── */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 8px;
+  color: var(--bone-800);
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.metaSep { color: var(--bone-900); }
+
+/* ── Output area — fills all remaining height ── */
+.outputArea {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.outputPre {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.75;
+  color: var(--bone-400);
+  white-space: pre-wrap;
+  word-break: break-all;
+  padding: 12px 14px;
+  min-height: 100%;
+}
+
+.noOutput {
+  padding: 12px 14px;
+  font-size: 9px;
+  color: var(--bone-900);
+  font-style: italic;
+}
+
+/* ── Waiting dots ── */
+.waiting {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 14px;
+}
+
+.waitText {
+  font-size: 9px;
+  color: var(--bone-800);
+  margin-left: 4px;
+  letter-spacing: 0.04em;
+}
+
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: translateY(0);   opacity: 0.3; }
+  40%           { transform: translateY(-4px); opacity: 1;   }
+}
+
+.waitDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--crimson-400);
+  animation: dotBounce 1.2s ease-in-out infinite;
+}
+.waitDot:nth-child(2) { animation-delay: 0.15s; }
+.waitDot:nth-child(3) { animation-delay: 0.30s; }
