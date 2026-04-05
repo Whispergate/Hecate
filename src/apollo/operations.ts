@@ -141,6 +141,19 @@ export const SUB_TASK_RESPONSES = gql`
   }
 `
 
+// Commands for a payload type — used for tab completion
+export const GET_COMMANDS = gql`
+  query GetCommands($payloadtype_name: String!) {
+    command(
+      where: { payloadtype: { name: { _eq: $payloadtype_name } } }
+      order_by: { cmd: asc }
+    ) {
+      cmd
+      description
+    }
+  }
+`
+
 // Mutations
 // callback_id must be the callback's display_id (not the internal id).
 // tasking_location "command_line" tells Mythic to treat params as raw CLI input.

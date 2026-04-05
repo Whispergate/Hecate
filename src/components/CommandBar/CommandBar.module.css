@@ -78,3 +78,53 @@
   letter-spacing: 0.1em;
   flex-shrink: 0;
 }
+
+/* ── Tab completion menu ── */
+.compMenu {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--beige-border);
+  border-bottom: 1px solid var(--beige-border);
+  background: var(--bg-elevated);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.compItem {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 5px 18px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background var(--t-fast);
+}
+.compItem:hover { background: var(--beige-dim); }
+
+.compItemActive {
+  background: var(--beige-dim);
+  border-left: 2px solid var(--crimson-500);
+  padding-left: 16px;
+}
+
+.compCmd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bone-100);
+  flex-shrink: 0;
+}
+
+.compItemActive .compCmd { color: var(--beige); }
+
+.compDesc {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
