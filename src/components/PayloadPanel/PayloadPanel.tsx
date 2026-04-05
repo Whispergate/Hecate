@@ -1,0 +1,324 @@
+/* ═══════════════════════════════════════════════════
+   src/components/PayloadPanel/PayloadPanel.tsx
+   Full-panel payload management view.
+   Accessed via Rail → Payloads, replaces the main content area.
+   ═══════════════════════════════════════════════════ */
+
+import { useState, useCallback } from 'react'
+import { useQuery, useMutation } from '@apollo/client'
+import { GET_PAYLOADS, DELETE_PAYLOAD } from '@/apollo/operations'
+import { useStore }              from '@/store'
+import { parseTs }               from '@/components/Sidebar/utils'
+import { CreatePayloadModal }    from './CreatePayloadModal'
+import styles                    from './PayloadPanel.module.css'
+
+// ── Types ─────────────────────────────────────────────
+
+interface Payload {
+  id:             number
+  uuid:           string
+  description:    string
+  os:             string
+  build_phase:    string   // 'success' | 'building' | 'error' | 'cancelled'
+  creation_time:  string
+  auto_generated: boolean
+  operator:       { username: string }
+  payloadtype:    { name: string }
+  filemetum:      { agent_file_id: string; filename_text: string } | null
+  callbacks_aggregate: { aggregate: { count: number } }
+}
+
+// ── Helpers ───────────────────────────────────────────
+
+function fmtDate(iso: string): string {
+  return parseTs(iso).toLocaleString([], {
+    month: 'short', day: '2-digit', year: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  })
+}
+
+function buildPhaseStyle(phase: string): string {
+  switch (phase) {
+    case 'success':   return styles.phaseOk
+    case 'building':  return styles.phaseBuilding
+    case 'error':     return styles.phaseErr
+    case 'cancelled': return styles.phaseWarn
+    default:          return styles.phaseWarn
+  }
+}
+
+function buildPhaseLabel(phase: string): string {
+  switch (phase) {
+    case 'success':   return 'ready'
+    case 'building':  return 'building…'
+    case 'error':     return 'build error'
+    case 'cancelled': return 'cancelled'
+    default:          return phase
+  }
+}
+
+function agentStyle(name: string): { color: string } {
+  const n = name.toLowerCase()
+  if (n.includes('apollo'))   return { color: '#90d880' }
+  if (n.includes('poseidon')) return { color: '#80c8d0' }
+  if (n.includes('medusa'))   return { color: '#c090e0' }
+  if (n.includes('hermes'))   return { color: '#d0a848' }
+  if (n.includes('thanatos')) return { color: '#d08080' }
+  if (n.includes('athena'))   return { color: '#80a8d0' }
+  return { color: 'var(--bone-600)' }
+}
+
+function AgentIcon({ name, color }: { name: string; color: string }) {
+  const [imgFailed, setImgFailed] = useState(false)
+  const src = `/static/${name.toLowerCase()}_dark.svg`
+
+  return (
+    <span
+      className={styles.agentIcon}
+      style={{ '--agent-color': color } as React.CSSProperties}
+      aria-hidden
+    >
+      {!imgFailed
+        ? <img src={src} alt={name} className={styles.agentIconImg} onError={() => setImgFailed(true)} />
+        : name.charAt(0).toUpperCase()
+      }
+    </span>
+  )
+}
+
+// ── Payload list row ──────────────────────────────────
+
+function PayloadRow({
+  payload, selected, onClick,
+}: {
+  payload: Payload; selected: boolean; onClick: () => void
+}) {
+  const agent     = agentStyle(payload.payloadtype.name)
+  const callCount = payload.callbacks_aggregate.aggregate.count
+
+  return (
+    <button
+      className={`${styles.row} ${selected ? styles.rowSelected : ''}`}
+      onClick={onClick}
+    >
+      <AgentIcon name={payload.payloadtype.name} color={agent.color} />
+
+      <div className={styles.rowBody}>
+        <div className={styles.rowTop}>
+          <span
+            className={styles.agentBadge}
+            style={{ '--agent-color': agent.color } as React.CSSProperties}
+          >
+            {payload.payloadtype.name}
+          </span>
+          <span className={styles.rowOs}>{payload.os || '—'}</span>
+          <span className={`${styles.phaseDot} ${buildPhaseStyle(payload.build_phase)}`} />
+        </div>
+
+        <div className={styles.rowDesc}>
+          {payload.description || payload.filemetum?.filename_text || payload.uuid.slice(0, 16) + '…'}
+        </div>
+
+        <div className={styles.rowMeta}>
+          <span>{fmtDate(payload.creation_time)}</span>
+          {callCount > 0 && (
+            <span className={styles.callCount}>{callCount} cb</span>
+          )}
+        </div>
+      </div>
+    </button>
+  )
+}
+
+// ── Detail panel ──────────────────────────────────────
+
+function PayloadDetail({ payload, onDelete }: { payload: Payload; onDelete: () => void }) {
+  const [copied,      setCopied]      = useState(false)
+  const [confirmDel,  setConfirmDel]  = useState(false)
+  const [deleting,    setDeleting]    = useState(false)
+
+  const agent     = agentStyle(payload.payloadtype.name)
+  const callCount = payload.callbacks_aggregate.aggregate.count
+
+  const [deletePayload] = useMutation(DELETE_PAYLOAD)
+
+  const copyUuid = useCallback(() => {
+    navigator.clipboard.writeText(payload.uuid).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }, [payload.uuid])
+
+  const handleDelete = useCallback(async () => {
+    if (!confirmDel) { setConfirmDel(true); return }
+    setDeleting(true)
+    await deletePayload({ variables: { payload_uuid: payload.uuid } })
+    onDelete()
+  }, [confirmDel, deletePayload, payload.id, onDelete])
+
+  // Handler accepts both filemeta agent_file_id and payload UUID
+  const downloadUrl = payload.build_phase === 'success'
+    ? `/direct/download/${payload.filemetum?.agent_file_id ?? payload.uuid}`
+    : null
+
+  const filename = payload.filemetum?.filename_text
+    || `${payload.payloadtype.name}_${payload.uuid.slice(0, 8)}`
+
+  return (
+    <div className={styles.detail}>
+
+      {/* ── Header ── */}
+      <div className={styles.detailHeader}>
+        <div className={styles.detailTitleRow}>
+          <AgentIcon name={payload.payloadtype.name} color={agent.color} />
+          <span
+            className={styles.agentBadgeLg}
+            style={{ '--agent-color': agent.color } as React.CSSProperties}
+          >
+            {payload.payloadtype.name}
+          </span>
+          <span className={`${styles.phasePill} ${buildPhaseStyle(payload.build_phase)}`}>
+            {buildPhaseLabel(payload.build_phase)}
+          </span>
+        </div>
+        <div className={styles.detailDesc}>
+          {payload.description || <em>(no description)</em>}
+        </div>
+      </div>
+
+      {/* ── Info table ── */}
+      <div className={styles.detailSection}>
+        <div className="sec-label">Details</div>
+        <table className={styles.infoTable}>
+          <tbody>
+            {[
+              ['OS',        payload.os || '—'],
+              ['Operator',  payload.operator?.username || '—'],
+              ['Created',   fmtDate(payload.creation_time)],
+              ['Callbacks', String(callCount)],
+              ['Source',    payload.auto_generated ? 'auto-generated' : 'manual'],
+              ['Filename',  payload.filemetum?.filename_text || '—'],
+            ].map(([k, v]) => (
+              <tr key={k}>
+                <td className={styles.tdKey}>{k}</td>
+                <td className={styles.tdVal}>{v}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ── UUID ── */}
+      <div className={styles.detailSection}>
+        <div className="sec-label">UUID</div>
+        <div className={styles.uuidRow}>
+          <code className={styles.uuid}>{payload.uuid}</code>
+          <button className={styles.copyBtn} onClick={copyUuid}>
+            {copied ? 'copied ✓' : 'copy'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Actions ── */}
+      <div className={styles.detailSection}>
+        <div className="sec-label">Actions</div>
+        <div className={styles.actions}>
+          {downloadUrl ? (
+            <a className={styles.dlBtn} href={downloadUrl} download={filename}>
+              ↓ download payload
+            </a>
+          ) : (
+            <span className={styles.dlBtnDisabled}>↓ download payload</span>
+          )}
+
+          <button
+            className={`${styles.delBtn} ${confirmDel ? styles.delBtnConfirm : ''}`}
+            onClick={handleDelete}
+            disabled={deleting}
+            onBlur={() => setConfirmDel(false)}
+          >
+            {deleting ? '…' : confirmDel ? 'confirm delete' : '✕ delete'}
+          </button>
+        </div>
+      </div>
+
+    </div>
+  )
+}
+
+// ── Empty detail placeholder ──────────────────────────
+
+function EmptyDetail() {
+  return (
+    <div className={styles.emptyDetail}>
+      <span className={styles.emptyIcon}>⬡</span>
+      <span className={styles.emptyText}>select a payload</span>
+    </div>
+  )
+}
+
+// ── Main panel ────────────────────────────────────────
+
+export function PayloadPanel() {
+  const activeOp = useStore((s) => s.activeOperation)
+  const [selectedId,  setSelectedId]  = useState<number | null>(null)
+  const [showCreate,  setShowCreate]  = useState(false)
+
+  const { data, loading, refetch } = useQuery(GET_PAYLOADS, {
+    variables: { operation_id: activeOp?.id ?? 0 },
+    skip: !activeOp,
+    fetchPolicy: 'cache-and-network',
+  })
+
+  const payloads: Payload[] = data?.payload ?? []
+  const selected = payloads.find(p => p.id === selectedId) ?? null
+
+  const handleModalClose = useCallback(() => {
+    setShowCreate(false)
+    refetch()
+  }, [refetch])
+
+  return (
+    <div className={styles.panel}>
+      {showCreate && <CreatePayloadModal onClose={handleModalClose} />}
+
+      {/* ── Left: list ── */}
+      <div className={styles.listPane}>
+        <div className={styles.listHeader}>
+          <span className={styles.listTitle}>Payloads</span>
+          {payloads.length > 0 && (
+            <span className={styles.listCount}>{payloads.length}</span>
+          )}
+          <button className={styles.newBtn} onClick={() => setShowCreate(true)} title="New payload">+</button>
+          <button className={styles.refreshBtn} onClick={() => refetch()} title="Refresh">↺</button>
+        </div>
+
+        <div className={styles.list}>
+          {loading && payloads.length === 0 && (
+            <div className={styles.listEmpty}>Loading…</div>
+          )}
+          {!loading && payloads.length === 0 && (
+            <div className={styles.listEmpty}>No payloads in this operation</div>
+          )}
+          {payloads.map(p => (
+            <PayloadRow
+              key={p.id}
+              payload={p}
+              selected={p.id === selectedId}
+              onClick={() => setSelectedId(p.id)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* ── Right: detail ── */}
+      <div className={styles.detailPane}>
+        {selected
+          ? <PayloadDetail payload={selected} onDelete={() => { setSelectedId(null); refetch() }} />
+          : <EmptyDetail />
+        }
+      </div>
+
+    </div>
+  )
+}

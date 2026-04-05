@@ -22,6 +22,14 @@
   min-height: 0;
 }
 
+/* Full-panel views (e.g. Payloads) span sidebar + main + right columns */
+.fullPanel {
+  grid-column: 2 / -1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
 .main {
   display: flex;
   flex-direction: column;

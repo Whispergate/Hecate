@@ -141,6 +141,123 @@ export const SUB_TASK_RESPONSES = gql`
   }
 `
 
+// Payload list for the active operation
+export const GET_PAYLOADS = gql`
+  query GetPayloads($operation_id: Int!) {
+    payload(
+      where:    { operation_id: { _eq: $operation_id }, deleted: { _eq: false } }
+      order_by: { id: desc }
+    ) {
+      id
+      uuid
+      description
+      os
+      build_phase
+      creation_time
+      auto_generated
+      operator    { username }
+      payloadtype { name }
+      filemetum   { agent_file_id filename_text }
+      callbacks_aggregate { aggregate { count } }
+    }
+  }
+`
+
+// All payload types (agents) available for building
+export const GET_PAYLOAD_TYPES = gql`
+  query GetPayloadTypes {
+    payloadtype(
+      where:    { deleted: { _eq: false }, wrapper: { _eq: false } }
+      order_by: { name: asc }
+    ) {
+      id
+      name
+      file_extension
+      supported_os
+      note
+      container_running
+      buildparameters(where: { deleted: { _eq: false } }, order_by: { id: asc }) {
+        id
+        name
+        description
+        parameter_type
+        default_value
+        required
+        randomize
+        choices
+        crypto_type
+      }
+      payloadtypec2profiles {
+        c2profile {
+          id
+          name
+          is_p2p
+          description
+          c2profileparameters(where: { deleted: { _eq: false } }, order_by: { id: asc }) {
+            id
+            name
+            description
+            parameter_type
+            default_value
+            required
+            randomize
+            choices
+            crypto_type
+          }
+        }
+      }
+    }
+  }
+`
+
+// Soft-delete a payload via Hasura action (update_payload_by_pk is not exposed)
+export const DELETE_PAYLOAD = gql`
+  mutation DeletePayload($payload_uuid: String!) {
+    updatePayload(payload_uuid: $payload_uuid, deleted: true) {
+      status
+      error
+      id
+    }
+  }
+`
+
+// Commands available for a payload type
+export const GET_COMMANDS_FOR_TYPE = gql`
+  query GetCommandsForType($payload_type_id: Int!) {
+    command(
+      where:    { payload_type_id: { _eq: $payload_type_id }, deleted: { _eq: false } }
+      order_by: { cmd: asc }
+    ) {
+      id
+      cmd
+      description
+    }
+  }
+`
+
+// Create a new payload (Hasura action → Mythic Go server)
+export const CREATE_PAYLOAD = gql`
+  mutation CreatePayload($payloadDefinition: String!) {
+    createPayload(payloadDefinition: $payloadDefinition) {
+      status
+      error
+      uuid
+    }
+  }
+`
+
+// Watch a payload build by UUID
+export const SUB_PAYLOAD_BUILD = gql`
+  subscription SubPayloadBuild($uuid: String!) {
+    payload(where: { uuid: { _eq: $uuid } }) {
+      build_phase
+      build_message
+      build_stderr
+      filemetum { agent_file_id }
+    }
+  }
+`
+
 // Commands for a payload type — used for tab completion
 export const GET_COMMANDS = gql`
   query GetCommands($payloadtype_name: String!) {

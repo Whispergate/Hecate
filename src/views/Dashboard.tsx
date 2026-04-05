@@ -2,12 +2,13 @@
    hecate/src/views/Dashboard.tsx
    ═══════════════════════════════════════════════════ */
 
-import { Topbar }     from '@/components/Topbar/Topbar'
-import { Rail }       from '@/components/Rail/Rail'
-import { Sidebar }    from '@/components/Sidebar/Sidebar'
-import { TaskFeed }   from '@/components/TaskFeed/TaskFeed'
-import { CommandBar } from '@/components/CommandBar/CommandBar'
-import { RightPanel } from '@/components/RightPanel/RightPanel'
+import { Topbar }        from '@/components/Topbar/Topbar'
+import { Rail }          from '@/components/Rail/Rail'
+import { Sidebar }       from '@/components/Sidebar/Sidebar'
+import { TaskFeed }      from '@/components/TaskFeed/TaskFeed'
+import { CommandBar }    from '@/components/CommandBar/CommandBar'
+import { RightPanel }    from '@/components/RightPanel/RightPanel'
+import { PayloadPanel }  from '@/components/PayloadPanel/PayloadPanel'
 import { useStore, useSelectedCallback } from '@/store'
 import styles from './Dashboard.module.css'
 
@@ -36,6 +37,9 @@ function MainHeader() {
 }
 
 export function Dashboard() {
+  const activeRailView = useStore((s) => s.activeRailView)
+  const isFullPanel    = activeRailView === 'payloads'
+
   return (
     <div className={styles.root}>
       <div className={styles.stripe} />
@@ -43,15 +47,20 @@ export function Dashboard() {
 
       <div className={styles.body}>
         <Rail />
-        <Sidebar />
 
-        <main className={styles.main}>
-          <MainHeader />
-          <TaskFeed />
-          <CommandBar />
-        </main>
-
-        <RightPanel />
+        {isFullPanel ? (
+          <div className={styles.fullPanel}><PayloadPanel /></div>
+        ) : (
+          <>
+            <Sidebar />
+            <main className={styles.main}>
+              <MainHeader />
+              <TaskFeed />
+              <CommandBar />
+            </main>
+            <RightPanel />
+          </>
+        )}
       </div>
     </div>
   )
