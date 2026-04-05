@@ -5,7 +5,7 @@
 import { useSubscription } from '@apollo/client'
 import { SUB_CALLBACKS }   from '@/apollo/operations'
 import { useStore, useSelectedCallback } from '@/store'
-import { integrityLabel, timeSince }     from './utils'
+import { integrityLabel, timeSince, parseTs } from './utils'
 import styles from './Sidebar.module.css'
 
 export function Sidebar() {
@@ -36,8 +36,9 @@ export function Sidebar() {
         )}
 
         {callbacks.map((cb) => {
-          const alive = Date.now() - new Date(cb.last_checkin).getTime() < 60_000
-          const idle  = !alive && Date.now() - new Date(cb.last_checkin).getTime() < 600_000
+          const elapsed = Date.now() - parseTs(cb.last_checkin).getTime()
+          const alive = elapsed < 60_000
+          const idle  = !alive && elapsed < 600_000
           const statusClass = alive ? styles.alive : idle ? styles.idle : styles.dead
 
           return (

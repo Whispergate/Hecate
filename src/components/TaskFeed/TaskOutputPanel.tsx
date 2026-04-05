@@ -8,6 +8,7 @@ import { useRef, useEffect, useState, useCallback } from 'react'
 import { useSubscription }                           from '@apollo/client'
 import { SUB_TASK_RESPONSES }                        from '@/apollo/operations'
 import type { Task }                                 from '@/store'
+import { FileBrowser, parseLsOutput }                from './FileBrowser'
 import styles                                        from './TaskOutputPanel.module.css'
 
 function decodeResponse(raw: string): string {
@@ -170,7 +171,18 @@ export function TaskOutputPanel({ task }: Props) {
       {/* ── Output ── */}
       <div className={styles.outputArea}>
         {fullOutput ? (
-          <pre ref={outputRef} className={styles.outputPre}>{fullOutput}</pre>
+          (() => {
+            const lsResult = parseLsOutput(fullOutput)
+            if (lsResult) {
+              return (
+                <FileBrowser
+                  result={lsResult}
+                  callbackDisplayId={task.callback.display_id}
+                />
+              )
+            }
+            return <pre ref={outputRef} className={styles.outputPre}>{fullOutput}</pre>
+          })()
         ) : isRunning ? (
           <div className={styles.waiting}>
             <span className={styles.waitDot} />

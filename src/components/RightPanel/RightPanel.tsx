@@ -1,29 +1,219 @@
 /* ═══════════════════════════════════════════════════
-   hecate/src/components/RightPanel/RightPanel.tsx
+   src/components/RightPanel/RightPanel.tsx
    ═══════════════════════════════════════════════════ */
 
-import { useQuery }                                    from '@apollo/client'
-import { GET_OPERATIONS }                              from '@/apollo/operations'
+import { useQuery, useSubscription }                        from '@apollo/client'
+import { GET_OPERATIONS, SUB_ALL_CALLBACKS }                from '@/apollo/operations'
 import { useStore, useSelectedCallback, useAliveCallbacks } from '@/store'
-import styles from './RightPanel.module.css'
+import type { Callback }                                    from '@/store'
+import { parseTs }                                          from '@/components/Sidebar/utils'
+import styles                                               from './RightPanel.module.css'
+
+// ── Protocol helpers ──────────────────────────────────
+
+type ProtoInfo = { color: string; dash?: string; short: string }
+
+function protocolInfo(c2name: string): ProtoInfo {
+  const n = c2name.toLowerCase()
+  if (n.includes('http'))   return { color: '#90d880', short: 'HTTP'  }
+  if (n.includes('smb'))    return { color: '#EFEFDA', short: 'SMB',  dash: '4 2' }
+  if (n.includes('tcp'))    return { color: '#d0a848', short: 'TCP',  dash: '2 2' }
+  if (n.includes('ws') || n.includes('socket'))
+                            return { color: '#c090e0', short: 'WS',   dash: '6 2' }
+  if (n.includes('dns'))    return { color: '#80c8d0', short: 'DNS',  dash: '1 3' }
+  return                           { color: 'rgba(208,56,56,0.7)', short: c2name.toUpperCase().slice(0,4) }
+}
+
+// ── Late-checkin detection ────────────────────────────
+
+// Mythic sleep_info formats: "60", "10s", "2m", "1h", "60 10" (interval jitter%)
+function parseSleepSeconds(raw: string): number {
+  if (!raw || raw === '—') return 0
+  const first = raw.trim().toLowerCase().split(/\s+/)[0]
+  if (first.endsWith('h')) return parseFloat(first) * 3600
+  if (first.endsWith('m')) return parseFloat(first) * 60
+  if (first.endsWith('s')) return parseFloat(first)
+  const n = parseFloat(first)
+  return isNaN(n) ? 0 : n
+}
+
+function isLateCheckin(cb: Callback): boolean {
+  const sleepSecs = parseSleepSeconds(cb.sleep_info)
+  const elapsed   = (Date.now() - parseTs(cb.last_checkin).getTime()) / 1000
+  // sleep=0 means continuous check-in — threshold is just the 5-min grace window
+  // sleep>0 — threshold is the interval plus 5-min grace
+  const threshold = sleepSecs > 0 ? sleepSecs + 300 : 300
+  return elapsed > threshold
+}
+
+// ── Topology SVG ──────────────────────────────────────
+
+const C2_X = 122
+const C2_Y = 28
+const C2_R = 11
+
+function NetworkTopology({ callbacks, selectedId }: { callbacks: Callback[]; selectedId: number | null }) {
+  const visible = callbacks.slice(0, 6)
+  const total   = visible.length
+
+  // Collect unique protocols for legend
+  const legendProtos = Array.from(
+    new Map(
+      callbacks.map(cb => {
+        const name = cb.callbackc2profiles[0]?.c2profile.name ?? 'unknown'
+        const info = protocolInfo(name)
+        return [info.short, info]
+      })
+    ).values()
+  )
+
+  return (
+    <svg className={styles.netSvg} viewBox="0 0 244 170">
+
+      {/* ── C2 hub ── */}
+      <circle
+        cx={C2_X} cy={C2_Y} r={C2_R}
+        fill="#2a0808"
+        stroke="var(--crimson-500)"
+        strokeWidth="1.5"
+      />
+      <text x={C2_X} y={C2_Y + 3} textAnchor="middle" fontFamily="monospace" fontSize="6.5" fill="var(--crimson-300)">
+        C2
+      </text>
+
+      {/* ── Agent nodes ── */}
+      {visible.map((cb, i) => {
+        const angle = (i / Math.max(total, 1)) * Math.PI * 1.35 + Math.PI * (-0.175)
+        const r     = 66
+        const nx    = C2_X + Math.cos(angle) * r
+        const ny    = 100  + Math.sin(angle) * 36
+
+        const c2name  = cb.callbackc2profiles[0]?.c2profile.name ?? 'unknown'
+        const proto   = protocolInfo(c2name)
+        const alive   = cb.active
+        const isSel   = cb.id === selectedId
+        const late    = alive && isLateCheckin(cb)
+
+        // Dead connection: very sparse dash — visually "broken"
+        const lineColor   = !alive ? 'rgba(80,30,30,0.35)' : proto.color
+        const lineDash    = !alive ? '3 3' : late ? '2 8' : proto.dash
+        const lineWidth   = isSel ? 1.8 : 1
+        const lineOpacity = alive ? (late ? 0.35 : 0.75) : 0.4
+
+        // Midpoint for protocol label
+        const mx = (C2_X + nx) / 2
+        const my = (C2_Y + ny) / 2 - 4
+
+        return (
+          <g key={cb.id}>
+            {/* Connection line */}
+            <line
+              x1={C2_X} y1={C2_Y + C2_R}
+              x2={nx}   y2={ny - 9}
+              stroke={lineColor}
+              strokeWidth={lineWidth}
+              strokeDasharray={lineDash}
+              opacity={lineOpacity}
+            />
+
+            {/* Protocol label on the line */}
+            {alive && (
+              <g>
+                <rect
+                  x={mx - 9} y={my - 6}
+                  width={18} height={9}
+                  rx="1"
+                  fill="#0d0806"
+                  opacity="0.85"
+                />
+                <text
+                  x={mx} y={my + 1}
+                  textAnchor="middle"
+                  fontFamily="monospace"
+                  fontSize="5.5"
+                  fontWeight="bold"
+                  fill={lineColor}
+                >
+                  {proto.short}
+                </text>
+              </g>
+            )}
+
+            {/* Agent node */}
+            <circle
+              cx={nx} cy={ny} r="9"
+              fill={isSel ? '#3a0c0c' : '#160808'}
+              stroke={isSel ? lineColor : (alive ? `${lineColor}99` : '#3a1818')}
+              strokeWidth={isSel ? 1.8 : 1}
+            />
+
+            {/* Live pulse dot — hidden when late (no active connection) */}
+            {alive && !late && (
+              <circle
+                cx={nx + 6.5} cy={ny - 6.5} r="2.5"
+                fill="var(--status-alive)"
+                opacity="0.9"
+              />
+            )}
+
+            {/* Hostname */}
+            <text
+              x={nx} y={ny + 19}
+              textAnchor="middle"
+              fontFamily="monospace"
+              fontSize="5.5"
+              fill={isSel ? 'var(--beige)' : 'var(--bone-600)'}
+            >
+              {cb.host.slice(0, 10)}
+            </text>
+          </g>
+        )
+      })}
+
+      {callbacks.length === 0 && (
+        <text x={C2_X} y="95" textAnchor="middle" fontFamily="monospace" fontSize="8" fill="var(--bone-800)">
+          no agents
+        </text>
+      )}
+
+      {/* ── Protocol legend ── */}
+      {legendProtos.length > 0 && (
+        <g transform="translate(6, 150)">
+          {legendProtos.map((p, i) => (
+            <g key={p.short} transform={`translate(${i * 52}, 0)`}>
+              <line x1="0" y1="5" x2="12" y2="5"
+                stroke={p.color}
+                strokeWidth="1.5"
+                strokeDasharray={p.dash}
+              />
+              <text x="15" y="8" fontFamily="monospace" fontSize="6" fill={p.color}>
+                {p.short}
+              </text>
+            </g>
+          ))}
+        </g>
+      )}
+    </svg>
+  )
+}
+
+// ── Main panel ────────────────────────────────────────
 
 export function RightPanel() {
-  const allCallbacks      = useStore((s) => s.callbacks)
-  const currentTasks      = useStore((s) => s.currentTasks)
+  const aliveCallbacks     = useAliveCallbacks()       // active:true only — for stats
+  const currentTasks       = useStore((s) => s.currentTasks)
   const selectedCallbackId = useStore((s) => s.selectedCallbackId)
-  const aliveCallbacks    = useAliveCallbacks()
-  const selected          = useSelectedCallback()
-  const activeOp          = useStore((s) => s.activeOperation)
+  const selected           = useSelectedCallback()
+  const activeOp           = useStore((s) => s.activeOperation)
 
-  const { data: opData } = useQuery(GET_OPERATIONS, {
+  // All callbacks (including inactive) for topology — shows dead nodes too
+  const { data: allCbData } = useSubscription(SUB_ALL_CALLBACKS, {
+    variables: { operation_id: activeOp?.id ?? 0 },
     skip: !activeOp,
-    fetchPolicy: 'cache-first',
   })
+  const allCallbacks: Callback[] = allCbData?.callback ?? aliveCallbacks
 
-  // Count operators from the operation
-  const operatorCount = opData?.operation?.[0]
-    ? 1  // Will expand when we add operator list to operations query
-    : 1
+  useQuery(GET_OPERATIONS, { skip: !activeOp, fetchPolicy: 'cache-first' })
 
   const errorCount = currentTasks.filter(t => t.status === 'error').length
 
@@ -58,60 +248,7 @@ export function RightPanel() {
       {/* ── Network topology ── */}
       <div className={styles.section}>
         <div className="sec-label">Network topology</div>
-        <svg className={styles.netSvg} viewBox="0 0 244 148">
-          {/* C2 hub */}
-          <circle cx="122" cy="30" r="12" fill="#2a0808" stroke="var(--crimson-500)" strokeWidth="1.5" />
-          <text x="122" y="34" textAnchor="middle" fontFamily="monospace" fontSize="7" fill="var(--crimson-300)">C2</text>
-
-          {allCallbacks.slice(0, 6).map((cb, i) => {
-            const total = Math.min(allCallbacks.length, 6)
-            const angle = (i / total) * Math.PI * 1.4 + Math.PI * (-0.2)
-            const r = 72
-            const x = 122 + Math.cos(angle) * r
-            const y = 85  + Math.sin(angle) * 38
-            const alive = cb.active
-            const isSelected = cb.id === selectedCallbackId
-
-            return (
-              <g key={cb.id}>
-                <line
-                  x1="122" y1="42"
-                  x2={x} y2={y - 9}
-                  stroke={alive ? 'rgba(208,56,56,0.5)' : 'rgba(80,20,20,0.3)'}
-                  strokeWidth={isSelected ? 1.5 : 0.8}
-                  strokeDasharray={alive ? undefined : '3 3'}
-                />
-                <circle
-                  cx={x} cy={y} r="9"
-                  fill={isSelected ? '#3a0808' : '#1a0606'}
-                  stroke={alive ? 'var(--crimson-500)' : '#3a1818'}
-                  strokeWidth={isSelected ? 1.5 : 1}
-                />
-                {alive && (
-                  <circle cx={x + 7} cy={y - 7} r="2.5"
-                    fill="var(--status-alive)"
-                    opacity="0.9"
-                  />
-                )}
-                <text
-                  x={x} y={y + 20}
-                  textAnchor="middle"
-                  fontFamily="monospace"
-                  fontSize="6"
-                  fill="var(--bone-600)"
-                >
-                  {cb.host.slice(0, 9)}
-                </text>
-              </g>
-            )
-          })}
-
-          {allCallbacks.length === 0 && (
-            <text x="122" y="90" textAnchor="middle" fontFamily="monospace" fontSize="8" fill="var(--bone-800)">
-              no agents
-            </text>
-          )}
-        </svg>
+        <NetworkTopology callbacks={allCallbacks} selectedId={selectedCallbackId} />
       </div>
 
       {/* ── Selected agent detail ── */}
@@ -144,9 +281,9 @@ export function RightPanel() {
           <div className="sec-label">Task status</div>
           <div className={styles.taskBreakdown}>
             {[
-              { label: 'Completed', count: currentTasks.filter(t => t.completed).length,           color: 'var(--status-ok-text)' },
-              { label: 'Running',   count: currentTasks.filter(t => !t.completed && t.status !== 'error').length, color: 'var(--crimson-300)' },
-              { label: 'Errors',    count: errorCount,                                             color: 'var(--status-err-text)' },
+              { label: 'Completed', count: currentTasks.filter(t => t.completed).length,                               color: 'var(--status-ok-text)'  },
+              { label: 'Running',   count: currentTasks.filter(t => !t.completed && t.status !== 'error').length,      color: 'var(--crimson-300)'     },
+              { label: 'Errors',    count: errorCount,                                                                  color: 'var(--status-err-text)' },
             ].map(({ label, count, color }) => (
               <div key={label} className={styles.taskBreakdownRow}>
                 <span className={styles.tbLabel}>{label}</span>

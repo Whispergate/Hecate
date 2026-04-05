@@ -9,6 +9,7 @@ import { useRef, useEffect, useState } from 'react'
 import { useSubscription }             from '@apollo/client'
 import { SUB_TASK_RESPONSES }          from '@/apollo/operations'
 import type { Task }                   from '@/store'
+import { FileBrowser, parseLsOutput }  from './FileBrowser'
 import styles                          from './ConsoleView.module.css'
 
 // ── Helpers ───────────────────────────────────────────
@@ -33,7 +34,8 @@ function formatTimestamp(iso: string): string {
 // ── Single task entry inside the console ─────────────
 
 function ConsoleEntry({ task, isLast }: { task: Task; isLast: boolean }) {
-  const [lines, setLines] = useState<Array<{ id: number; response: string }>>([])
+  const [lines,    setLines]    = useState<Array<{ id: number; response: string }>>([])
+  const [expanded, setExpanded] = useState(false)
   const hasOutput = task.response_count > 0
   const isRunning = !task.completed && !task.status.toLowerCase().includes('error')
 
@@ -53,6 +55,7 @@ function ConsoleEntry({ task, isLast }: { task: Task; isLast: boolean }) {
   })
 
   const fullOutput = lines.map(r => decodeResponse(r.response)).join('')
+  const lsResult   = fullOutput ? parseLsOutput(fullOutput) : null
 
   const displayArgs = (task.display_params && task.display_params !== '{}' && task.display_params !== '')
     ? task.display_params
@@ -74,9 +77,33 @@ function ConsoleEntry({ task, isLast }: { task: Task; isLast: boolean }) {
 
       {/* Output */}
       {fullOutput && (
-        <pre className={`${styles.output} ${isError ? styles.outputErr : ''}`}>
-          {fullOutput}
-        </pre>
+        lsResult ? (
+          // File-explorer output — collapsed by default to avoid giant scroll
+          <div className={styles.lsWrap}>
+            <button className={styles.lsToggle} onClick={() => setExpanded(x => !x)}>
+              <span className={styles.lsIcon}>📂</span>
+              <span className={styles.lsPath}>
+                {[lsResult.parent_path, lsResult.name].filter(Boolean).join('').replace(/\\$/, '')}
+              </span>
+              <span className={styles.lsMeta}>
+                {lsResult.files.filter(f => !f.is_file).length}d {lsResult.files.filter(f => f.is_file).length}f
+              </span>
+              <span className={styles.lsChevron}>{expanded ? '▲' : '▼'}</span>
+            </button>
+            {expanded && (
+              <div className={styles.lsBrowserWrap}>
+                <FileBrowser
+                  result={lsResult}
+                  callbackDisplayId={task.callback.display_id}
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          <pre className={`${styles.output} ${isError ? styles.outputErr : ''}`}>
+            {fullOutput}
+          </pre>
+        )
       )}
 
       {/* Running: waiting indicator (only on last/active task) */}
@@ -89,7 +116,7 @@ function ConsoleEntry({ task, isLast }: { task: Task; isLast: boolean }) {
       )}
 
       {/* Running: inline pulse after output */}
-      {isRunning && fullOutput && isLast && (
+      {isRunning && fullOutput && !lsResult && isLast && (
         <div className={styles.cursor} />
       )}
     </div>

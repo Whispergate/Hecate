@@ -88,12 +88,23 @@ export const GET_CALLBACKS = gql`
 // SUBSCRIPTIONS
 // ─────────────────────────────────────────────────────
 
-// Live callback list
+// Live callback list — sidebar shows active only, topology shows all
 export const SUB_CALLBACKS = gql`
   ${CALLBACK_FIELDS}
   subscription SubCallbacks($operation_id: Int!) {
     callback(
       where: { operation_id: { _eq: $operation_id }, active: { _eq: true } }
+      order_by: { last_checkin: desc }
+    ) { ...CallbackFields }
+  }
+`
+
+// All callbacks (including inactive) for topology
+export const SUB_ALL_CALLBACKS = gql`
+  ${CALLBACK_FIELDS}
+  subscription SubAllCallbacks($operation_id: Int!) {
+    callback(
+      where: { operation_id: { _eq: $operation_id } }
       order_by: { last_checkin: desc }
     ) { ...CallbackFields }
   }
@@ -131,9 +142,23 @@ export const SUB_TASK_RESPONSES = gql`
 `
 
 // Mutations
+// callback_id must be the callback's display_id (not the internal id).
+// tasking_location "command_line" tells Mythic to treat params as raw CLI input.
 export const CREATE_TASK = gql`
-  mutation CreateTask($callback_id: Int!, $command: String!, $params: String!) {
-    createTask(callback_id: $callback_id, command: $command, params: $params) {
+  mutation CreateTask(
+    $callback_id: Int!
+    $command: String!
+    $params: String!
+    $tasking_location: String
+    $original_params: String
+  ) {
+    createTask(
+      callback_id: $callback_id
+      command: $command
+      params: $params
+      tasking_location: $tasking_location
+      original_params: $original_params
+    ) {
       status
       error
       id

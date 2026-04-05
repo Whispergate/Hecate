@@ -121,6 +121,63 @@
 .waitDot:nth-child(2) { animation-delay: 0.15s; }
 .waitDot:nth-child(3) { animation-delay: 0.30s; }
 
+/* ── Inline ls / file-browser ── */
+.lsWrap {
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+  border: 1px solid var(--beige-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.lsToggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  background: var(--bg-raised);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background var(--t-fast);
+}
+.lsToggle:hover { background: var(--beige-dim); }
+
+.lsIcon { font-size: 11px; }
+
+.lsPath {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--beige);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lsMeta {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--bone-800);
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.lsChevron {
+  font-size: 7px;
+  color: var(--bone-800);
+  flex-shrink: 0;
+}
+
+/* Capped height so an ls doesn't take over the whole console */
+.lsBrowserWrap {
+  max-height: 260px;
+  overflow-y: auto;
+  border-top: 1px solid var(--beige-border);
+}
+
 /* ── Block cursor after streaming output ── */
 @keyframes cursorBlink {
   0%, 100% { opacity: 1; }

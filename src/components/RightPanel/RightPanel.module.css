@@ -2,14 +2,14 @@
 
 .panel {
   background: var(--bg-raised);
-  border-left: 1px solid var(--border-default);
+  border-left: 1px solid var(--beige-border-md);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
 .section {
   padding: 12px 14px;
-  border-bottom: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--beige-border);
 }
 
 /* ── Stats ── */

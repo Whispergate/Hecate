@@ -2,11 +2,11 @@
    hecate/src/components/Topbar/Topbar.tsx
    ═══════════════════════════════════════════════════ */
 
-import { useState }        from 'react'
-import { WgSigil }         from '../shared/WgSigil'
-import { useStore }        from '@/store'
-import { mythicLogout }    from '@/apollo/client'
-import styles              from './Topbar.module.css'
+import { useState }     from 'react'
+import logoImg          from '@/assets/logo.png'
+import { useStore }     from '@/store'
+import { mythicLogout } from '@/apollo/client'
+import styles           from './Topbar.module.css'
 
 export function Topbar() {
   const { activeOperation, setActiveOperation, token, setToken } = useStore()
@@ -27,7 +27,7 @@ export function Topbar() {
   return (
     <header className={styles.topbar}>
       <div className={styles.logo}>
-        <WgSigil size={26} />
+        <img src={logoImg} className={styles.logoImg} alt="WhisperGate" />
         <span className={styles.logoText}>HECATE</span>
       </div>
 

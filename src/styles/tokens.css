@@ -30,6 +30,13 @@
   --bone-800:   #887860;   /* dimmed — was near-invisible */
   --bone-900:   #584838;   /* placeholders */
 
+  /* ── Beige / parchment accent (matches logo hex border) ── */
+  --beige:             #EFEFDA;              /* pure accent — logo border colour   */
+  --beige-dim:         rgba(239,239,218,0.06);/* subtle panel tint                */
+  --beige-border:      rgba(239,239,218,0.18);/* structural frame borders         */
+  --beige-border-md:   rgba(239,239,218,0.30);/* topbar / panel-divider borders   */
+  --beige-border-strong:rgba(239,239,218,0.50);/* emphasis lines, active frames   */
+
   /* ── Semantic ── */
   --status-alive:      #e06020;
   --status-alive-glow: rgba(224,96,32,0.7);

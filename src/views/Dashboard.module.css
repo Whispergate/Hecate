@@ -1,4 +1,4 @@
-/* hecate/src/views/Dashboard.module.css */
+/* src/views/Dashboard.module.css */
 
 .root {
   display: flex;
@@ -7,9 +7,10 @@
   overflow: hidden;
 }
 
+/* Beige top stripe — matches logo border colour, frames the UI */
 .stripe {
   height: 2px;
-  background: var(--crimson-600);
+  background: linear-gradient(90deg, var(--beige-border-strong), var(--beige), var(--beige-border-strong));
   flex-shrink: 0;
 }
 
@@ -30,8 +31,8 @@
 }
 
 .mainHeader {
-  padding: 10px 18px;
-  border-bottom: 1px solid var(--border-subtle);
+  padding: 9px 18px;
+  border-bottom: 1px solid var(--beige-border);
   background: var(--bg-raised);
   display: flex;
   align-items: center;
