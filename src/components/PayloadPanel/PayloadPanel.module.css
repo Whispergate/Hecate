@@ -365,6 +365,140 @@
   min-width: 0;
 }
 
+/* ── Horizontal build step chain ── */
+.horizChain {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 4px 0 8px;
+}
+
+.horizStep {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
+}
+
+.horizConnector {
+  width: 20px;
+  height: 2px;
+  background: var(--border-default);
+  flex-shrink: 0;
+}
+
+.horizNode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.hBubble {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 80ms, box-shadow 80ms;
+}
+.hBubble:hover {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.hDotPending  { color: var(--bone-800); background: var(--bg-base); }
+.hDotRunning  {
+  color: var(--status-warn);
+  background: color-mix(in srgb, var(--status-warn) 20%, transparent);
+  animation: hpulse 1.2s ease-in-out infinite;
+}
+.hDotOk  { color: var(--status-ok);  background: color-mix(in srgb, var(--status-ok)  20%, transparent); }
+.hDotErr { color: var(--status-err); background: color-mix(in srgb, var(--status-err) 20%, transparent); }
+
+@keyframes hpulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.hLabel {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--bone-700);
+  text-align: center;
+  max-width: 64px;
+  word-break: break-word;
+}
+
+/* Popover drops below the node */
+.hPopover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  min-width: 220px;
+  max-width: 320px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+.hPopoverName {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--bone-200);
+}
+
+.hPopoverDesc {
+  font-size: 9px;
+  color: var(--bone-600);
+}
+
+.hOutputLabel {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bone-800);
+}
+
+.hOutputPre {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-400);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  white-space: pre-wrap;
+  max-height: 120px;
+  overflow-y: auto;
+  margin: 0;
+}
+
+.hOutputErr {
+  color: var(--status-err-text);
+  background: rgba(160,30,30,0.08);
+  border-color: rgba(160,30,30,0.2);
+}
+
+.hNoOutput {
+  font-size: 9px;
+  color: var(--bone-900);
+  font-style: italic;
+}
+
 /* ── Actions ── */
 .actions {
   display: flex;

@@ -8,7 +8,8 @@ import { Sidebar }       from '@/components/Sidebar/Sidebar'
 import { TaskFeed }      from '@/components/TaskFeed/TaskFeed'
 import { CommandBar }    from '@/components/CommandBar/CommandBar'
 import { RightPanel }    from '@/components/RightPanel/RightPanel'
-import { PayloadPanel }  from '@/components/PayloadPanel/PayloadPanel'
+import { PayloadPanel }   from '@/components/PayloadPanel/PayloadPanel'
+import { ServicesPanel }  from '@/components/ServicesPanel/ServicesPanel'
 import { useStore, useSelectedCallback } from '@/store'
 import styles from './Dashboard.module.css'
 
@@ -38,7 +39,7 @@ function MainHeader() {
 
 export function Dashboard() {
   const activeRailView = useStore((s) => s.activeRailView)
-  const isFullPanel    = activeRailView === 'payloads'
+  const isFullPanel    = activeRailView === 'payloads' || activeRailView === 'services'
 
   return (
     <div className={styles.root}>
@@ -49,7 +50,10 @@ export function Dashboard() {
         <Rail />
 
         {isFullPanel ? (
-          <div className={styles.fullPanel}><PayloadPanel /></div>
+          <div className={styles.fullPanel}>
+            {activeRailView === 'payloads'  && <PayloadPanel />}
+            {activeRailView === 'services'  && <ServicesPanel />}
+          </div>
         ) : (
           <>
             <Sidebar />

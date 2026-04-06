@@ -7,6 +7,7 @@ import { useQuery, useMutation, useSubscription } from '@apollo/client'
 import {
   GET_PAYLOAD_TYPES,
   GET_COMMANDS_FOR_TYPE,
+  GET_WRAPPABLE_PAYLOADS,
   CREATE_PAYLOAD,
   SUB_PAYLOAD_BUILD,
 } from '@/apollo/operations'
@@ -14,16 +15,72 @@ import styles from './CreatePayloadModal.module.css'
 
 // ── Types ──────────────────────────────────────────────
 
+interface DictChoice {
+  name:          string
+  default_value: string
+  default_show:  boolean
+  required:      boolean
+}
+
+interface HideCondition {
+  name:    string
+  operand: string  // eq, neq, in, nin, lt, gt, lte, gte, sw, ew, co, nco
+  value:   string
+  choices: string[]
+}
+
 interface Param {
-  id:             number
-  name:           string
-  description:    string
-  parameter_type: string
-  default_value:  string
-  required:       boolean
-  randomize:      boolean
-  choices:        string[]
-  crypto_type:    boolean
+  id:              number
+  name:            string
+  description:     string
+  parameter_type:  string
+  default_value:   string
+  required:        boolean
+  randomize:       boolean
+  format_string:   string
+  // string[] for ChooseOne/Multiple; DictChoice[] for Dictionary
+  choices:         string[] | DictChoice[]
+  crypto_type:     boolean
+  hide_conditions: HideCondition[]
+  ui_position:     number
+}
+
+function evalHideConditions(param: Param, allValues: Record<string, string>): boolean {
+  if (!param.hide_conditions?.length) return false
+  for (const cond of param.hide_conditions) {
+    const other = String(allValues[cond.name] ?? '')
+    const val   = String(cond.value ?? '')
+    let hide = false
+    switch (cond.operand) {
+      case 'eq':  hide = other === val; break
+      case 'neq': hide = other !== val; break
+      case 'in':  hide = (cond.choices ?? []).includes(other); break
+      case 'nin': hide = !(cond.choices ?? []).includes(other); break
+      case 'lt':  hide = parseFloat(other) < parseFloat(val); break
+      case 'gt':  hide = parseFloat(other) > parseFloat(val); break
+      case 'lte': hide = parseFloat(other) <= parseFloat(val); break
+      case 'gte': hide = parseFloat(other) >= parseFloat(val); break
+      case 'sw':  hide = other.startsWith(val); break
+      case 'ew':  hide = other.endsWith(val); break
+      case 'co':  hide = other.includes(val); break
+      case 'nco': hide = !other.includes(val); break
+    }
+    if (hide) return true
+  }
+  return false
+}
+
+// Build the rendered default for a Dictionary param from its choices
+function dictDefaultFromChoices(p: Param): string {
+  if (p.parameter_type !== 'Dictionary') return p.default_value ?? ''
+  if (p.default_value) return p.default_value
+  const choices = p.choices as DictChoice[]
+  if (!Array.isArray(choices) || choices.length === 0) return '{}'
+  const obj: Record<string, string> = {}
+  for (const c of choices) {
+    if (c.default_show) obj[c.name] = c.default_value
+  }
+  return JSON.stringify(obj, null, 2)
 }
 
 interface C2Profile {
@@ -34,15 +91,26 @@ interface C2Profile {
   c2profileparameters: Param[]
 }
 
+interface C2Deviation {
+  supported:         boolean
+  default_value?:    unknown
+  choices?:          string[]
+  dictionary_choices?: DictChoice[]
+}
+
 interface PayloadType {
-  id:                   number
-  name:                 string
-  file_extension:       string
-  supported_os:         string[]
-  note:                 string
-  container_running:    boolean
-  buildparameters:      Param[]
-  payloadtypec2profiles: { c2profile: C2Profile }[]
+  id:                      number
+  name:                    string
+  file_extension:          string
+  supported_os:            string[]
+  note:                    string
+  container_running:       boolean
+  wrapper:                 boolean
+  // { "HTTP": { "query_path_name": { supported: false }, ... }, ... }
+  c2_parameter_deviations: Record<string, Record<string, C2Deviation>> | null
+  wrap_these_payload_types: { wrapped: { id: number; name: string } }[]
+  buildparameters:         Param[]
+  payloadtypec2profiles:   { c2profile: C2Profile }[]
 }
 
 interface Command {
@@ -70,34 +138,48 @@ function coerce(value: string, type: string): unknown {
 
 // Build the `payloadDefinition` JSON string for the mutation
 function buildDefinition(opts: {
-  type:         PayloadType
-  os:           string
-  description:  string
-  filename:     string
-  buildParams:  Record<string, string>
-  c2Name:       string
-  c2Profile:    C2Profile | null
-  c2Params:     Record<string, string>
-  commands:     string[]
+  type:            PayloadType
+  os:              string
+  description:     string
+  filename:        string
+  buildParams:     Record<string, string>
+  c2Name:          string
+  c2Profile:       C2Profile | null
+  c2Params:        Record<string, string>
+  commands:        string[]
+  wrappedUuid?:    string
 }): string {
-  const { type, os, description, filename, buildParams, c2Name, c2Profile, c2Params, commands } = opts
+  const { type, os, description, filename, buildParams, c2Name, c2Profile, c2Params, commands, wrappedUuid } = opts
 
-  const buildParameters = type.buildparameters
-    .filter(p => !p.crypto_type)
-    .map(p => ({
-      name:  p.name,
-      value: coerce(buildParams[p.name] ?? p.default_value, p.parameter_type),
-    }))
+  const buildParameters = type.buildparameters.map(p => ({
+    name:  p.name,
+    value: coerce(buildParams[p.name] ?? p.default_value, p.parameter_type),
+  }))
+
+  if (type.wrapper) {
+    return JSON.stringify({
+      description,
+      payload_type:    type.name,
+      selected_os:     os,
+      filename,
+      commands:        [],
+      build_parameters: buildParameters,
+      c2_profiles:     [],
+      wrapper:         true,
+      wrapped_payload: wrappedUuid ?? '',
+    })
+  }
 
   const c2ProfileParameters: Record<string, unknown> = {}
   if (c2Profile) {
     for (const p of c2Profile.c2profileparameters) {
-      if (p.crypto_type) continue
-      c2ProfileParameters[p.name] = coerce(c2Params[p.name] ?? p.default_value, p.parameter_type)
+      const val = c2Params[p.name]
+      if (p.crypto_type && p.randomize && !val) continue
+      c2ProfileParameters[p.name] = coerce(val ?? p.default_value, p.parameter_type)
     }
   }
 
-  const def = {
+  return JSON.stringify({
     description,
     payload_type: type.name,
     selected_os:  os,
@@ -109,21 +191,23 @@ function buildDefinition(opts: {
       c2_profile_is_p2p:     c2Profile?.is_p2p ?? false,
       c2_profile_parameters: c2ProfileParameters,
     }] : [],
-  }
-  return JSON.stringify(def)
+  })
 }
 
 // ── Dynamic parameter input ────────────────────────────
 
 function ParamInput({
-  param, value, onChange,
+  param, value, onChange, allValues,
 }: {
-  param: Param; value: string; onChange: (v: string) => void
+  param: Param; value: string; onChange: (v: string) => void; allValues: Record<string, string>
 }) {
-  if (param.crypto_type) return null
+  if (evalHideConditions(param, allValues)) return null
 
-  const { parameter_type: type, choices, description, name, default_value } = param
+  const { parameter_type: type, description, name, default_value, randomize } = param
+  const choices = param.choices as string[]
   const label = name.replace(/_/g, ' ')
+  // crypto_type params with randomize=true are auto-generated if left empty
+  const cryptoHint = param.crypto_type && randomize ? 'auto-generated if empty' : null
 
   if (type === 'ChooseOne') {
     return (
@@ -133,6 +217,7 @@ function ParamInput({
           {param.required && <span className={styles.required}>*</span>}
         </label>
         {description && <span className={styles.fieldHint}>{description}</span>}
+        {cryptoHint && <span className={styles.cryptoHint}>{cryptoHint}</span>}
         <select
           className={styles.fieldSelect}
           value={value !== '' ? value : default_value}
@@ -235,6 +320,26 @@ function ParamInput({
     )
   }
 
+  if (type === 'Date') {
+    return (
+      <div className={styles.field}>
+        <label className={styles.fieldLabel}>
+          {label}
+          {param.required && <span className={styles.required}>*</span>}
+        </label>
+        {description && <span className={styles.fieldHint}>{description}</span>}
+        <input
+          type="date"
+          className={styles.fieldInput}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+        />
+      </div>
+    )
+  }
+
+  if (type === 'None') return null
+
   const isMultiline = type === 'Dictionary' || type === 'Array' || type === 'TypedArray'
   return (
     <div className={styles.field}>
@@ -243,10 +348,11 @@ function ParamInput({
         {param.required && <span className={styles.required}>*</span>}
       </label>
       {description && <span className={styles.fieldHint}>{description}</span>}
+      {cryptoHint && <span className={styles.cryptoHint}>{cryptoHint}</span>}
       {isMultiline ? (
         <textarea
           className={styles.fieldTextarea}
-          value={value || default_value}
+          value={value}
           onChange={e => onChange(e.target.value)}
           rows={3}
           placeholder={type === 'Array' ? 'comma, separated, values' : '{"key": "value"}'}
@@ -255,10 +361,94 @@ function ParamInput({
         <input
           type={type === 'Number' || type === 'Integer' ? 'number' : 'text'}
           className={styles.fieldInput}
-          value={value !== undefined ? value : default_value}
+          value={value}
           onChange={e => onChange(e.target.value)}
+          placeholder={param.crypto_type && randomize ? 'auto-generated' : undefined}
         />
       )}
+    </div>
+  )
+}
+
+// ── Wrapped payload picker ─────────────────────────────
+
+interface WrappablePayload {
+  id: number; uuid: string; description: string; creation_time: string
+  filemetum: { filename_text: string } | null
+  agentName?: string
+}
+
+function WrappedPayloadPicker({
+  typeId, value, onChange,
+}: {
+  typeId: number; value: string; onChange: (uuid: string) => void
+}) {
+  const [filter, setFilter] = useState('')
+  const { data, loading } = useQuery(GET_WRAPPABLE_PAYLOADS, {
+    variables: { wrapper_type_id: typeId },
+    fetchPolicy: 'cache-and-network',
+  })
+
+  const options: WrappablePayload[] = []
+  if (data?.payloadtype_by_pk?.wrap_these_payload_types) {
+    for (const wt of data.payloadtype_by_pk.wrap_these_payload_types) {
+      for (const p of wt.wrapped.payloads ?? []) {
+        options.push({ ...p, agentName: wt.wrapped.name })
+      }
+    }
+    options.sort((a, b) =>
+      new Date(b.creation_time).getTime() - new Date(a.creation_time).getTime()
+    )
+  }
+
+  if (loading) return <div className={styles.loading}>Loading payloads…</div>
+  if (!options.length) return (
+    <div className={styles.noParams}>No wrappable payloads found. Build a supported payload first.</div>
+  )
+
+  const q = filter.toLowerCase()
+  const visible = options.filter(p => {
+    const b64 = p.filemetum?.filename_text
+    const name = b64 ? decodeURIComponent(escape(atob(b64))) : (p.description || p.uuid)
+    return name.toLowerCase().includes(q)
+      || (p.agentName ?? '').toLowerCase().includes(q)
+      || (p.description ?? '').toLowerCase().includes(q)
+  })
+
+  return (
+    <div className={styles.wrapListWrap}>
+      <input
+        className={styles.cmdSearch}
+        type="text"
+        placeholder="filter payloads…"
+        value={filter}
+        onChange={e => setFilter(e.target.value)}
+      />
+    <div className={styles.wrapList}>
+      {visible.map(p => {
+        const b64 = p.filemetum?.filename_text
+        const filename = b64
+          ? decodeURIComponent(escape(atob(b64)))
+          : (p.description || p.uuid.slice(0, 12))
+        const isSelected = value === p.uuid
+        return (
+          <button
+            key={p.uuid}
+            className={`${styles.wrapItem} ${isSelected ? styles.wrapItemSelected : ''}`}
+            onClick={() => onChange(p.uuid)}
+          >
+            <span className={styles.wrapItemAgent}>{p.agentName}</span>
+            <span className={styles.wrapItemFile}>{filename}</span>
+            {p.description && (
+              <span className={styles.wrapItemDesc}>{p.description}</span>
+            )}
+          </button>
+        )
+      })}
+      {visible.length === 0 && (
+        <div className={styles.noParams}>No matching payloads.</div>
+      )}
+    </div>
     </div>
   )
 }
@@ -280,6 +470,7 @@ function PickAgent({
         >
           <div className={styles.agentCardTop}>
             <span className={styles.agentCardName}>{t.name}</span>
+            {t.wrapper && <span className={styles.wrapperBadge}>WRAPPER</span>}
             <span className={`${styles.agentDot} ${t.container_running ? styles.agentDotOn : styles.agentDotOff}`} />
           </div>
           {(t.supported_os as string[]).length > 0 && (
@@ -315,18 +506,64 @@ function Configure({
   const [os,          setOs]          = useState(osList[0] ?? 'Windows')
   const [description, setDescription] = useState('')
   const [filename,    setFilename]    = useState(`${type.name}${type.file_extension ?? ''}`)
-  const [buildParams, setBuildParams] = useState<Record<string, string>>({})
+  const [buildParams, setBuildParams] = useState<Record<string, string>>(() => {
+    const defaults: Record<string, string> = {}
+    for (const p of type.buildparameters) {
+      if (p.crypto_type && p.randomize) continue
+      let def: string
+      if (p.parameter_type === 'Dictionary') {
+        def = dictDefaultFromChoices(p)
+      } else if (p.parameter_type === 'Date' && p.default_value) {
+        // default_value is a day offset from today
+        const d = new Date()
+        d.setDate(d.getDate() + parseInt(p.default_value, 10))
+        def = d.toISOString().slice(0, 10)
+      } else {
+        def = p.default_value ?? ''
+      }
+      if (def) defaults[p.name] = def
+    }
+    return defaults
+  })
   const [selectedC2,  setSelectedC2]  = useState<string>(
     type.payloadtypec2profiles[0]?.c2profile.name ?? ''
   )
-  const [c2Params, setC2Params] = useState<Record<string, string>>({})
+
+  const defaultsForC2 = useCallback((profile: C2Profile | null, c2Name?: string): Record<string, string> => {
+    const defaults: Record<string, string> = {}
+    if (!profile) return defaults
+    for (const p of profile.c2profileparameters) {
+      if (p.crypto_type && p.randomize) continue
+      const dev = type.c2_parameter_deviations?.[c2Name ?? profile.name]?.[p.name]
+      if (dev?.supported === false) continue
+      let def: string
+      if (p.parameter_type === 'Dictionary') {
+        def = dictDefaultFromChoices(p)
+      } else if (p.parameter_type === 'Date' && p.default_value) {
+        const d = new Date()
+        d.setDate(d.getDate() + parseInt(p.default_value, 10))
+        def = d.toISOString().slice(0, 10)
+      } else {
+        def = p.default_value ?? ''
+      }
+      if (def) defaults[p.name] = def
+    }
+    return defaults
+  }, [])
+
+  const firstC2Name = type.payloadtypec2profiles[0]?.c2profile.name ?? ''
+  const [c2Params, setC2Params] = useState<Record<string, string>>(() =>
+    defaultsForC2(type.payloadtypec2profiles[0]?.c2profile ?? null, firstC2Name)
+  )
   const [selectedCmds, setSelectedCmds] = useState<Set<string>>(new Set())
   const [allCmds,      setAllCmds]      = useState<Command[]>([])
   const [cmdsLoaded,   setCmdsLoaded]   = useState(false)
   const [cmdFilter,    setCmdFilter]    = useState('')
+  const [wrappedUuid,  setWrappedUuid]  = useState('')
 
   const { data: cmdData } = useQuery(GET_COMMANDS_FOR_TYPE, {
     variables: { payload_type_id: type.id },
+    skip: type.wrapper,
   })
 
   useEffect(() => {
@@ -356,13 +593,14 @@ function Configure({
       prev.size === allCmds.length ? new Set() : new Set(allCmds.map(c => c.cmd))
     ), [allCmds])
 
-  const visibleBuildParams = type.buildparameters.filter(p => !p.crypto_type)
+  const visibleBuildParams = [...type.buildparameters].sort((a, b) => a.name.localeCompare(b.name))
 
   const handleBuild = () => {
     const def = buildDefinition({
       type, os, description, filename: filename || `${type.name}${type.file_extension ?? ''}`,
       buildParams, c2Name: selectedC2, c2Profile, c2Params,
       commands: Array.from(selectedCmds),
+      wrappedUuid,
     })
     onBuild(def)
   }
@@ -423,13 +661,26 @@ function Configure({
               param={p}
               value={buildParams[p.name] ?? ''}
               onChange={v => setBuildParam(p.name, v)}
+              allValues={buildParams}
             />
           ))}
         </div>
       )}
 
-      {/* C2 profile */}
-      {type.payloadtypec2profiles.length > 0 && (
+      {/* Wrapper: select payload to wrap */}
+      {type.wrapper && (
+        <div className={styles.section}>
+          <div className={styles.sectionLabel}>Payload to Wrap</div>
+          <WrappedPayloadPicker
+            typeId={type.id}
+            value={wrappedUuid}
+            onChange={setWrappedUuid}
+          />
+        </div>
+      )}
+
+      {/* C2 profile (regular payloads only) */}
+      {!type.wrapper && type.payloadtypec2profiles.length > 0 && (
         <div className={styles.section}>
           <div className={styles.sectionLabel}>C2 Profile</div>
           <div className={styles.c2Tabs}>
@@ -437,7 +688,11 @@ function Configure({
               <button
                 key={p.id}
                 className={`${styles.c2Tab} ${selectedC2 === p.name ? styles.c2TabActive : ''}`}
-                onClick={() => { setSelectedC2(p.name); setC2Params({}) }}
+                onClick={() => {
+                  setSelectedC2(p.name)
+                  const prof = type.payloadtypec2profiles.find(x => x.c2profile.name === p.name)?.c2profile ?? null
+                  setC2Params(defaultsForC2(prof, p.name))
+                }}
               >
                 {p.name}
                 {p.is_p2p && <span className={styles.p2pBadge}>P2P</span>}
@@ -446,18 +701,22 @@ function Configure({
           </div>
           {c2Profile && (
             <div className={styles.c2Params}>
-              {c2Profile.c2profileparameters
-                .filter(p => !p.crypto_type)
+              {[...c2Profile.c2profileparameters]
+                .filter(p => {
+                  const dev = type.c2_parameter_deviations?.[selectedC2]?.[p.name]
+                  return dev?.supported !== false
+                })
+                .sort((a, b) => a.name.localeCompare(b.name))
                 .map(p => (
                   <ParamInput
                     key={p.id}
                     param={p}
                     value={c2Params[p.name] ?? ''}
                     onChange={v => setC2Param(p.name, v)}
+                    allValues={c2Params}
                   />
-                ))
-              }
-              {c2Profile.c2profileparameters.filter(p => !p.crypto_type).length === 0 && (
+                ))}
+              {c2Profile.c2profileparameters.length === 0 && (
                 <div className={styles.noParams}>No configurable parameters.</div>
               )}
             </div>
@@ -465,8 +724,8 @@ function Configure({
         </div>
       )}
 
-      {/* Commands */}
-      <div className={styles.section}>
+      {/* Commands (regular payloads only) */}
+      {!type.wrapper && <div className={styles.section}>
         <div className={styles.sectionLabelRow}>
           <span className={styles.sectionLabel}>
             Commands
@@ -510,7 +769,7 @@ function Configure({
             </div>
           </>
         )}
-      </div>
+      </div>}
 
       {/* Actions */}
       <div className={styles.actions}>
@@ -522,7 +781,87 @@ function Configure({
   )
 }
 
+// ── Build step types ────────────────────────────────────
+
+interface BuildStep {
+  id:               number
+  step_number:      number
+  step_name:        string
+  step_description: string
+  step_success:     boolean
+  start_time:       string | null
+  end_time:         string | null
+  step_stdout:      string
+  step_stderr:      string
+}
+
 // ── Step 3: Building ───────────────────────────────────
+
+function BuildStepRow({
+  step, running, isFirst, isLast,
+}: {
+  step: BuildStep; running: boolean; isFirst: boolean; isLast: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const done      = !!step.end_time
+  const hasOutput = !!(step.step_stdout || step.step_stderr)
+
+  const dotCls = running && !done
+    ? styles.stepDotRunning
+    : done && step.step_success
+    ? styles.stepDotOk
+    : done && !step.step_success
+    ? styles.stepDotErr
+    : styles.stepDotPending
+
+  return (
+    <div className={styles.buildStepRow}>
+      {/* ── Timeline column ── */}
+      <div className={styles.buildStepTimeline}>
+        <div className={`${styles.stepLine} ${isFirst ? styles.stepLineInvis : ''}`} />
+        <button
+          className={`${styles.stepBubble} ${dotCls}`}
+          onClick={() => setOpen(o => !o)}
+          title={hasOutput ? 'Click to view output' : step.step_description}
+        />
+        <div className={`${styles.stepLine} ${isLast && !open ? styles.stepLineInvis : ''}`} />
+      </div>
+
+      {/* ── Content column ── */}
+      <div className={styles.buildStepBody}>
+        <div className={styles.buildStepHeader} onClick={() => setOpen(o => !o)}>
+          <span className={styles.buildStepName}>{step.step_name}</span>
+          {step.step_description && (
+            <span className={styles.buildStepDesc}>{step.step_description}</span>
+          )}
+          <span className={styles.buildStepChevron}>{open ? '▾' : '▸'}</span>
+        </div>
+        {open && (
+          <div className={styles.buildStepOutput}>
+            {step.step_description && (
+              <div className={styles.buildStepDescFull}>{step.step_description}</div>
+            )}
+            {step.step_stdout && (
+              <>
+                <span className={styles.buildStepOutputLabel}>stdout</span>
+                <pre className={styles.buildStepStdout}>{step.step_stdout}</pre>
+              </>
+            )}
+            {step.step_stderr && (
+              <>
+                <span className={styles.buildStepOutputLabel}>stderr</span>
+                <pre className={styles.buildStepStderr}>{step.step_stderr}</pre>
+              </>
+            )}
+            {!step.step_stdout && !step.step_stderr && (
+              <span className={styles.buildStepNoOutput}>no output</span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 function Building({
   uuid, onClose,
@@ -533,22 +872,26 @@ function Building({
     variables: { uuid },
   })
 
-  const result = data?.payload?.[0]
-  const phase: string = result?.build_phase ?? 'building'
+  const result  = data?.payload?.[0]
+  const phase: string   = result?.build_phase ?? 'building'
   const message: string = result?.build_message ?? ''
   const stderr: string  = result?.build_stderr  ?? ''
   const fileId: string  = result?.filemetum?.agent_file_id ?? ''
+  const steps: BuildStep[] = result?.payload_build_steps ?? []
 
-  const isDone   = phase === 'success' || phase === 'error' || phase === 'cancelled'
-  const isOk     = phase === 'success'
+  const isDone = phase === 'success' || phase === 'error' || phase === 'cancelled'
+  const isOk   = phase === 'success'
+
+  // Which step is currently running (has start_time but no end_time)
+  const runningIdx = steps.findIndex(s => s.start_time && !s.end_time)
 
   return (
     <div className={styles.building}>
       <div className={styles.buildStatus}>
         <span className={`${styles.buildDot} ${
-          phase === 'success'  ? styles.buildOk  :
-          phase === 'error'    ? styles.buildErr :
-          phase === 'cancelled'? styles.buildWarn:
+          phase === 'success'   ? styles.buildOk   :
+          phase === 'error'     ? styles.buildErr  :
+          phase === 'cancelled' ? styles.buildWarn :
           styles.buildPulse
         }`} />
         <span className={styles.buildPhaseLabel}>{phase}</span>
@@ -559,20 +902,26 @@ function Building({
         <code className={styles.buildUuidVal}>{uuid}</code>
       </div>
 
-      {message && (
-        <div className={styles.buildMsg}>{message}</div>
+      {/* Build step chain */}
+      {steps.length > 0 && (
+        <div className={styles.buildStepChain}>
+          {steps.map((s, i) => (
+            <BuildStepRow
+              key={s.id}
+              step={s}
+              running={i === runningIdx}
+              isFirst={i === 0}
+              isLast={i === steps.length - 1}
+            />
+          ))}
+        </div>
       )}
 
-      {stderr && phase === 'error' && (
-        <pre className={styles.buildStderr}>{stderr}</pre>
-      )}
+      {message && <div className={styles.buildMsg}>{message}</div>}
+      {stderr && phase === 'error' && <pre className={styles.buildStderr}>{stderr}</pre>}
 
       {isOk && fileId && (
-        <a
-          className={styles.dlBtnLg}
-          href={`/direct/download/${fileId}`}
-          download
-        >
+        <a className={styles.dlBtnLg} href={`/direct/download/${fileId}`} download>
           ↓ Download Payload
         </a>
       )}

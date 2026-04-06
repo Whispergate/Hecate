@@ -159,6 +159,17 @@ export const GET_PAYLOADS = gql`
       payloadtype { name }
       filemetum   { agent_file_id filename_text }
       callbacks_aggregate { aggregate { count } }
+      payload_build_steps(order_by: { step_number: asc }) {
+        id
+        step_number
+        step_name
+        step_success
+        start_time
+        end_time
+        step_stdout
+        step_stderr
+        step_description
+      }
     }
   }
 `
@@ -167,7 +178,7 @@ export const GET_PAYLOADS = gql`
 export const GET_PAYLOAD_TYPES = gql`
   query GetPayloadTypes {
     payloadtype(
-      where:    { deleted: { _eq: false }, wrapper: { _eq: false } }
+      where:    { deleted: { _eq: false } }
       order_by: { name: asc }
     ) {
       id
@@ -176,6 +187,9 @@ export const GET_PAYLOAD_TYPES = gql`
       supported_os
       note
       container_running
+      wrapper
+      c2_parameter_deviations
+      wrap_these_payload_types { wrapped { id name } }
       buildparameters(where: { deleted: { _eq: false } }, order_by: { id: asc }) {
         id
         name
@@ -184,8 +198,11 @@ export const GET_PAYLOAD_TYPES = gql`
         default_value
         required
         randomize
+        format_string
         choices
         crypto_type
+        hide_conditions
+        ui_position
       }
       payloadtypec2profiles {
         c2profile {
@@ -201,8 +218,33 @@ export const GET_PAYLOAD_TYPES = gql`
             default_value
             required
             randomize
+            format_string
             choices
             crypto_type
+            ui_position
+          }
+        }
+      }
+    }
+  }
+`
+
+// Payloads that can be wrapped by a given wrapper type
+export const GET_WRAPPABLE_PAYLOADS = gql`
+  query GetWrappablePayloads($wrapper_type_id: Int!) {
+    payloadtype_by_pk(id: $wrapper_type_id) {
+      wrap_these_payload_types {
+        wrapped {
+          name
+          payloads(
+            where: { auto_generated: { _eq: false }, build_phase: { _eq: "success" }, deleted: { _eq: false } }
+            order_by: { id: desc }
+          ) {
+            id
+            uuid
+            description
+            creation_time
+            filemetum { filename_text }
           }
         }
       }
@@ -254,6 +296,140 @@ export const SUB_PAYLOAD_BUILD = gql`
       build_message
       build_stderr
       filemetum { agent_file_id }
+      payload_build_steps(order_by: { step_number: asc }) {
+        id
+        step_number
+        step_name
+        step_description
+        step_success
+        start_time
+        end_time
+        step_stdout
+        step_stderr
+      }
+    }
+  }
+`
+
+// ── Services panel subscriptions ──────────────────────
+
+export const SUB_PAYLOAD_TYPES = gql`
+  subscription SubPayloadTypes {
+    payloadtype(order_by: { name: asc }, where: { deleted: { _eq: false } }) {
+      id
+      name
+      author
+      note
+      container_running
+      wrapper
+      agent_type
+      semver
+      supported_os
+      translationcontainer { id name container_running }
+      wrap_these_payload_types { wrapped { name } }
+    }
+  }
+`
+
+export const SUB_C2_PROFILES = gql`
+  subscription SubC2Profiles {
+    c2profile(order_by: { name: asc }, where: { deleted: { _eq: false } }) {
+      id
+      name
+      author
+      description
+      is_p2p
+      running
+      container_running
+      semver
+      payloadtypec2profiles(order_by: { payloadtype: { name: asc } }) {
+        payloadtype { id name deleted }
+      }
+    }
+  }
+`
+
+export const SUB_TRANSLATION_CONTAINERS = gql`
+  subscription SubTranslationContainers {
+    translationcontainer(order_by: { name: asc }, where: { deleted: { _eq: false } }) {
+      id
+      name
+      author
+      description
+      container_running
+      semver
+      payloadtypes(order_by: { name: asc }) { id name deleted }
+    }
+  }
+`
+
+export const SUB_CONSUMING_SERVICES = gql`
+  subscription SubConsumingServices {
+    consuming_container(order_by: { name: asc }, where: { deleted: { _eq: false } }) {
+      id
+      name
+      description
+      type
+      container_running
+      semver
+    }
+  }
+`
+
+// ── Container/service actions ──────────────────────────
+
+export const START_STOP_C2 = gql`
+  mutation StartStopC2($id: Int!, $action: String) {
+    startStopProfile(id: $id, action: $action) {
+      status
+      error
+      output
+    }
+  }
+`
+
+export const CONTAINER_LIST_FILES = gql`
+  query ContainerListFiles($container_name: String!) {
+    containerListFiles(container_name: $container_name) {
+      status
+      error
+      files
+    }
+  }
+`
+
+export const CONTAINER_DOWNLOAD_FILE = gql`
+  query ContainerDownloadFile($container_name: String!, $filename: String!) {
+    containerDownloadFile(container_name: $container_name, filename: $filename) {
+      status
+      error
+      filename
+      data
+    }
+  }
+`
+
+export const CONTAINER_WRITE_FILE = gql`
+  mutation ContainerWriteFile($container_name: String!, $file_path: String!, $data: String!) {
+    containerWriteFile(container_name: $container_name, file_path: $file_path, data: $data) {
+      status
+      error
+      filename
+    }
+  }
+`
+
+export const GET_AGENT_COMMANDS = gql`
+  query GetAgentCommands($payload_name: String!) {
+    command(
+      where: { payloadtype: { name: { _eq: $payload_name } }, deleted: { _eq: false } }
+      order_by: { cmd: asc }
+    ) {
+      id
+      cmd
+      description
+      help_cmd
+      version
     }
   }
 `

@@ -141,7 +141,71 @@
 .agentCardTop {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
+}
+.agentCardTop > :last-child { margin-left: auto; }
+
+.wrapperBadge {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.08em;
+  color: var(--crimson-400, #c87070);
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  padding: 1px 4px;
+}
+
+/* ── Wrapped payload picker ── */
+.wrapListWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wrapList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.wrapItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.wrapItem:hover {
+  border-color: var(--border-default);
+  background: var(--bg-elevated);
+}
+.wrapItemSelected {
+  border-color: var(--crimson-500, #b05050);
+  background: rgba(180,60,60,0.08);
+}
+
+.wrapItemAgent {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-600);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.wrapItemFile {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bone-200);
+}
+.wrapItemDesc {
+  font-size: 10px;
+  color: var(--bone-700);
 }
 
 .agentCardName {
@@ -323,6 +387,15 @@
   font-family: var(--font-mono);
   text-transform: none;
   letter-spacing: 0;
+}
+
+.cryptoHint {
+  font-size: 8px;
+  color: var(--crimson-400, #c0504d);
+  font-family: var(--font-mono);
+  text-transform: none;
+  letter-spacing: 0;
+  font-style: italic;
 }
 
 .fieldInput,
@@ -580,7 +653,178 @@
   flex-direction: column;
   align-items: center;
   gap: 18px;
-  padding: 32px 24px;
+  padding: 24px 24px;
+}
+
+.building > * {
+  width: 100%;
+}
+
+.buildStepChain,
+.dlBtnLg,
+.doneBtn {
+  width: 100%;
+}
+
+/* ── Build step chain ── */
+.buildStepChain {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.buildStepRow {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 12px;
+}
+
+/* Timeline column: top-line · bubble · bottom-line */
+.buildStepTimeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stepLine {
+  width: 2px;
+  flex: 1;
+  min-height: 10px;
+  background: var(--border-default);
+}
+.stepLineInvis {
+  background: transparent;
+}
+
+/* Clickable bubble */
+.stepBubble {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 80ms, box-shadow 80ms;
+}
+.stepBubble:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.stepDotPending {
+  color: var(--bone-800);
+  background: var(--bg-base);
+}
+.stepDotRunning {
+  color: var(--status-warn);
+  background: color-mix(in srgb, var(--status-warn) 20%, transparent);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.stepDotOk {
+  color: var(--status-ok);
+  background: color-mix(in srgb, var(--status-ok) 20%, transparent);
+}
+.stepDotErr {
+  color: var(--status-err);
+  background: color-mix(in srgb, var(--status-err) 20%, transparent);
+}
+
+/* Content column */
+.buildStepBody {
+  min-width: 0;
+  padding-bottom: 2px;
+}
+
+.buildStepHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  /* match bubble center: stepLine(10px) + half bubble(7px) = 17px from top,
+     so give the header a min-height of 34px and center the content */
+  min-height: 34px;
+  padding: 0;
+  user-select: none;
+}
+
+.buildStepName {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bone-300);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.buildStepDesc {
+  font-size: 10px;
+  color: var(--bone-700);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.buildStepChevron {
+  font-size: 10px;
+  color: var(--bone-700);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.buildStepOutput {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.buildStepDescFull {
+  font-size: 10px;
+  color: var(--bone-500);
+  padding: 4px 0 2px;
+}
+
+.buildStepOutputLabel {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bone-800);
+}
+
+.buildStepNoOutput {
+  font-size: 9px;
+  color: var(--bone-900);
+  font-style: italic;
+}
+
+.buildStepStdout {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-400);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  white-space: pre-wrap;
+  max-height: 150px;
+  overflow-y: auto;
+  margin: 0;
+}
+
+.buildStepStderr {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--status-err-text);
+  background: rgba(160,30,30,0.08);
+  border: 1px solid rgba(160,30,30,0.2);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  white-space: pre-wrap;
+  max-height: 150px;
+  overflow-y: auto;
+  margin: 0;
 }
 
 .buildStatus {
@@ -654,7 +898,10 @@
 }
 
 .dlBtnLg {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.06em;

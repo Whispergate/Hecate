@@ -33,7 +33,7 @@ export interface HecateStore {
   setCallbacks: (cbs: Callback[]) => void
   currentTasks: Task[]
   setCurrentTasks: (tasks: Task[]) => void
-  activeRailView: 'callbacks' | 'payloads' | 'credentials' | 'files' | 'attack' | 'logs'
+  activeRailView: 'callbacks' | 'payloads' | 'services' | 'credentials' | 'files' | 'attack' | 'logs'
   setActiveRailView: (v: HecateStore['activeRailView']) => void
 }
 

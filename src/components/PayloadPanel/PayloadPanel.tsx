@@ -14,6 +14,18 @@ import styles                    from './PayloadPanel.module.css'
 
 // ── Types ─────────────────────────────────────────────
 
+interface PayloadBuildStep {
+  id:               number
+  step_number:      number
+  step_name:        string
+  step_description: string
+  step_success:     boolean
+  start_time:       string | null
+  end_time:         string | null
+  step_stdout:      string
+  step_stderr:      string
+}
+
 interface Payload {
   id:             number
   uuid:           string
@@ -26,9 +38,15 @@ interface Payload {
   payloadtype:    { name: string }
   filemetum:      { agent_file_id: string; filename_text: string } | null
   callbacks_aggregate: { aggregate: { count: number } }
+  payload_build_steps: PayloadBuildStep[]
 }
 
 // ── Helpers ───────────────────────────────────────────
+
+function decodeFilename(b64: string | undefined | null): string | null {
+  if (!b64) return null
+  try { return decodeURIComponent(escape(atob(b64))) } catch { return b64 }
+}
 
 function fmtDate(iso: string): string {
   return parseTs(iso).toLocaleString([], {
@@ -116,7 +134,7 @@ function PayloadRow({
         </div>
 
         <div className={styles.rowDesc}>
-          {payload.description || payload.filemetum?.filename_text || payload.uuid.slice(0, 16) + '…'}
+          {payload.description || decodeFilename(payload.filemetum?.filename_text) || payload.uuid.slice(0, 16) + '…'}
         </div>
 
         <div className={styles.rowMeta}>
@@ -127,6 +145,69 @@ function PayloadRow({
         </div>
       </div>
     </button>
+  )
+}
+
+// ── Horizontal build step chain ───────────────────────
+
+function HorizStepChain({ steps }: { steps: PayloadBuildStep[] }) {
+  const [openId, setOpenId] = useState<number | null>(null)
+
+  if (!steps.length) return null
+
+  return (
+    <div className={styles.horizChain}>
+      {steps.map((s, i) => {
+        const done    = !!s.end_time
+        const running = !!s.start_time && !done
+        const dotCls  = running       ? styles.hDotRunning
+                      : done && s.step_success  ? styles.hDotOk
+                      : done && !s.step_success ? styles.hDotErr
+                      : styles.hDotPending
+        const isOpen  = openId === s.id
+
+        return (
+          <div key={s.id} className={styles.horizStep}>
+            {/* connector before dot (not on first) */}
+            {i > 0 && <div className={styles.horizConnector} />}
+
+            <div className={styles.horizNode}>
+              <button
+                className={`${styles.hBubble} ${dotCls}`}
+                onClick={() => setOpenId(isOpen ? null : s.id)}
+                title={s.step_name}
+              />
+              <span className={styles.hLabel}>{s.step_name}</span>
+            </div>
+
+            {/* expanded detail — rendered below the full chain via absolute/portal-free approach */}
+            {isOpen && (
+              <div className={styles.hPopover}>
+                <div className={styles.hPopoverName}>{s.step_name}</div>
+                {s.step_description && (
+                  <div className={styles.hPopoverDesc}>{s.step_description}</div>
+                )}
+                {s.step_stdout && (
+                  <>
+                    <span className={styles.hOutputLabel}>stdout</span>
+                    <pre className={styles.hOutputPre}>{s.step_stdout}</pre>
+                  </>
+                )}
+                {s.step_stderr && (
+                  <>
+                    <span className={styles.hOutputLabel}>stderr</span>
+                    <pre className={`${styles.hOutputPre} ${styles.hOutputErr}`}>{s.step_stderr}</pre>
+                  </>
+                )}
+                {!s.step_stdout && !s.step_stderr && (
+                  <span className={styles.hNoOutput}>no output</span>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -161,7 +242,7 @@ function PayloadDetail({ payload, onDelete }: { payload: Payload; onDelete: () =
     ? `/direct/download/${payload.filemetum?.agent_file_id ?? payload.uuid}`
     : null
 
-  const filename = payload.filemetum?.filename_text
+  const filename = decodeFilename(payload.filemetum?.filename_text)
     || `${payload.payloadtype.name}_${payload.uuid.slice(0, 8)}`
 
   return (
@@ -197,7 +278,7 @@ function PayloadDetail({ payload, onDelete }: { payload: Payload; onDelete: () =
               ['Created',   fmtDate(payload.creation_time)],
               ['Callbacks', String(callCount)],
               ['Source',    payload.auto_generated ? 'auto-generated' : 'manual'],
-              ['Filename',  payload.filemetum?.filename_text || '—'],
+              ['Filename',  decodeFilename(payload.filemetum?.filename_text) || '—'],
             ].map(([k, v]) => (
               <tr key={k}>
                 <td className={styles.tdKey}>{k}</td>
@@ -218,6 +299,14 @@ function PayloadDetail({ payload, onDelete }: { payload: Payload; onDelete: () =
           </button>
         </div>
       </div>
+
+      {/* ── Build steps ── */}
+      {payload.payload_build_steps?.length > 0 && (
+        <div className={styles.detailSection}>
+          <div className="sec-label">Build Steps</div>
+          <HorizStepChain steps={payload.payload_build_steps} />
+        </div>
+      )}
 
       {/* ── Actions ── */}
       <div className={styles.detailSection}>
