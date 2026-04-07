@@ -79,6 +79,17 @@ const ITEMS: { id: RailView; title: string; icon: React.ReactNode }[] = [
       </svg>
     ),
   },
+  {
+    id: 'report',
+    title: 'Report Builder',
+    icon: (
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+        <path d="M3 2h7l3 3v9H3V2z" />
+        <path d="M10 2v3h3" />
+        <path d="M5 7h6M5 10h4" />
+      </svg>
+    ),
+  },
 ]
 
 export function Rail() {

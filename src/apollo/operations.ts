@@ -434,6 +434,26 @@ export const GET_AGENT_COMMANDS = gql`
   }
 `
 
+// All tasks in operation for report generation (RLS scopes to user's operations)
+export const GET_REPORT_TASKS = gql`
+  query GetReportTasks($limit: Int = 1000) {
+    task(order_by: { timestamp: asc }, limit: $limit) {
+      id
+      display_id
+      command_name
+      display_params
+      params
+      status
+      completed
+      timestamp
+      operator { username }
+      callback { id display_id host ip user os }
+      response_count
+      tags { tagtype { name color } }
+    }
+  }
+`
+
 // Commands for a payload type — used for tab completion
 export const GET_COMMANDS = gql`
   query GetCommands($payloadtype_name: String!) {
