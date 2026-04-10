@@ -434,10 +434,14 @@ export const GET_AGENT_COMMANDS = gql`
   }
 `
 
-// All tasks in operation for report generation (RLS scopes to user's operations)
+// All tasks in operation for report generation
 export const GET_REPORT_TASKS = gql`
-  query GetReportTasks($limit: Int = 1000) {
-    task(order_by: { timestamp: asc }, limit: $limit) {
+  query GetReportTasks($operation_id: Int!, $limit: Int = 1000) {
+    task(
+      where: { callback: { operation_id: { _eq: $operation_id } } }
+      order_by: { timestamp: asc }
+      limit: $limit
+    ) {
       id
       display_id
       command_name
@@ -463,6 +467,21 @@ export const GET_COMMANDS = gql`
     ) {
       cmd
       description
+    }
+  }
+`
+
+// Switch the operator's current operation server-side.
+// Mythic updates operator.current_operation_id in the DB and calls UpdateHasuraClaims,
+// so all subsequent Hasura queries see the new operation's RLS scope.
+export const UPDATE_CURRENT_OPERATION = gql`
+  mutation UpdateCurrentOperation($user_id: Int!, $operation_id: Int!) {
+    updateCurrentOperation(user_id: $user_id, operation_id: $operation_id) {
+      status
+      error
+      operation_id
+      name
+      complete
     }
   }
 `

@@ -100,11 +100,7 @@ const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
 })
 
 // ── Cache ─────────────────────────────────────────────
-const cache = new InMemoryCache({
-  typePolicies: {
-    Query: { fields: { callback: { keyArgs: ['id'] } } },
-  },
-})
+const cache = new InMemoryCache()
 
 // ── Apollo Client ─────────────────────────────────────
 export const apolloClient = new ApolloClient({
@@ -114,10 +110,15 @@ export const apolloClient = new ApolloClient({
 })
 
 // ── Login ─────────────────────────────────────────────
+export interface LoginResult {
+  success: boolean
+  userId:  number | null
+}
+
 export async function mythicLogin(
   username: string,
   password: string
-): Promise<boolean> {
+): Promise<LoginResult> {
   try {
     const res = await fetch(AUTH_URL, {
       method:  'POST',
@@ -127,25 +128,38 @@ export async function mythicLogin(
     const text = await res.text()
     if (!res.ok) {
       console.error('[Login] HTTP', res.status, text)
-      return false
+      return { success: false, userId: null }
     }
     const data = JSON.parse(text)
-    const token = data.access_token
+    const token  = data.access_token
+    const userId = data.user?.user_id ?? null
     if (!token) {
       console.error('[Login] No access_token:', data)
-      return false
+      return { success: false, userId: null }
     }
     sessionStorage.setItem('hecate_token', token)
-    return true
+    return { success: true, userId }
   } catch (e) {
     console.error('[Login] fetch failed:', e)
-    return false
+    return { success: false, userId: null }
   }
 }
 
 // ── Logout ────────────────────────────────────────────
+// Dispose WS client so next subscription reconnects with fresh Hasura claims.
+// Call after updateCurrentOperation succeeds.
+export function resetWsLink() {
+  if (_wsLink) {
+    // graphql-ws client has a dispose method on the underlying client
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(_wsLink as any).client?.dispose?.()
+    _wsLink = null
+  }
+}
+
 export function mythicLogout() {
   sessionStorage.removeItem('hecate_token')
+  sessionStorage.removeItem('hecate_user_id')
   _wsLink = null
   apolloClient.clearStore()
 }

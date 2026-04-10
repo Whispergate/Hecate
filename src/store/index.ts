@@ -25,6 +25,8 @@ export interface Operation { id: number; name: string }
 export interface HecateStore {
   token: string | null
   setToken: (t: string | null) => void
+  userId: number | null
+  setUserId: (id: number | null) => void
   activeOperation: Operation | null
   setActiveOperation: (op: Operation | null) => void
   selectedCallbackId: number | null
@@ -44,8 +46,14 @@ export const useStore = create<HecateStore>((set) => ({
     else sessionStorage.removeItem('hecate_token')
     set({ token })
   },
+  userId: sessionStorage.getItem('hecate_user_id') ? Number(sessionStorage.getItem('hecate_user_id')) : null,
+  setUserId: (userId) => {
+    if (userId) sessionStorage.setItem('hecate_user_id', String(userId))
+    else sessionStorage.removeItem('hecate_user_id')
+    set({ userId })
+  },
   activeOperation: null,
-  setActiveOperation: (op) => set({ activeOperation: op, selectedCallbackId: null, currentTasks: [] }),
+  setActiveOperation: (op) => set({ activeOperation: op, selectedCallbackId: null, currentTasks: [], callbacks: [] }),
   selectedCallbackId: null,
   setSelectedCallbackId: (id) => set({ selectedCallbackId: id, currentTasks: [] }),
   callbacks: [],

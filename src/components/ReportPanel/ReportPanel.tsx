@@ -211,6 +211,7 @@ export function ReportPanel() {
   const [copied, setCopied] = useState(false)
 
   const { data, loading } = useQuery(GET_REPORT_TASKS, {
+    variables: { operation_id: activeOperation?.id ?? 0 },
     fetchPolicy: 'cache-and-network',
     skip: !activeOperation,
   })

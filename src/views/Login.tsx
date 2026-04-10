@@ -9,7 +9,8 @@ import { WgSigil }     from '@/components/shared/WgSigil'
 import styles          from './Login.module.css'
 
 export function Login() {
-  const setToken = useStore((s) => s.setToken)
+  const setToken  = useStore((s) => s.setToken)
+  const setUserId = useStore((s) => s.setUserId)
   const [user, setUser]     = useState('')
   const [pass, setPass]     = useState('')
   const [error, setError]   = useState('')
@@ -19,9 +20,10 @@ export function Login() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const ok = await mythicLogin(user, pass)
+    const result = await mythicLogin(user, pass)
     setLoading(false)
-    if (ok) {
+    if (result.success) {
+      setUserId(result.userId)
       setToken(sessionStorage.getItem('hecate_token'))
     } else {
       setError('Authentication failed — check credentials or Mythic host')
