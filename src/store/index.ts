@@ -4,6 +4,7 @@ export interface Callback {
   id: number; display_id: number; host: string; user: string; pid: number
   ip: string; os: string; architecture: string; domain: string
   integrity_level: number; sleep_info: string; description: string
+  extra_info: string
   active: boolean; locked: boolean; last_checkin: string; init_callback: string
   payload: { payloadtype: { name: string }; description: string }
   callbackc2profiles: Array<{ c2profile: { name: string } }>

@@ -49,6 +49,7 @@ export const CALLBACK_FIELDS = gql`
     integrity_level
     sleep_info
     description
+    extra_info
     active
     locked
     last_checkin
@@ -458,7 +459,7 @@ export const GET_REPORT_TASKS = gql`
   }
 `
 
-// Commands for a payload type — used for tab completion
+// Commands for a payload type — used for tab completion and param detection
 export const GET_COMMANDS = gql`
   query GetCommands($payloadtype_name: String!) {
     command(
@@ -467,6 +468,15 @@ export const GET_COMMANDS = gql`
     ) {
       cmd
       description
+      commandparameters(order_by: { ui_position: asc }) {
+        name
+        display_name
+        type
+        required
+        default_value
+        choices
+        parameter_group_name
+      }
     }
   }
 `
@@ -489,6 +499,7 @@ export const UPDATE_CURRENT_OPERATION = gql`
 // Mutations
 // callback_id must be the callback's display_id (not the internal id).
 // tasking_location "command_line" tells Mythic to treat params as raw CLI input.
+// tasking_location "modal" tells Mythic params is a JSON object; pass file UUIDs in files[].
 export const CREATE_TASK = gql`
   mutation CreateTask(
     $callback_id: Int!
@@ -496,6 +507,8 @@ export const CREATE_TASK = gql`
     $params: String!
     $tasking_location: String
     $original_params: String
+    $files: [String]
+    $parameter_group_name: String
   ) {
     createTask(
       callback_id: $callback_id
@@ -503,6 +516,8 @@ export const CREATE_TASK = gql`
       params: $params
       tasking_location: $tasking_location
       original_params: $original_params
+      files: $files
+      parameter_group_name: $parameter_group_name
     ) {
       status
       error
