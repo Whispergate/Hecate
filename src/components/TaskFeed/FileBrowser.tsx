@@ -65,16 +65,63 @@ function parseJsonObjects(text: string): LsResult[] {
   return results
 }
 
-export function parseLsOutput(raw: string): LsResult | null {
-  if (!raw.trim().startsWith('{')) return null
-  const chunks = parseJsonObjects(raw)
-  if (!chunks.length) return null
+// ── Apollo text ls parser ─────────────────────────────
+// Parses Apollo agent's human-readable ls output:
+//   Directory listing for: C:\path
+//   -rw-rw-rw-    2026-01-01 12:00:00    1024    filename.txt
+//   drwxrwxrwx    2026-01-01 12:00:00    0       dirname
 
-  // Merge: use first chunk's metadata, combine all files, deduplicate
-  const base = chunks[0]
-  const fileMap = new Map<string, LsFile>()
-  chunks.forEach(chunk => chunk.files.forEach(f => fileMap.set(f.full_name ?? f.name, f)))
-  return { ...base, files: Array.from(fileMap.values()) }
+function parseApolloTextLs(raw: string): LsResult | null {
+  const lines   = raw.split('\n')
+  const header  = lines[0]?.trim()
+  const PREFIX  = 'Directory listing for:'
+  if (!header?.startsWith(PREFIX)) return null
+
+  const dirPath = header.slice(PREFIX.length).trim()
+  const sep     = dirPath.includes('\\') ? '\\' : '/'
+  const lineRe  = /^([d-][rwx-]+)\s+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+(\d+)\s+(.+)$/
+
+  const files: LsFile[] = []
+  for (let i = 1; i < lines.length; i++) {
+    const m = lines[i].trim().match(lineRe)
+    if (!m) continue
+    const [, perms, dateStr, sizeStr, name] = m
+    const isFile = !perms.startsWith('d')
+    files.push({
+      name,
+      full_name: dirPath.replace(/[/\\]$/, '') + sep + name,
+      is_file:   isFile,
+      size:      isFile ? parseInt(sizeStr, 10) : undefined,
+      modify_time: new Date(dateStr).getTime(),
+    })
+  }
+
+  if (!files.length) return null
+
+  const clean   = dirPath.replace(/[/\\]$/, '')
+  const lastSep = Math.max(clean.lastIndexOf('\\'), clean.lastIndexOf('/'))
+  return {
+    success:     true,
+    name:        lastSep >= 0 ? clean.slice(lastSep + 1) : clean,
+    parent_path: lastSep >= 0 ? clean.slice(0, lastSep + 1) : undefined,
+    files,
+  }
+}
+
+export function parseLsOutput(raw: string): LsResult | null {
+  // Try Mythic JSON format first (Poseidon and other agents)
+  if (raw.trim().startsWith('{')) {
+    const chunks = parseJsonObjects(raw)
+    if (chunks.length) {
+      const base    = chunks[0]
+      const fileMap = new Map<string, LsFile>()
+      chunks.forEach(chunk => chunk.files.forEach(f => fileMap.set(f.full_name ?? f.name, f)))
+      return { ...base, files: Array.from(fileMap.values()) }
+    }
+  }
+
+  // Fall back to Apollo plain-text format
+  return parseApolloTextLs(raw)
 }
 
 // ── Formatters ────────────────────────────────────────

@@ -130,12 +130,12 @@ export function CommandBar() {
 
     // Only intercept when no args typed — user-supplied args mean they know what they're doing
     if (!params) {
-      const cmdParams    = cmdParamsMap[command] ?? []
-      const hasFileParam = cmdParams.some(
-        p => p.type === 'File' || p.type === 'FileMultiple'
+      const cmdParams         = cmdParamsMap[command] ?? []
+      const hasRequiredFile   = cmdParams.some(
+        p => (p.type === 'File' || p.type === 'FileMultiple') && p.required
       )
 
-      if (hasFileParam) {
+      if (hasRequiredFile) {
         // Open modal — it handles upload + task creation
         setHistory(h => [raw, ...h.slice(0, 99)])
         setHistIdx(-1)
