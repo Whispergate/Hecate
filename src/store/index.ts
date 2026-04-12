@@ -38,6 +38,8 @@ export interface HecateStore {
   setCurrentTasks: (tasks: Task[]) => void
   activeRailView: 'callbacks' | 'payloads' | 'services' | 'credentials' | 'files' | 'attack' | 'logs' | 'report'
   setActiveRailView: (v: HecateStore['activeRailView']) => void
+  theme: 'dark' | 'light'
+  setTheme: (t: 'dark' | 'light') => void
 }
 
 export const useStore = create<HecateStore>((set) => ({
@@ -63,6 +65,11 @@ export const useStore = create<HecateStore>((set) => ({
   setCurrentTasks: (tasks) => set({ currentTasks: tasks }),
   activeRailView: 'callbacks',
   setActiveRailView: (v) => set({ activeRailView: v }),
+  theme: (localStorage.getItem('hecate_theme') as 'dark' | 'light') ?? 'dark',
+  setTheme: (theme) => {
+    localStorage.setItem('hecate_theme', theme)
+    set({ theme })
+  },
 }))
 
 export const useSelectedCallback = () =>

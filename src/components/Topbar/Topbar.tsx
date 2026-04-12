@@ -9,7 +9,7 @@ import { mythicLogout } from '@/apollo/client'
 import styles           from './Topbar.module.css'
 
 export function Topbar() {
-  const { activeOperation, setActiveOperation, token, setToken } = useStore()
+  const { activeOperation, setActiveOperation, token, setToken, theme, setTheme } = useStore()
   const [menuOpen, setMenuOpen] = useState(false)
 
   function handleLogout() {
@@ -42,6 +42,14 @@ export function Topbar() {
           </div>
         )}
         <div className={styles.mythicVersion}>mythic v3 · graphql</div>
+
+        <button
+          className={styles.themeToggle}
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? '☀' : '☾'}
+        </button>
 
         {token && (
           <div className={styles.userMenu}>

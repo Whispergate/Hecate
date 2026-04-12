@@ -67,7 +67,7 @@
 
 /* ── Rows ── */
 .row {
-  border-bottom: 1px solid rgba(239,239,218,0.05);
+  border-bottom: 1px solid var(--beige-border);
   transition: background var(--t-fast);
 }
 .row:hover { background: var(--beige-dim); }
@@ -153,7 +153,7 @@
 
 .actNav:hover {
   color: var(--beige);
-  background: rgba(239,239,218,0.08);
+  background: var(--beige-dim);
   border-color: var(--beige-border-md);
 }
 

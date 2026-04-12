@@ -131,3 +131,25 @@
   background: var(--beige-border);
   margin: 2px 0;
 }
+
+/* ── Theme toggle ── */
+.themeToggle {
+  background: transparent;
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-sm);
+  color: var(--bone-600);
+  font-size: 12px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--t-fast);
+  padding: 0;
+}
+.themeToggle:hover {
+  border-color: var(--beige-border-md);
+  color: var(--beige);
+  background: var(--beige-dim);
+}

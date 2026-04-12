@@ -41,7 +41,12 @@
 }
 
 /* ── Network SVG ── */
-.netSvg { width: 100%; margin: 4px 0; }
+.netSvg {
+  width: 100%;
+  margin: 4px 0;
+  background: var(--topo-svg-bg);
+  border-radius: var(--radius-sm);
+}
 
 /* ── Info table ── */
 .infoTable { width: 100%; border-collapse: collapse; }

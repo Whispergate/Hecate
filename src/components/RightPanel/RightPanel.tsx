@@ -15,13 +15,13 @@ type ProtoInfo = { color: string; dash?: string; short: string }
 
 function protocolInfo(c2name: string): ProtoInfo {
   const n = c2name.toLowerCase()
-  if (n.includes('http'))   return { color: '#90d880', short: 'HTTP'  }
-  if (n.includes('smb'))    return { color: '#EFEFDA', short: 'SMB',  dash: '4 2' }
-  if (n.includes('tcp'))    return { color: '#d0a848', short: 'TCP',  dash: '2 2' }
+  if (n.includes('http'))   return { color: 'var(--proto-http)',    short: 'HTTP'  }
+  if (n.includes('smb'))    return { color: 'var(--proto-smb)',     short: 'SMB',  dash: '4 2' }
+  if (n.includes('tcp'))    return { color: 'var(--proto-tcp)',     short: 'TCP',  dash: '2 2' }
   if (n.includes('ws') || n.includes('socket'))
-                            return { color: '#c090e0', short: 'WS',   dash: '6 2' }
-  if (n.includes('dns'))    return { color: '#80c8d0', short: 'DNS',  dash: '1 3' }
-  return                           { color: 'rgba(208,56,56,0.7)', short: c2name.toUpperCase().slice(0,4) }
+                            return { color: 'var(--proto-ws)',      short: 'WS',   dash: '6 2' }
+  if (n.includes('dns'))    return { color: 'var(--proto-dns)',     short: 'DNS',  dash: '1 3' }
+  return                           { color: 'var(--proto-default)', short: c2name.toUpperCase().slice(0,4) }
 }
 
 // ── Late-checkin detection ────────────────────────────
@@ -73,11 +73,11 @@ function NetworkTopology({ callbacks, selectedId }: { callbacks: Callback[]; sel
       {/* ── C2 hub ── */}
       <circle
         cx={C2_X} cy={C2_Y} r={C2_R}
-        fill="#2a0808"
+        fill="var(--topo-c2-bg)"
         stroke="var(--crimson-500)"
         strokeWidth="1.5"
       />
-      <text x={C2_X} y={C2_Y + 3} textAnchor="middle" fontFamily="monospace" fontSize="6.5" fill="var(--crimson-300)">
+      <text x={C2_X} y={C2_Y + 3} textAnchor="middle" fontFamily="monospace" fontSize="6.5" fill="var(--topo-text-accent)">
         C2
       </text>
 
@@ -95,7 +95,7 @@ function NetworkTopology({ callbacks, selectedId }: { callbacks: Callback[]; sel
         const late    = alive && isLateCheckin(cb)
 
         // Dead connection: very sparse dash — visually "broken"
-        const lineColor   = !alive ? 'rgba(80,30,30,0.35)' : proto.color
+        const lineColor   = !alive ? 'var(--topo-dead-line)' : proto.color
         const lineDash    = !alive ? '3 3' : late ? '2 8' : proto.dash
         const lineWidth   = isSel ? 1.8 : 1
         const lineOpacity = alive ? (late ? 0.35 : 0.75) : 0.4
@@ -123,8 +123,7 @@ function NetworkTopology({ callbacks, selectedId }: { callbacks: Callback[]; sel
                   x={mx - 9} y={my - 6}
                   width={18} height={9}
                   rx="1"
-                  fill="#0d0806"
-                  opacity="0.85"
+                  fill="var(--topo-label-bg)"
                 />
                 <text
                   x={mx} y={my + 1}
@@ -142,9 +141,10 @@ function NetworkTopology({ callbacks, selectedId }: { callbacks: Callback[]; sel
             {/* Agent node */}
             <circle
               cx={nx} cy={ny} r="9"
-              fill={isSel ? '#3a0c0c' : '#160808'}
-              stroke={isSel ? lineColor : (alive ? `${lineColor}99` : '#3a1818')}
+              fill={isSel ? 'var(--topo-node-sel)' : 'var(--topo-node-bg)'}
+              stroke={alive ? lineColor : 'var(--topo-dead-line)'}
               strokeWidth={isSel ? 1.8 : 1}
+              strokeOpacity={isSel ? 1 : (alive ? 0.6 : 1)}
             />
 
             {/* Live pulse dot — hidden when late (no active connection) */}
@@ -162,7 +162,7 @@ function NetworkTopology({ callbacks, selectedId }: { callbacks: Callback[]; sel
               textAnchor="middle"
               fontFamily="monospace"
               fontSize="5.5"
-              fill={isSel ? 'var(--beige)' : 'var(--bone-600)'}
+              fill={isSel ? 'var(--topo-text-node-sel)' : 'var(--topo-text-node)'}
             >
               {cb.host.slice(0, 10)}
             </text>
@@ -171,7 +171,7 @@ function NetworkTopology({ callbacks, selectedId }: { callbacks: Callback[]; sel
       })}
 
       {callbacks.length === 0 && (
-        <text x={C2_X} y="95" textAnchor="middle" fontFamily="monospace" fontSize="8" fill="var(--bone-800)">
+        <text x={C2_X} y="95" textAnchor="middle" fontFamily="monospace" fontSize="8" fill="var(--topo-text-info)">
           no agents
         </text>
       )}

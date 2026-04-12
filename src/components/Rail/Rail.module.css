@@ -21,7 +21,7 @@
   justify-content: center;
   cursor: pointer;
   color: var(--bone-800);
-  opacity: 0.4;
+  opacity: var(--rail-icon-opacity, 0.4);
   transition: opacity var(--t-fast), background var(--t-fast), border-color var(--t-fast);
 }
 
@@ -31,7 +31,7 @@
 }
 
 .btn:hover {
-  opacity: 0.8;
+  opacity: var(--rail-icon-opacity-hover, 0.8);
   background: var(--glow-crimson);
 }
 

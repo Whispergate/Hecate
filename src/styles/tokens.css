@@ -25,6 +25,7 @@
   /* ── Bone / parchment — much higher contrast ── */
   --bone-100:   #f5ecd8;   /* primary bright text — near white */
   --bone-200:   #ede0c4;   /* headings */
+  --bone-300:   #e4d4b4;   /* filenames, mild emphasis */
   --bone-400:   #d8c8a4;   /* body text — was too dark */
   --bone-600:   #b8a880;   /* secondary labels */
   --bone-800:   #887860;   /* dimmed — was near-invisible */
@@ -70,7 +71,114 @@
   --radius-sm: 2px;
   --radius-md: 3px;
 
+  /* ── Topology SVG (dark mode) ── */
+  --topo-svg-bg:       transparent;
+  --topo-c2-bg:        #2a0808;
+  --topo-node-bg:      #160808;
+  --topo-node-sel:     #3a0c0c;
+  --topo-label-bg:     rgba(13,8,6,0.88);
+  --topo-dead-line:    rgba(80,30,30,0.40);
+  --topo-text-accent:  #e05050;
+  --topo-text-node:    #b8a880;
+  --topo-text-node-sel:#EFEFDA;
+  --topo-text-info:    #887860;
+  /* protocol line colors — bright for dark bg */
+  --proto-http:    #72b860;
+  --proto-smb:     #c8b880;
+  --proto-tcp:     #c8983a;
+  --proto-ws:      #a880d8;
+  --proto-dns:     #68b8c8;
+  --proto-default: #d03838;
+
+  /* ── Rail ── */
+  --rail-icon-opacity:       0.40;
+  --rail-icon-opacity-hover: 0.80;
+
   /* ── Transitions ── */
   --t-fast: 0.12s ease;
   --t-mid:  0.22s ease;
+}
+
+/* ═══════════════════════════════════════════════════
+   Light theme overrides
+   Warm parchment backgrounds, dark ink text.
+   Applied via data-theme="light" on <html>.
+   ═══════════════════════════════════════════════════ */
+
+[data-theme="light"] {
+  /* ── Topology SVG (light mode) — dark nodes on light bg ── */
+  --topo-svg-bg:       transparent;
+  --topo-c2-bg:        #383028;
+  --topo-node-bg:      #403830;
+  --topo-node-sel:     #504840;
+  --topo-label-bg:     rgba(222,214,204,0.95);
+  --topo-dead-line:    rgba(80,60,40,0.45);
+  --topo-text-accent:  #e05050;          /* inside dark node — always bright */
+  --topo-text-node:    #241608;          /* hostname on light SVG bg — dark */
+  --topo-text-node-sel:#0e0806;
+  --topo-text-info:    #381e0c;
+  /* protocol line colors — darker/saturated for light bg (min 3:1 on #d2c9bf) */
+  --proto-http:    #1e6810;
+  --proto-smb:     #4a3810;
+  --proto-tcp:     #6a4a00;
+  --proto-ws:      #4a1880;
+  --proto-dns:     #085870;
+  --proto-default: #a02020;
+
+  /* ── Rail ── */
+  --rail-icon-opacity:       0.65;
+  --rail-icon-opacity-hover: 0.95;
+
+  /* ── Backgrounds — warm grey-taupe, not stark white ── */
+  --bg-void:    #e4ddd4;
+  --bg-base:    #dcd4cb;
+  --bg-raised:  #d2c9bf;
+  --bg-elevated:#c8bfb3;
+  --bg-hover:   #bcb3a6;
+
+  /* ── Crimson — slightly deeper for contrast on light ── */
+  --crimson-900:#fde8e8;
+  --crimson-700:#f5c0c0;
+  --crimson-600:#e89090;
+  --crimson-500:#c83030;
+  --crimson-400:#b02828;   /* primary accent */
+  --crimson-300:#902020;   /* bright accent */
+  --crimson-200:#701818;   /* highlight */
+
+  /* ── Bone — dark ink, all levels contrast-checked on taupe bg ── */
+  --bone-100:   #0e0806;   /* primary text */
+  --bone-200:   #181008;
+  --bone-300:   #241408;   /* filenames, mild emphasis */
+  --bone-400:   #241608;   /* body text */
+  --bone-600:   #381e0c;   /* secondary labels */
+  --bone-800:   #4c2c18;   /* dimmed — was too light */
+  --bone-900:   #603c24;   /* placeholders */
+
+  /* ── Beige — warm amber/brown on light backgrounds ── */
+  --beige:             #5a3810;
+  --beige-dim:         rgba(90,56,16,0.07);
+  --beige-border:      rgba(90,56,16,0.18);
+  --beige-border-md:   rgba(90,56,16,0.30);
+  --beige-border-strong:rgba(90,56,16,0.50);
+
+  /* ── Semantic ── */
+  --status-alive:      #c05010;
+  --status-alive-glow: rgba(192,80,16,0.5);
+  --status-idle:       #885010;
+  --status-dead:       #601818;
+  --status-ok:         #2a6830;
+  --status-ok-text:    #1a5020;
+  --status-warn:       #705010;
+  --status-warn-text:  #905818;
+  --status-err:        #881818;
+  --status-err-text:   #6a1010;
+
+  /* ── Borders ── */
+  --border-subtle:  rgba(130,30,30,0.16);
+  --border-default: rgba(130,30,30,0.32);
+  --border-strong:  rgba(130,30,30,0.52);
+
+  /* ── Glows ── */
+  --glow-crimson:   rgba(160,40,40,0.08);
+  --glow-crimson-md:rgba(160,40,40,0.15);
 }
