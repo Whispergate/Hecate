@@ -496,6 +496,39 @@ export const UPDATE_CURRENT_OPERATION = gql`
   }
 `
 
+// All filemeta for the active operation (excludes payloads, excludes deleted).
+// filename_text and full_remote_path_text are base64-encoded bytea — decode with atob().
+export const GET_FILES = gql`
+  query GetFiles($operation_id: Int!) {
+    filemeta(
+      where: {
+        operation_id: { _eq: $operation_id }
+        deleted: { _eq: false }
+        is_payload: { _eq: false }
+      }
+      order_by: { timestamp: desc }
+    ) {
+      id
+      agent_file_id
+      filename_text
+      full_remote_path_text
+      host
+      size
+      complete
+      total_chunks
+      chunks_received
+      is_download_from_agent
+      is_screenshot
+      md5
+      sha1
+      comment
+      timestamp
+      operator { username }
+      task { display_id }
+    }
+  }
+`
+
 // Mutations
 // callback_id must be the callback's display_id (not the internal id).
 // tasking_location "command_line" tells Mythic to treat params as raw CLI input.
