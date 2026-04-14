@@ -436,6 +436,18 @@ export const GET_AGENT_COMMANDS = gql`
   }
 `
 
+// Recent tasks across the whole operation — used by OverviewPanel activity feed
+export const SUB_RECENT_OP_TASKS = gql`
+  ${TASK_FIELDS}
+  subscription SubRecentOpTasks($operation_id: Int!, $limit: Int = 40) {
+    task(
+      where: { callback: { operation_id: { _eq: $operation_id } } }
+      order_by: { id: desc }
+      limit: $limit
+    ) { ...TaskFields }
+  }
+`
+
 // All tasks in operation for report generation
 export const GET_REPORT_TASKS = gql`
   query GetReportTasks($operation_id: Int!, $limit: Int = 1000) {

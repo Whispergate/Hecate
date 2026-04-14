@@ -1,0 +1,521 @@
+/* ═══════════════════════════════════════════════════
+   OverviewPanel.module.css
+   ═══════════════════════════════════════════════════ */
+
+/* ── Root ────────────────────────────────────────────── */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;           /* fill .fullPanel's flex row — same pattern as FilesPanel */
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+/* ── Header ──────────────────────────────────────────── */
+
+.header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 52px;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--beige-border-md);
+  gap: 24px;
+}
+
+.opTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.opPulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-alive);
+  box-shadow: 0 0 7px var(--status-alive-glow);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 7px var(--status-alive-glow); }
+  50%       { opacity: 0.35; box-shadow: none; }
+}
+
+.opName {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--bone-200);
+}
+
+.statsBar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.statDivider {
+  width: 1px;
+  height: 24px;
+  background: var(--beige-border);
+  margin: 0 16px;
+}
+
+.statChip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.statVal {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--bone-100);
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.statLbl {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--bone-800);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ── Body ────────────────────────────────────────────── */
+
+.body {
+  flex: 1 1 0;
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  grid-template-rows: 1fr;   /* force row to fill container height */
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Left column ─────────────────────────────────────── */
+
+.leftCol {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--beige-border);
+  background: var(--bg-void);
+}
+
+.leftSection {
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--beige-border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.leftEmpty {
+  padding: 20px 14px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-900);
+}
+
+/* ── Mini bar ────────────────────────────────────────── */
+
+.miniBarRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.miniBarLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-600);
+  width: 74px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.miniBarTrack {
+  flex: 1;
+  height: 2px;
+  background: var(--bg-elevated);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.miniBarFill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.4s ease;
+}
+
+.miniBarCount {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-800);
+  width: 18px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Main area ───────────────────────────────────────── */
+
+.mainArea {
+  overflow-y: auto;
+  padding: 16px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.cardSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Card grid ───────────────────────────────────────── */
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 8px;
+}
+
+/* ── Agent card ──────────────────────────────────────── */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--t-fast), background var(--t-fast), box-shadow var(--t-fast);
+}
+
+.card:hover {
+  background: var(--bg-elevated);
+  border-color: var(--crimson-700);
+  box-shadow: 0 0 0 1px var(--glow-crimson);
+}
+
+.cardInactive {
+  opacity: 0.38;
+}
+
+.cardInactive:hover {
+  opacity: 0.6;
+}
+
+.cardLate {
+  border-color: rgba(144, 96, 32, 0.4);
+}
+
+.cardLate:hover {
+  border-color: var(--status-warn);
+}
+
+/* card head */
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotAlive {
+  background: var(--status-alive);
+  box-shadow: 0 0 4px var(--status-alive-glow);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+
+/* idle = checked in 60–600s ago (matches sidebar amber) */
+.dotIdle {
+  background: var(--status-idle);
+}
+
+.dotDead {
+  background: var(--status-dead);
+}
+
+.cardHost {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--bone-200);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardId {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-900);
+  flex-shrink: 0;
+}
+
+.c2Tag {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 1px 4px;
+  background: var(--bg-void);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  color: var(--bone-800);
+  flex-shrink: 0;
+}
+
+/* card identity */
+.cardIdent {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-600);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardOs {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* meta grid: 4 key-value pairs in 2 columns */
+.metaGrid {
+  display: grid;
+  grid-template-columns: 28px 1fr 28px 1fr;
+  gap: 2px 5px;
+  margin-top: 4px;
+}
+
+.metaKey {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  color: var(--bone-900);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  align-self: center;
+}
+
+.metaVal {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-600);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* last task strip */
+.cardLastTask {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.ltCmd {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--crimson-300);
+  flex-shrink: 0;
+}
+
+.ltParams {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-800);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ltGlyph {
+  font-size: 9px;
+  flex-shrink: 0;
+}
+
+/* ── Status colors ───────────────────────────────────── */
+
+.statusOk  { color: var(--status-ok-text); }
+.statusErr { color: var(--status-err-text); }
+.statusRun { color: var(--crimson-300); }
+
+/* ── Empty state ─────────────────────────────────────── */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 60px 20px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--bone-800);
+}
+
+.emptyIcon {
+  width: 36px;
+  height: 36px;
+  opacity: 0.2;
+  color: var(--bone-600);
+}
+
+.emptySub {
+  font-size: 9px;
+  color: var(--bone-900);
+}
+
+/* ── Activity feed ───────────────────────────────────── */
+
+.feed {
+  flex: 0 0 220px;    /* stable height — doesn't collapse or expand */
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--beige-border-md);
+  background: var(--bg-void);
+}
+
+.feedHead {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px 5px;
+  gap: 12px;
+}
+
+.feedMeta {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--bone-900);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.feedList {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 8px 6px;
+}
+
+/* activity rows */
+.actRow {
+  display: grid;
+  grid-template-columns: 62px 130px 90px 80px 1fr 54px;
+  gap: 6px;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+
+.actRow:hover {
+  background: var(--bg-raised);
+}
+
+.actHeader {
+  opacity: 0.4;
+  font-size: 7px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 2px;
+}
+
+.actHeader:hover {
+  background: transparent;
+}
+
+.actRowErr {
+  background: rgba(160, 40, 40, 0.07);
+}
+
+.actTime {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-900);
+  flex-shrink: 0;
+}
+
+.actHost {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-600);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actOp {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--proto-ws);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actCmd {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--crimson-300);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actParams {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-800);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actStatus {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: right;
+}

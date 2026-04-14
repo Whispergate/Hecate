@@ -10,6 +10,18 @@ type RailView = HecateStore['activeRailView']
 
 const ITEMS: { id: RailView; title: string; icon: React.ReactNode }[] = [
   {
+    id: 'overview',
+    title: 'Overview',
+    icon: (
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+        <rect x="2" y="2" width="5" height="5" rx="1" />
+        <rect x="9" y="2" width="5" height="4" rx="1" />
+        <rect x="2" y="9" width="5" height="5" rx="1" />
+        <rect x="9" y="8" width="5" height="6" rx="1" />
+      </svg>
+    ),
+  },
+  {
     id: 'callbacks',
     title: 'Callbacks',
     icon: (
@@ -99,7 +111,7 @@ export function Rail() {
     <nav className={styles.rail}>
       {ITEMS.map((item, idx) => (
         <>
-          {idx === 3 && <div key="sep" className={styles.sep} />}
+          {idx === 4 && <div key="sep" className={styles.sep} />}
           <button
             key={item.id}
             className={`${styles.btn} ${activeRailView === item.id ? styles.active : ''}`}

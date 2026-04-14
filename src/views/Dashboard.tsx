@@ -12,6 +12,7 @@ import { PayloadPanel }   from '@/components/PayloadPanel/PayloadPanel'
 import { ServicesPanel }  from '@/components/ServicesPanel/ServicesPanel'
 import { ReportPanel }    from '@/components/ReportPanel/ReportPanel'
 import { FilesPanel }     from '@/components/FilesPanel/FilesPanel'
+import { OverviewPanel }  from '@/components/OverviewPanel/OverviewPanel'
 import { useStore, useSelectedCallback } from '@/store'
 import styles from './Dashboard.module.css'
 
@@ -41,7 +42,7 @@ function MainHeader() {
 
 export function Dashboard() {
   const activeRailView = useStore((s) => s.activeRailView)
-  const isFullPanel    = activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'report' || activeRailView === 'files'
+  const isFullPanel    = activeRailView === 'overview' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'report' || activeRailView === 'files'
 
   return (
     <div className={styles.root}>
@@ -53,6 +54,7 @@ export function Dashboard() {
 
         {isFullPanel ? (
           <div className={styles.fullPanel}>
+            {activeRailView === 'overview'  && <OverviewPanel />}
             {activeRailView === 'payloads'  && <PayloadPanel />}
             {activeRailView === 'services'  && <ServicesPanel />}
             {activeRailView === 'report'    && <ReportPanel />}
