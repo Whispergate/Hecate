@@ -90,12 +90,13 @@ export const GET_CALLBACKS = gql`
 // ─────────────────────────────────────────────────────
 
 // Live callback list — sidebar shows active only, topology shows all
+// Order by id (stable insertion order) so frequent check-ins don't reorder the list
 export const SUB_CALLBACKS = gql`
   ${CALLBACK_FIELDS}
   subscription SubCallbacks($operation_id: Int!) {
     callback(
       where: { operation_id: { _eq: $operation_id }, active: { _eq: true } }
-      order_by: { last_checkin: desc }
+      order_by: { id: asc }
     ) { ...CallbackFields }
   }
 `

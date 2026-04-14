@@ -35,8 +35,17 @@ export function Sidebar() {
           <div className={styles.empty}>No callbacks yet</div>
         )}
 
-        {callbacks.map((cb) => {
-          const elapsed = Date.now() - parseTs(cb.last_checkin).getTime()
+        {[...callbacks]
+          .map((cb) => {
+            const elapsed = Date.now() - parseTs(cb.last_checkin).getTime()
+            return { cb, elapsed }
+          })
+          .sort((a, b) => {
+            const rank = (e: number) => e < 60_000 ? 0 : e < 600_000 ? 1 : 2
+            const dr = rank(a.elapsed) - rank(b.elapsed)
+            return dr !== 0 ? dr : a.cb.id - b.cb.id
+          })
+          .map(({ cb, elapsed }) => {
           const alive = elapsed < 60_000
           const idle  = !alive && elapsed < 600_000
           const statusClass = alive ? styles.alive : idle ? styles.idle : styles.dead
