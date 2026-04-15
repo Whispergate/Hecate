@@ -2,24 +2,12 @@
    hecate/src/components/Sidebar/Sidebar.tsx
    ═══════════════════════════════════════════════════ */
 
-import { useSubscription } from '@apollo/client'
-import { SUB_CALLBACKS }   from '@/apollo/operations'
 import { useStore, useSelectedCallback } from '@/store'
 import { integrityLabel, timeSince, parseTs } from './utils'
 import styles from './Sidebar.module.css'
 
 export function Sidebar() {
-  const { activeOperation, selectedCallbackId, setSelectedCallbackId, setCallbacks, callbacks } =
-    useStore()
-
-  // Live subscription — auto-updates on every checkin
-  useSubscription(SUB_CALLBACKS, {
-    variables: { operation_id: activeOperation?.id ?? 0 },
-    skip: !activeOperation,
-    onData: ({ data }) => {
-      if (data.data?.callback) setCallbacks(data.data.callback)
-    },
-  })
+  const { selectedCallbackId, setSelectedCallbackId, callbacks } = useStore()
 
   const selected = useSelectedCallback()
 

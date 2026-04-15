@@ -23,6 +23,15 @@ export interface Task {
 
 export interface Operation { id: number; name: string }
 
+export interface CallbackToast {
+  id: number
+  callbackId: number
+  display_id: number
+  host: string
+  user: string
+  agent: string
+}
+
 export interface HecateStore {
   token: string | null
   setToken: (t: string | null) => void
@@ -40,6 +49,9 @@ export interface HecateStore {
   setActiveRailView: (v: HecateStore['activeRailView']) => void
   theme: 'dark' | 'light'
   setTheme: (t: 'dark' | 'light') => void
+  toasts: CallbackToast[]
+  addToast: (t: Omit<CallbackToast, 'id'>) => void
+  removeToast: (id: number) => void
 }
 
 export const useStore = create<HecateStore>((set) => ({
@@ -70,6 +82,9 @@ export const useStore = create<HecateStore>((set) => ({
     localStorage.setItem('hecate_theme', theme)
     set({ theme })
   },
+  toasts: [],
+  addToast: (t) => set((s) => ({ toasts: [...s.toasts, { ...t, id: Date.now() + Math.random() }] })),
+  removeToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 }))
 
 export const useSelectedCallback = () =>

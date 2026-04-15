@@ -2,6 +2,8 @@
    hecate/src/views/Dashboard.tsx
    ═══════════════════════════════════════════════════ */
 
+import { useEffect, useRef } from 'react'
+import { useSubscription } from '@apollo/client'
 import { Topbar }        from '@/components/Topbar/Topbar'
 import { Rail }          from '@/components/Rail/Rail'
 import { Sidebar }       from '@/components/Sidebar/Sidebar'
@@ -13,6 +15,9 @@ import { ServicesPanel }  from '@/components/ServicesPanel/ServicesPanel'
 import { ReportPanel }    from '@/components/ReportPanel/ReportPanel'
 import { FilesPanel }     from '@/components/FilesPanel/FilesPanel'
 import { OverviewPanel }  from '@/components/OverviewPanel/OverviewPanel'
+import { CallbackToastContainer } from '@/components/Toast/CallbackToast'
+import { SUB_CALLBACKS } from '@/apollo/operations'
+import { parseTs }       from '@/components/Sidebar/utils'
 import { useStore, useSelectedCallback } from '@/store'
 import styles from './Dashboard.module.css'
 
@@ -40,7 +45,52 @@ function MainHeader() {
   )
 }
 
+function useCallbackSubscription() {
+  // Use selectors — without them, every store mutation (setCurrentTasks, etc.)
+  // re-renders Dashboard, which re-renders all children and loops their effects.
+  const activeOperation = useStore((s) => s.activeOperation)
+  const callbacks       = useStore((s) => s.callbacks)
+  const setCallbacks    = useStore((s) => s.setCallbacks)
+  const addToast        = useStore((s) => s.addToast)
+  const opSelectedTimeRef = useRef<number>(0)
+  const toastedIdsRef     = useRef<Set<number>>(new Set())
+
+  // Reset tracking when operation changes
+  useEffect(() => {
+    opSelectedTimeRef.current = Date.now()
+    toastedIdsRef.current     = new Set()
+  }, [activeOperation?.id])
+
+  // Detect new callbacks: init_callback after we joined the operation
+  useEffect(() => {
+    for (const cb of callbacks) {
+      if (toastedIdsRef.current.has(cb.id)) continue
+      const initTime = parseTs(cb.init_callback).getTime()
+      if (initTime > opSelectedTimeRef.current) {
+        toastedIdsRef.current.add(cb.id)
+        addToast({
+          callbackId: cb.id,
+          display_id: cb.display_id,
+          host:       cb.host,
+          user:       cb.user || 'unknown',
+          agent:      cb.payload?.payloadtype?.name ?? 'unknown',
+        })
+      }
+    }
+  }, [callbacks])
+
+  useSubscription(SUB_CALLBACKS, {
+    variables: { operation_id: activeOperation?.id ?? 0 },
+    skip:      !activeOperation,
+    onData: ({ data }) => {
+      if (data.data?.callback) setCallbacks(data.data.callback)
+    },
+  })
+}
+
 export function Dashboard() {
+  useCallbackSubscription()
+
   const activeRailView = useStore((s) => s.activeRailView)
   const isFullPanel    = activeRailView === 'overview' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'report' || activeRailView === 'files'
 
@@ -48,6 +98,7 @@ export function Dashboard() {
     <div className={styles.root}>
       <div className={styles.stripe} />
       <Topbar />
+      <CallbackToastContainer />
 
       <div className={styles.body}>
         <Rail />
