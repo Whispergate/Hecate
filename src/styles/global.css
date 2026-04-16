@@ -15,11 +15,18 @@ html, body, #root {
   overflow: hidden;
 }
 
+#root {
+  transform-origin: top left;
+  transform: scale(var(--ui-scale, 1));
+  width: calc(100% / var(--ui-scale, 1));
+  height: calc(100% / var(--ui-scale, 1));
+}
+
 body {
   background: var(--bg-void);
   color: var(--bone-400);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-base, 11px);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
@@ -41,22 +48,6 @@ body {
   outline-offset: 1px;
 }
 
-/* ── Scanline (dark mode only) ── */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0,0,0,0.025) 2px,
-    rgba(0,0,0,0.025) 4px
-  );
-  z-index: 9999;
-}
-[data-theme="light"] body::after { display: none; }
 
 /* ── Shared section label ── */
 .sec-label {

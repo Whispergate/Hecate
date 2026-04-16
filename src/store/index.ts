@@ -1,5 +1,30 @@
 import { create } from 'zustand'
 
+export interface HecateSettings {
+  fontSize:             'small' | 'normal' | 'large'
+  toastsEnabled:        boolean
+  toastDuration:        number   // ms
+  callbackAliveMs:      number
+  callbackIdleMs:       number
+  showCallbackDisplayId: boolean
+}
+
+const SETTINGS_KEY = 'hecate_settings'
+export const DEFAULT_SETTINGS: HecateSettings = {
+  fontSize:             'normal',
+  toastsEnabled:        true,
+  toastDuration:        4500,
+  callbackAliveMs:      60_000,
+  callbackIdleMs:       600_000,
+  showCallbackDisplayId: false,
+}
+function loadSettings(): HecateSettings {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY)
+    return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS
+  } catch { return DEFAULT_SETTINGS }
+}
+
 export interface Callback {
   id: number; display_id: number; host: string; user: string; pid: number
   ip: string; os: string; architecture: string; domain: string
@@ -49,6 +74,10 @@ export interface HecateStore {
   setActiveRailView: (v: HecateStore['activeRailView']) => void
   theme: 'dark' | 'light'
   setTheme: (t: 'dark' | 'light') => void
+  settings: HecateSettings
+  updateSettings: (patch: Partial<HecateSettings>) => void
+  isSettingsOpen: boolean
+  setSettingsOpen: (v: boolean) => void
   toasts: CallbackToast[]
   addToast: (t: Omit<CallbackToast, 'id'>) => void
   removeToast: (id: number) => void
@@ -82,6 +111,14 @@ export const useStore = create<HecateStore>((set) => ({
     localStorage.setItem('hecate_theme', theme)
     set({ theme })
   },
+  settings: loadSettings(),
+  updateSettings: (patch) => set((s) => {
+    const updated = { ...s.settings, ...patch }
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(updated))
+    return { settings: updated }
+  }),
+  isSettingsOpen: false,
+  setSettingsOpen: (isSettingsOpen) => set({ isSettingsOpen }),
   toasts: [],
   addToast: (t) => set((s) => ({ toasts: [...s.toasts, { ...t, id: Date.now() + Math.random() }] })),
   removeToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),

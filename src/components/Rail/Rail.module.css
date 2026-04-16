@@ -48,3 +48,5 @@
   background: var(--border-subtle);
   margin: 5px 0;
 }
+
+.spacer { flex: 1; }

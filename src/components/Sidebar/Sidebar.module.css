@@ -55,6 +55,12 @@
 .idle  { background: var(--status-idle); }
 .dead  { background: var(--status-dead); border: 1px solid #6a2828; }
 
+.cbId {
+  color: var(--bone-800);
+  font-size: 9px;
+  font-weight: 400;
+}
+
 /* Host name — most important, needs to be bright */
 .cbHost {
   color: var(--bone-100);

@@ -6,9 +6,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useStore, CallbackToast } from '@/store'
 import styles from './CallbackToast.module.css'
 
-const DURATION = 4500
-
 function Toast({ toast }: { toast: CallbackToast }) {
+  const DURATION = useStore((s) => s.settings.toastDuration)
   const { removeToast, setActiveRailView, setSelectedCallbackId } = useStore()
   const [exiting, setExiting] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)

@@ -542,6 +542,134 @@ export const GET_FILES = gql`
   }
 `
 
+// ─────────────────────────────────────────────────────
+// ACCOUNT / SETTINGS
+// ─────────────────────────────────────────────────────
+
+// Current operator's API tokens (User type, non-deleted)
+export const GET_API_TOKENS = gql`
+  query GetAPITokens {
+    apitokens(
+      where: { deleted: { _eq: false }, token_type: { _eq: "User" } }
+      order_by: { id: desc }
+    ) {
+      id
+      name
+      active
+      token_type
+    }
+  }
+`
+
+export const CREATE_API_TOKEN = gql`
+  mutation CreateAPIToken($token_type: String!, $name: String) {
+    createAPIToken(token_type: $token_type, name: $name) {
+      id
+      name
+      token_value
+      active
+      token_type
+      status
+      error
+    }
+  }
+`
+
+export const DELETE_API_TOKEN = gql`
+  mutation DeleteAPIToken($apitokens_id: Int!) {
+    deleteAPIToken(apitokens_id: $apitokens_id) {
+      status
+      error
+    }
+  }
+`
+
+// Change password for the current operator
+export const CHANGE_PASSWORD = gql`
+  mutation ChangePassword($old_password: String!, $new_password: String!) {
+    updatePasswordAndEmail(old_password: $old_password, new_password: $new_password) {
+      status
+      error
+    }
+  }
+`
+
+// ─────────────────────────────────────────────────────
+// OPERATOR MANAGEMENT (admin)
+// ─────────────────────────────────────────────────────
+
+export const GET_OPERATORS = gql`
+  query GetOperators {
+    operator(order_by: { username: asc }) {
+      id
+      username
+      email
+      active
+      admin
+      deleted
+      last_login
+      creation_time
+      account_type
+      operation { id name }
+    }
+  }
+`
+
+export const CREATE_OPERATOR = gql`
+  mutation CreateOperator($username: String!, $password: String!, $email: String, $bot: Boolean) {
+    createOperator(input: { username: $username, password: $password, email: $email, bot: $bot }) {
+      status
+      error
+      id
+      username
+      active
+      admin
+      deleted
+      account_type
+      email
+    }
+  }
+`
+
+// Update operator active / admin / deleted flags via Mythic action
+export const UPDATE_OPERATOR_STATUS = gql`
+  mutation UpdateOperatorStatus($operator_id: Int!, $active: Boolean, $admin: Boolean, $deleted: Boolean) {
+    updateOperatorStatus(operator_id: $operator_id, active: $active, admin: $admin, deleted: $deleted) {
+      status
+      error
+      id
+      active
+      admin
+      deleted
+    }
+  }
+`
+
+// Admin updating another user's username (direct table mutation, admin permission required)
+export const UPDATE_OPERATOR_USERNAME = gql`
+  mutation UpdateOperatorUsername($id: Int!, $username: String!) {
+    update_operator_by_pk(pk_columns: { id: $id }, _set: { username: $username }) {
+      id
+      username
+    }
+  }
+`
+
+// Admin updating another user's password/email (user_id bypasses old_password requirement)
+export const UPDATE_OPERATOR_CREDENTIALS = gql`
+  mutation UpdateOperatorCredentials($user_id: Int!, $new_password: String, $email: String) {
+    updatePasswordAndEmail(user_id: $user_id, new_password: $new_password, email: $email) {
+      status
+      error
+      operator_id
+    }
+  }
+`
+
+// ─────────────────────────────────────────────────────
+// TASK MUTATIONS
+// ─────────────────────────────────────────────────────
+
 // Mutations
 // callback_id must be the callback's display_id (not the internal id).
 // tasking_location "command_line" tells Mythic to treat params as raw CLI input.

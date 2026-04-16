@@ -6,6 +6,16 @@ import { useStore } from '@/store'
 import type { HecateStore } from '@/store'
 import styles from './Rail.module.css'
 
+const SETTINGS_ICON = (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+    <circle cx="5"  cy="4"  r="1.3" />
+    <circle cx="10" cy="8"  r="1.3" />
+    <circle cx="5"  cy="12" r="1.3" />
+    <path d="M7 4h7M2 8h6M7 12h7" />
+    <path d="M2 4h1M14 8h-2M2 12h1" />
+  </svg>
+)
+
 type RailView = HecateStore['activeRailView']
 
 const ITEMS: { id: RailView; title: string; icon: React.ReactNode }[] = [
@@ -105,7 +115,7 @@ const ITEMS: { id: RailView; title: string; icon: React.ReactNode }[] = [
 ]
 
 export function Rail() {
-  const { activeRailView, setActiveRailView } = useStore()
+  const { activeRailView, setActiveRailView, isSettingsOpen, setSettingsOpen } = useStore()
 
   return (
     <nav className={styles.rail}>
@@ -122,6 +132,17 @@ export function Rail() {
           </button>
         </>
       ))}
+
+      {/* Push settings to bottom */}
+      <div className={styles.spacer} />
+      <div className={styles.sep} />
+      <button
+        className={`${styles.btn} ${isSettingsOpen ? styles.active : ''}`}
+        title="Settings"
+        onClick={() => setSettingsOpen(!isSettingsOpen)}
+      >
+        {SETTINGS_ICON}
+      </button>
     </nav>
   )
 }

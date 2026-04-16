@@ -8,6 +8,9 @@ import styles from './Sidebar.module.css'
 
 export function Sidebar() {
   const { selectedCallbackId, setSelectedCallbackId, callbacks } = useStore()
+  const callbackAliveMs       = useStore((s) => s.settings.callbackAliveMs)
+  const callbackIdleMs        = useStore((s) => s.settings.callbackIdleMs)
+  const showCallbackDisplayId = useStore((s) => s.settings.showCallbackDisplayId)
 
   const selected = useSelectedCallback()
 
@@ -29,13 +32,13 @@ export function Sidebar() {
             return { cb, elapsed }
           })
           .sort((a, b) => {
-            const rank = (e: number) => e < 60_000 ? 0 : e < 600_000 ? 1 : 2
+            const rank = (e: number) => e < callbackAliveMs ? 0 : e < callbackIdleMs ? 1 : 2
             const dr = rank(a.elapsed) - rank(b.elapsed)
             return dr !== 0 ? dr : a.cb.id - b.cb.id
           })
           .map(({ cb, elapsed }) => {
-          const alive = elapsed < 60_000
-          const idle  = !alive && elapsed < 600_000
+          const alive = elapsed < callbackAliveMs
+          const idle  = !alive && elapsed < callbackIdleMs
           const statusClass = alive ? styles.alive : idle ? styles.idle : styles.dead
 
           return (
@@ -45,7 +48,10 @@ export function Sidebar() {
               onClick={() => setSelectedCallbackId(cb.id)}
             >
               <span className={`${styles.statusDot} ${statusClass}`} />
-              <div className={styles.cbHost}>{cb.host}</div>
+              <div className={styles.cbHost}>
+                {showCallbackDisplayId && <span className={styles.cbId}>#{cb.display_id} </span>}
+                {cb.host}
+              </div>
               <div className={styles.cbMeta}>
                 <span>{cb.payload.payloadtype.name} · {cb.os}</span>
                 <span>{timeSince(cb.last_checkin)}</span>

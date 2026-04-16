@@ -16,6 +16,7 @@ import { ReportPanel }    from '@/components/ReportPanel/ReportPanel'
 import { FilesPanel }     from '@/components/FilesPanel/FilesPanel'
 import { OverviewPanel }  from '@/components/OverviewPanel/OverviewPanel'
 import { CallbackToastContainer } from '@/components/Toast/CallbackToast'
+import { SettingsPanel }         from '@/components/SettingsPanel/SettingsPanel'
 import { SUB_CALLBACKS } from '@/apollo/operations'
 import { parseTs }       from '@/components/Sidebar/utils'
 import { useStore, useSelectedCallback } from '@/store'
@@ -48,10 +49,11 @@ function MainHeader() {
 function useCallbackSubscription() {
   // Use selectors — without them, every store mutation (setCurrentTasks, etc.)
   // re-renders Dashboard, which re-renders all children and loops their effects.
-  const activeOperation = useStore((s) => s.activeOperation)
-  const callbacks       = useStore((s) => s.callbacks)
-  const setCallbacks    = useStore((s) => s.setCallbacks)
-  const addToast        = useStore((s) => s.addToast)
+  const activeOperation  = useStore((s) => s.activeOperation)
+  const callbacks        = useStore((s) => s.callbacks)
+  const setCallbacks     = useStore((s) => s.setCallbacks)
+  const addToast         = useStore((s) => s.addToast)
+  const toastsEnabled    = useStore((s) => s.settings.toastsEnabled)
   const opSelectedTimeRef = useRef<number>(0)
   const toastedIdsRef     = useRef<Set<number>>(new Set())
 
@@ -66,7 +68,7 @@ function useCallbackSubscription() {
     for (const cb of callbacks) {
       if (toastedIdsRef.current.has(cb.id)) continue
       const initTime = parseTs(cb.init_callback).getTime()
-      if (initTime > opSelectedTimeRef.current) {
+      if (initTime > opSelectedTimeRef.current && toastsEnabled) {
         toastedIdsRef.current.add(cb.id)
         addToast({
           callbackId: cb.id,
@@ -99,6 +101,7 @@ export function Dashboard() {
       <div className={styles.stripe} />
       <Topbar />
       <CallbackToastContainer />
+      <SettingsPanel />
 
       <div className={styles.body}>
         <Rail />
