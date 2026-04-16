@@ -667,6 +667,104 @@ export const UPDATE_OPERATOR_CREDENTIALS = gql`
 `
 
 // ─────────────────────────────────────────────────────
+// OPERATION MANAGEMENT
+// ─────────────────────────────────────────────────────
+
+// All operations the user belongs to, with members.
+// Also fetches all active operators for the assignment UI.
+export const GET_OPERATIONS_WITH_MEMBERS = gql`
+  query GetOperationsWithMembers {
+    operation(order_by: { name: asc }) {
+      id
+      name
+      complete
+      deleted
+      banner_text
+      banner_color
+      admin { id username account_type }
+      operatoroperations {
+        id
+        view_mode
+        operator { id username account_type }
+      }
+    }
+    operator(where: { active: { _eq: true }, deleted: { _eq: false } }, order_by: { username: asc }) {
+      id
+      username
+      account_type
+    }
+  }
+`
+
+export const CREATE_OPERATION = gql`
+  mutation CreateOperation($name: String!) {
+    createOperation(name: $name) {
+      status
+      error
+      operation_id
+      operation_name
+    }
+  }
+`
+
+// Update op name, complete, channel/webhook, banner, admin_id, or deleted flag.
+// All fields except operation_id are optional (Mythic action handles partial updates).
+export const UPDATE_OPERATION = gql`
+  mutation UpdateOperation(
+    $operation_id: Int!
+    $name: String
+    $complete: Boolean
+    $admin_id: Int
+    $deleted: Boolean
+    $channel: String
+    $webhook: String
+    $banner_text: String
+    $banner_color: String
+  ) {
+    updateOperation(
+      operation_id: $operation_id
+      name: $name
+      complete: $complete
+      admin_id: $admin_id
+      deleted: $deleted
+      channel: $channel
+      webhook: $webhook
+      banner_text: $banner_text
+      banner_color: $banner_color
+    ) {
+      status
+      error
+      id
+      name
+      complete
+    }
+  }
+`
+
+// Add/remove members or update view_mode (operator / spectator).
+// Lead changes use UPDATE_OPERATION(admin_id) instead.
+export const UPDATE_OPERATOR_OPERATION = gql`
+  mutation UpdateOperatorOperation(
+    $operation_id: Int!
+    $add_users: [Int]
+    $remove_users: [Int]
+    $view_mode_operators: [Int]
+    $view_mode_spectators: [Int]
+  ) {
+    updateOperatorOperation(
+      operation_id: $operation_id
+      add_users: $add_users
+      remove_users: $remove_users
+      view_mode_operators: $view_mode_operators
+      view_mode_spectators: $view_mode_spectators
+    ) {
+      status
+      error
+    }
+  }
+`
+
+// ─────────────────────────────────────────────────────
 // TASK MUTATIONS
 // ─────────────────────────────────────────────────────
 

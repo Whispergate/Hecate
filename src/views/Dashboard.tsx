@@ -14,7 +14,8 @@ import { PayloadPanel }   from '@/components/PayloadPanel/PayloadPanel'
 import { ServicesPanel }  from '@/components/ServicesPanel/ServicesPanel'
 import { ReportPanel }    from '@/components/ReportPanel/ReportPanel'
 import { FilesPanel }     from '@/components/FilesPanel/FilesPanel'
-import { OverviewPanel }  from '@/components/OverviewPanel/OverviewPanel'
+import { OverviewPanel }     from '@/components/OverviewPanel/OverviewPanel'
+import { OperationsPanel }   from '@/components/OperationsPanel/OperationsPanel'
 import { CallbackToastContainer } from '@/components/Toast/CallbackToast'
 import { SettingsPanel }         from '@/components/SettingsPanel/SettingsPanel'
 import { SUB_CALLBACKS } from '@/apollo/operations'
@@ -94,7 +95,7 @@ export function Dashboard() {
   useCallbackSubscription()
 
   const activeRailView = useStore((s) => s.activeRailView)
-  const isFullPanel    = activeRailView === 'overview' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'report' || activeRailView === 'files'
+  const isFullPanel    = activeRailView === 'overview' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'report' || activeRailView === 'files' || activeRailView === 'operations'
 
   return (
     <div className={styles.root}>
@@ -112,7 +113,8 @@ export function Dashboard() {
             {activeRailView === 'payloads'  && <PayloadPanel />}
             {activeRailView === 'services'  && <ServicesPanel />}
             {activeRailView === 'report'    && <ReportPanel />}
-            {activeRailView === 'files'     && <FilesPanel />}
+            {activeRailView === 'files'       && <FilesPanel />}
+            {activeRailView === 'operations'  && <OperationsPanel />}
           </div>
         ) : (
           <>

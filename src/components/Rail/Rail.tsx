@@ -81,6 +81,18 @@ const ITEMS: { id: RailView; title: string; icon: React.ReactNode }[] = [
     ),
   },
   {
+    id: 'operations',
+    title: 'Operations',
+    icon: (
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+        <circle cx="8" cy="5" r="2.5" />
+        <path d="M3 13c0-2.76 2.24-5 5-5s5 2.24 5 5" />
+        <path d="M11 3.5l1.5 1.5-1.5 1.5" />
+        <path d="M13 5h-1.5" />
+      </svg>
+    ),
+  },
+  {
     id: 'attack',
     title: 'ATT&CK Matrix',
     icon: (

@@ -70,7 +70,7 @@ export interface HecateStore {
   setCallbacks: (cbs: Callback[]) => void
   currentTasks: Task[]
   setCurrentTasks: (tasks: Task[]) => void
-  activeRailView: 'overview' | 'callbacks' | 'payloads' | 'services' | 'credentials' | 'files' | 'attack' | 'logs' | 'report'
+  activeRailView: 'overview' | 'callbacks' | 'payloads' | 'services' | 'credentials' | 'files' | 'attack' | 'logs' | 'report' | 'operations'
   setActiveRailView: (v: HecateStore['activeRailView']) => void
   theme: 'dark' | 'light'
   setTheme: (t: 'dark' | 'light') => void
