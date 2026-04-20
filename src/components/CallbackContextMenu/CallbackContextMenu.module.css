@@ -1,0 +1,97 @@
+/* hecate/src/components/CallbackContextMenu/CallbackContextMenu.module.css */
+
+.menu {
+  z-index: 1000;
+  background: var(--bg-elevated);
+  border: 1px solid var(--beige-border-md);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  min-width: 180px;
+  padding: 4px 0;
+  font-family: var(--font-mono);
+}
+
+.header {
+  font-size: 9px;
+  color: var(--bone-600);
+  padding: 5px 12px 6px;
+  border-bottom: 1px solid var(--beige-border);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-200);
+  padding: 7px 12px;
+  cursor: pointer;
+}
+.item:hover { background: var(--glow-crimson); color: var(--bone-100); }
+
+.danger { color: var(--crimson-400); }
+.danger:hover { background: rgba(155,32,32,0.2); color: var(--crimson-300); }
+
+.divider {
+  height: 1px;
+  background: var(--beige-border);
+  margin: 3px 0;
+}
+
+/* ── Edit description ── */
+.editLabel {
+  font-size: 9px;
+  color: var(--bone-600);
+  padding: 6px 12px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.editInput {
+  display: block;
+  width: calc(100% - 24px);
+  margin: 0 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border-md);
+  border-radius: 2px;
+  color: var(--bone-100);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 5px 6px;
+  resize: none;
+  outline: none;
+}
+.editInput:focus { border-color: var(--crimson-500); }
+
+.editActions {
+  display: flex;
+  gap: 6px;
+  padding: 6px 12px 8px;
+}
+
+.btnSave, .btnCancel {
+  flex: 1;
+  background: none;
+  border: 1px solid;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 4px 0;
+  cursor: pointer;
+}
+.btnSave   { border-color: var(--crimson-500); color: var(--crimson-300); }
+.btnSave:hover { background: rgba(155,32,32,0.2); }
+.btnCancel { border-color: var(--beige-border-md); color: var(--bone-500); }
+.btnCancel:hover { background: var(--glow-crimson); }
+.btnExit   { border-color: var(--crimson-400); color: var(--crimson-200); font-weight: 700; }
+
+.confirmText {
+  font-size: 9px;
+  color: var(--bone-600);
+  padding: 2px 12px 8px;
+}

@@ -20,6 +20,7 @@ export const TASK_FIELDS = gql`
     command_name
     display_params
     params
+    agent_task_id
     status
     completed
     timestamp
@@ -54,9 +55,21 @@ export const CALLBACK_FIELDS = gql`
     locked
     last_checkin
     init_callback
-    payload { payloadtype { name } description }
+    payload {
+      payloadtype { name }
+      description
+      c2profileparametersinstances {
+        value
+        c2profileparameter { name }
+      }
+    }
     callbackc2profiles { c2profile { name } }
     operation { name }
+    tasks(
+      where: { command_name: { _eq: "sleep" }, completed: { _eq: true } }
+      order_by: { timestamp: desc }
+      limit: 1
+    ) { params timestamp }
   }
 `
 
@@ -794,6 +807,57 @@ export const CREATE_TASK = gql`
       status
       error
       id
+    }
+  }
+`
+
+// ─────────────────────────────────────────────────────
+// CALLBACK MUTATIONS
+// ─────────────────────────────────────────────────────
+
+export const UPDATE_CALLBACK_DESCRIPTION = gql`
+  mutation UpdateCallbackDescription($callback_display_id: Int!, $description: String!) {
+    updateCallback(input: { callback_display_id: $callback_display_id, description: $description }) {
+      status
+      error
+    }
+  }
+`
+
+export const LOCK_CALLBACK = gql`
+  mutation LockCallback($callback_display_id: Int!) {
+    updateCallback(input: { callback_display_id: $callback_display_id, locked: true }) {
+      status
+      error
+    }
+  }
+`
+
+export const UNLOCK_CALLBACK = gql`
+  mutation UnlockCallback($callback_display_id: Int!) {
+    updateCallback(input: { callback_display_id: $callback_display_id, locked: false }) {
+      status
+      error
+    }
+  }
+`
+
+export const HIDE_CALLBACK = gql`
+  mutation HideCallback($callback_display_id: Int!) {
+    updateCallback(input: { callback_display_id: $callback_display_id, active: false }) {
+      status
+      error
+    }
+  }
+`
+
+export const GET_JOB_KILL_COMMAND = gql`
+  query GetJobKillCommand($callback_id: Int!) {
+    loadedcommands(where: {
+      callback_id: { _eq: $callback_id }
+      command: { supported_ui_features: { _contains: "task:job_kill" } }
+    }) {
+      command { cmd }
     }
   }
 `

@@ -88,3 +88,25 @@
 .infoKey { color: var(--bone-600); font-size: 9px; }
 .infoVal { color: var(--bone-200); font-size: 9px; text-align: right; }
 .infoVal.hiVal { color: var(--crimson-300); font-weight: 700; }
+
+.lockBadge { margin-left: 5px; font-size: 9px; opacity: 0.7; }
+
+.cbDesc {
+  color: var(--bone-600);
+  font-size: 9px;
+  margin-top: 3px;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detailHeader { cursor: context-menu; }
+
+.descRow {
+  font-size: 9px;
+  color: var(--bone-500);
+  font-style: italic;
+  padding: 4px 0 6px;
+  border-bottom: 1px solid rgba(155,32,32,0.12);
+}

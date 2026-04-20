@@ -10,7 +10,7 @@ import { useSubscription }                            from '@apollo/client'
 import { useStore }                                   from '@/store'
 import type { Callback, Task }                        from '@/store'
 import { SUB_ALL_CALLBACKS, SUB_RECENT_OP_TASKS }     from '@/apollo/operations'
-import { parseTs, timeSince, integrityLabel }          from '@/components/Sidebar/utils'
+import { parseTs, timeSince, integrityLabel, formatSleepInterval, formatSleepJitter } from '@/components/Sidebar/utils'
 import styles                                         from './OverviewPanel.module.css'
 
 // ── Helpers ───────────────────────────────────────────
@@ -115,7 +115,9 @@ function AgentCard({ cb, lastTask, onSelect }: { cb: Callback; lastTask: Task | 
         <span className={styles.metaKey}>age</span>
         <span className={styles.metaVal}>{implantAge(cb.init_callback)}</span>
         <span className={styles.metaKey}>sleep</span>
-        <span className={styles.metaVal}>{cb.sleep_info || '—'}</span>
+        <span className={styles.metaVal}>{formatSleepInterval(cb.sleep_info, cb.tasks[0], cb.payload.c2profileparametersinstances)}</span>
+        <span className={styles.metaKey}>jitter</span>
+        <span className={styles.metaVal}>{formatSleepJitter(cb.sleep_info, cb.tasks[0], cb.payload.c2profileparametersinstances)}</span>
         <span className={styles.metaKey}>IL</span>
         <span className={styles.metaVal} style={{ color: ilColor(il) }}>
           {integrityLabel(il).toUpperCase()}

@@ -10,6 +10,7 @@ import { useSubscription }             from '@apollo/client'
 import { SUB_TASK_RESPONSES }          from '@/apollo/operations'
 import type { Task }                   from '@/store'
 import { FileBrowser, parseLsOutput }  from './FileBrowser'
+import { KillTaskButton }              from './KillTaskButton'
 import styles                          from './ConsoleView.module.css'
 
 // ── Helpers ───────────────────────────────────────────
@@ -73,6 +74,7 @@ function ConsoleEntry({ task, isLast }: { task: Task; isLast: boolean }) {
         <span className={styles.cmd}>{task.command_name}</span>
         {displayArgs && <span className={styles.args}>{displayArgs}</span>}
         <span className={styles.taskId}>#{task.display_id}</span>
+        {!task.completed && <KillTaskButton task={task} />}
       </div>
 
       {/* Output */}

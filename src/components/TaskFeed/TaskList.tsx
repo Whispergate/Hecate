@@ -5,6 +5,7 @@
 
 import { memo } from 'react'
 import type { Task } from '@/store'
+import { KillTaskButton } from './KillTaskButton'
 import styles from './TaskList.module.css'
 
 interface Props {
@@ -59,8 +60,9 @@ const TaskRow = memo(function TaskRow({ task, selected, onSelect }: RowProps) {
         )}
       </span>
 
-      {/* Right: time + id */}
+      {/* Right: kill + time + id */}
       <span className={styles.rowRight}>
+        {!task.completed && <KillTaskButton task={task} />}
         <span className={styles.rowTime}>{formatTime(task.timestamp)}</span>
         <span className={styles.rowId}>#{task.display_id}</span>
       </span>

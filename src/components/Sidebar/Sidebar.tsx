@@ -2,9 +2,14 @@
    hecate/src/components/Sidebar/Sidebar.tsx
    ═══════════════════════════════════════════════════ */
 
+import { useState } from 'react'
 import { useStore, useSelectedCallback } from '@/store'
-import { integrityLabel, timeSince, parseTs } from './utils'
+import type { Callback } from '@/store'
+import { integrityLabel, timeSince, parseTs, formatSleepInterval, formatSleepJitter } from './utils'
+import { CallbackContextMenu } from '@/components/CallbackContextMenu/CallbackContextMenu'
 import styles from './Sidebar.module.css'
+
+interface CtxMenu { cb: Callback; x: number; y: number }
 
 export function Sidebar() {
   const { selectedCallbackId, setSelectedCallbackId, callbacks } = useStore()
@@ -13,6 +18,13 @@ export function Sidebar() {
   const showCallbackDisplayId = useStore((s) => s.settings.showCallbackDisplayId)
 
   const selected = useSelectedCallback()
+  const [ctxMenu, setCtxMenu] = useState<CtxMenu | null>(null)
+
+  const openMenu = (e: React.MouseEvent, cb: Callback) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setCtxMenu({ cb, x: e.clientX, y: e.clientY })
+  }
 
   return (
     <aside className={styles.sidebar}>
@@ -46,16 +58,21 @@ export function Sidebar() {
               key={cb.id}
               className={`${styles.callbackItem} ${cb.id === selectedCallbackId ? styles.active : ''}`}
               onClick={() => setSelectedCallbackId(cb.id)}
+              onContextMenu={(e) => openMenu(e, cb)}
             >
               <span className={`${styles.statusDot} ${statusClass}`} />
               <div className={styles.cbHost}>
                 {showCallbackDisplayId && <span className={styles.cbId}>#{cb.display_id} </span>}
                 {cb.host}
+                {cb.locked && <span className={styles.lockBadge}>🔒</span>}
               </div>
               <div className={styles.cbMeta}>
                 <span>{cb.payload.payloadtype.name} · {cb.os}</span>
                 <span>{timeSince(cb.last_checkin)}</span>
               </div>
+              {cb.description && (
+                <div className={styles.cbDesc}>{cb.description}</div>
+              )}
             </div>
           )
         })}
@@ -64,14 +81,26 @@ export function Sidebar() {
       {/* ── Selected callback detail ── */}
       {selected && (
         <div className={`${styles.section} ${styles.detail}`}>
-          <div className="sec-label">{selected.host}</div>
+          <div
+            className={`sec-label ${styles.detailHeader}`}
+            onContextMenu={(e) => openMenu(e, selected)}
+            title="Right-click for options"
+          >
+            {selected.host}
+            {selected.locked && <span className={styles.lockBadge}>🔒</span>}
+          </div>
+
+          {selected.description && (
+            <div className={styles.descRow}>{selected.description}</div>
+          )}
 
           {[
             ['Integrity', integrityLabel(selected.integrity_level)],
             ['User',      selected.user || '—'],
             ['Domain',    selected.domain || '—'],
             ['PID',       String(selected.pid)],
-            ['Sleep',     selected.sleep_info || '—'],
+            ['Sleep',     formatSleepInterval(selected.sleep_info, selected.tasks[0], selected.payload.c2profileparametersinstances)],
+            ['Jitter',    formatSleepJitter(selected.sleep_info, selected.tasks[0], selected.payload.c2profileparametersinstances)],
             ['IP',        selected.ip],
             ['OS',        selected.os],
             ['Agent',     selected.payload.payloadtype.name],
@@ -87,6 +116,15 @@ export function Sidebar() {
             </div>
           ))}
         </div>
+      )}
+
+      {ctxMenu && (
+        <CallbackContextMenu
+          cb={ctxMenu.cb}
+          x={ctxMenu.x}
+          y={ctxMenu.y}
+          onClose={() => setCtxMenu(null)}
+        />
       )}
     </aside>
   )

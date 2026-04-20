@@ -31,14 +31,20 @@ export interface Callback {
   integrity_level: number; sleep_info: string; description: string
   extra_info: string
   active: boolean; locked: boolean; last_checkin: string; init_callback: string
-  payload: { payloadtype: { name: string }; description: string }
+  payload: {
+    payloadtype: { name: string }
+    description: string
+    c2profileparametersinstances: Array<{ value: string; c2profileparameter: { name: string } }>
+  }
   callbackc2profiles: Array<{ c2profile: { name: string } }>
   operation: { name: string }
+  tasks: Array<{ params: string; timestamp: string }>
 }
 
 export interface Task {
   id: number; display_id: number
   command_name: string; display_params: string; params: string
+  agent_task_id: string
   status: string; completed: boolean; timestamp: string
   operator: { username: string }
   callback: { id: number; display_id: number; host: string; ip: string }

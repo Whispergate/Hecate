@@ -46,7 +46,25 @@
   margin: 4px 0;
   background: var(--topo-svg-bg);
   border-radius: var(--radius-sm);
+  display: block;
 }
+
+.topoReset {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  background: var(--bg-elevated);
+  border: 1px solid var(--beige-border);
+  color: var(--bone-400);
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+.topoReset:hover { opacity: 1; color: var(--bone-100); }
 
 /* ── Info table ── */
 .infoTable { width: 100%; border-collapse: collapse; }
