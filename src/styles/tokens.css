@@ -50,6 +50,10 @@
   --status-err:        #a03030;
   --status-err-text:   #f07070;
 
+  /* ── Integrity indicators ── */
+  --integrity-med:     #c8a030;   /* amber — Medium / UAC elevated */
+  --integrity-high:    #e05050;   /* crimson — High / SYSTEM */
+
   /* ── Typography ── */
   --font-mono:  'Space Mono', 'Courier New', monospace;
   --font-serif: 'Cinzel', Georgia, serif;
@@ -172,6 +176,10 @@
   --status-warn-text:  #905818;
   --status-err:        #881818;
   --status-err-text:   #6a1010;
+
+  /* ── Integrity indicators ── */
+  --integrity-med:     #8a5c10;   /* dark amber on light bg */
+  --integrity-high:    #a02020;   /* deep crimson on light bg */
 
   /* ── Borders ── */
   --border-subtle:  rgba(130,30,30,0.16);

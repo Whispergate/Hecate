@@ -5,7 +5,7 @@
    in one scrolling pane, oldest → newest.
    ═══════════════════════════════════════════════════ */
 
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useLayoutEffect, useState } from 'react'
 import { useSubscription }             from '@apollo/client'
 import { SUB_TASK_RESPONSES }          from '@/apollo/operations'
 import type { Task }                   from '@/store'
@@ -132,7 +132,12 @@ interface Props { tasks: Task[] }
 export function ConsoleView({ tasks }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll to bottom when tasks change
+  // Instant scroll on mount (opening console view)
+  useLayoutEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'instant' })
+  }, [])
+
+  // Smooth scroll when new tasks arrive
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [tasks.length])

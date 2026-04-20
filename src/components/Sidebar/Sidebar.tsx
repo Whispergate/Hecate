@@ -2,7 +2,7 @@
    hecate/src/components/Sidebar/Sidebar.tsx
    ═══════════════════════════════════════════════════ */
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useStore, useSelectedCallback } from '@/store'
 import type { Callback } from '@/store'
 import { integrityLabel, timeSince, parseTs, formatSleepInterval, formatSleepJitter } from './utils'
@@ -10,6 +10,7 @@ import { CallbackContextMenu } from '@/components/CallbackContextMenu/CallbackCo
 import styles from './Sidebar.module.css'
 
 interface CtxMenu { cb: Callback; x: number; y: number }
+type StatusFilter = 'alive' | 'idle' | 'dead'
 
 export function Sidebar() {
   const { selectedCallbackId, setSelectedCallbackId, callbacks } = useStore()
@@ -19,6 +20,9 @@ export function Sidebar() {
 
   const selected = useSelectedCallback()
   const [ctxMenu, setCtxMenu] = useState<CtxMenu | null>(null)
+  const [filterText, setFilterText]     = useState('')
+  const [filterStatus, setFilterStatus] = useState<Set<StatusFilter>>(new Set())
+  const [filterAgents, setFilterAgents] = useState<Set<string>>(new Set())
 
   const openMenu = (e: React.MouseEvent, cb: Callback) => {
     e.preventDefault()
@@ -26,37 +30,112 @@ export function Sidebar() {
     setCtxMenu({ cb, x: e.clientX, y: e.clientY })
   }
 
+  const agentTypes = useMemo(() =>
+    [...new Set(callbacks.map(cb => cb.payload.payloadtype.name))].sort(),
+    [callbacks]
+  )
+
+  const toggleStatus = (s: StatusFilter) => setFilterStatus(prev => {
+    const next = new Set(prev)
+    next.has(s) ? next.delete(s) : next.add(s)
+    return next
+  })
+
+  const toggleAgent = (a: string) => setFilterAgents(prev => {
+    const next = new Set(prev)
+    next.has(a) ? next.delete(a) : next.add(a)
+    return next
+  })
+
+  const getStatus = (elapsed: number): StatusFilter =>
+    elapsed < callbackAliveMs ? 'alive' : elapsed < callbackIdleMs ? 'idle' : 'dead'
+
+  const needle = filterText.toLowerCase()
+
+  const sorted = useMemo(() => [...callbacks]
+    .map((cb) => ({ cb, elapsed: Date.now() - parseTs(cb.last_checkin).getTime() }))
+    .sort((a, b) => {
+      const rank = (e: number) => e < callbackAliveMs ? 0 : e < callbackIdleMs ? 1 : 2
+      const dr = rank(a.elapsed) - rank(b.elapsed)
+      return dr !== 0 ? dr : a.cb.id - b.cb.id
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [callbacks, callbackAliveMs, callbackIdleMs]
+  )
+
+  const visible = sorted.filter(({ cb, elapsed }) => {
+    if (filterStatus.size > 0 && !filterStatus.has(getStatus(elapsed))) return false
+    if (filterAgents.size > 0 && !filterAgents.has(cb.payload.payloadtype.name)) return false
+    if (needle) {
+      const haystack = [cb.host, cb.user, cb.ip, cb.os, cb.description ?? '', cb.domain ?? ''].join(' ').toLowerCase()
+      if (!haystack.includes(needle)) return false
+    }
+    return true
+  })
+
   return (
     <aside className={styles.sidebar}>
       {/* ── Callback list ── */}
       <div className={styles.section}>
         <div className="sec-label">
-          Active callbacks ({callbacks.length})
+          Callbacks ({visible.length}{visible.length !== callbacks.length ? `/${callbacks.length}` : ''})
+        </div>
+
+        {/* ── Filters ── */}
+        <div className={styles.filterBar}>
+          <input
+            className={styles.filterInput}
+            type="text"
+            placeholder="filter host / user / ip…"
+            value={filterText}
+            onChange={e => setFilterText(e.target.value)}
+          />
+          <div className={styles.filterChips}>
+            {(['alive', 'idle', 'dead'] as StatusFilter[]).map(s => (
+              <button
+                key={s}
+                className={`${styles.chip} ${styles[`chip_${s}`]} ${filterStatus.has(s) ? styles.chipActive : ''}`}
+                onClick={() => toggleStatus(s)}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          {agentTypes.length > 1 && (
+            <div className={styles.filterChips}>
+              {agentTypes.map(a => (
+                <button
+                  key={a}
+                  className={`${styles.chip} ${filterAgents.has(a) ? styles.chipActiveAgent : ''}`}
+                  onClick={() => toggleAgent(a)}
+                >
+                  {a}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {callbacks.length === 0 && (
           <div className={styles.empty}>No callbacks yet</div>
         )}
+        {callbacks.length > 0 && visible.length === 0 && (
+          <div className={styles.empty}>No matches</div>
+        )}
 
-        {[...callbacks]
-          .map((cb) => {
-            const elapsed = Date.now() - parseTs(cb.last_checkin).getTime()
-            return { cb, elapsed }
-          })
-          .sort((a, b) => {
-            const rank = (e: number) => e < callbackAliveMs ? 0 : e < callbackIdleMs ? 1 : 2
-            const dr = rank(a.elapsed) - rank(b.elapsed)
-            return dr !== 0 ? dr : a.cb.id - b.cb.id
-          })
-          .map(({ cb, elapsed }) => {
+        {visible.map(({ cb, elapsed }) => {
           const alive = elapsed < callbackAliveMs
           const idle  = !alive && elapsed < callbackIdleMs
           const statusClass = alive ? styles.alive : idle ? styles.idle : styles.dead
+          const integrityBorder = cb.integrity_level >= 3 ? styles.integrityHigh
+                                : cb.integrity_level === 2 ? styles.integrityMed : ''
+          const integrityIcon   = cb.integrity_level >= 3 ? styles.integrityIconHigh
+                                : cb.integrity_level === 2 ? styles.integrityIconMed : ''
 
           return (
             <div
               key={cb.id}
-              className={`${styles.callbackItem} ${cb.id === selectedCallbackId ? styles.active : ''}`}
+              className={`${styles.callbackItem} ${cb.id === selectedCallbackId ? styles.active : ''} ${integrityBorder}`}
               onClick={() => setSelectedCallbackId(cb.id)}
               onContextMenu={(e) => openMenu(e, cb)}
             >
@@ -65,6 +144,7 @@ export function Sidebar() {
                 {showCallbackDisplayId && <span className={styles.cbId}>#{cb.display_id} </span>}
                 {cb.host}
                 {cb.locked && <span className={styles.lockBadge}>🔒</span>}
+                {cb.integrity_level >= 2 && <span className={integrityIcon}>▲</span>}
               </div>
               <div className={styles.cbMeta}>
                 <span>{cb.payload.payloadtype.name} · {cb.os}</span>
