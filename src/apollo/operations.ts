@@ -172,8 +172,17 @@ export const GET_PAYLOADS = gql`
       auto_generated
       operator    { username }
       payloadtype { name }
-      filemetum   { agent_file_id filename_text }
+      filemetum   { id agent_file_id filename_text md5 sha1 }
       callbacks_aggregate { aggregate { count } }
+      c2profileparametersinstances {
+        value
+        c2profileparameter { name c2profile { name is_p2p } }
+      }
+      buildparameterinstances {
+        value
+        buildparameter { name }
+      }
+      payloadcommands { command { cmd } }
       payload_build_steps(order_by: { step_number: asc }) {
         id
         step_number
@@ -274,6 +283,26 @@ export const DELETE_PAYLOAD = gql`
       status
       error
       id
+    }
+  }
+`
+
+export const UPDATE_PAYLOAD_DESCRIPTION = gql`
+  mutation UpdatePayloadDescription($payload_uuid: String!, $description: String!) {
+    updatePayload(payload_uuid: $payload_uuid, description: $description) {
+      status
+      error
+      description
+    }
+  }
+`
+
+// filename is bytea — pass plain string, Hasura stores raw UTF-8 bytes via PG text→bytea cast
+export const RENAME_PAYLOAD_FILE = gql`
+  mutation RenamePayloadFile($file_id: Int!, $filename: bytea!) {
+    update_filemeta_by_pk(pk_columns: { id: $file_id }, _set: { filename: $filename }) {
+      id
+      filename_text
     }
   }
 `

@@ -1,0 +1,228 @@
+/* src/components/PayloadPanel/PayloadContextMenu.module.css */
+
+.menu {
+  z-index: 1000;
+  background: var(--bg-elevated);
+  border: 1px solid var(--beige-border-md);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.55);
+  min-width: 220px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding: 4px 0;
+  font-family: var(--font-mono);
+}
+
+.header {
+  font-size: 9px;
+  color: var(--bone-600);
+  padding: 5px 12px 6px;
+  border-bottom: 1px solid var(--beige-border);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-200);
+  padding: 7px 12px;
+  cursor: pointer;
+}
+.item:hover { background: var(--glow-crimson); color: var(--bone-100); }
+
+.divider {
+  height: 1px;
+  background: var(--beige-border);
+  margin: 3px 0;
+}
+
+/* ── Form controls ── */
+.input {
+  display: block;
+  width: calc(100% - 24px);
+  margin: 8px 12px 4px;
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border-md);
+  border-radius: 2px;
+  color: var(--bone-100);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 5px 6px;
+  resize: vertical;
+  outline: none;
+  box-sizing: content-box;
+}
+.input:focus { border-color: var(--crimson-500); }
+
+.rowActions {
+  display: flex;
+  gap: 6px;
+  padding: 6px 12px 8px;
+}
+
+.btnPrimary, .btnSecondary {
+  flex: 1;
+  background: none;
+  border: 1px solid;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 4px 0;
+  cursor: pointer;
+}
+.btnPrimary   { border-color: var(--crimson-500); color: var(--crimson-300); }
+.btnPrimary:hover { background: rgba(155,32,32,0.2); }
+.btnSecondary { border-color: var(--beige-border-md); color: var(--bone-500); }
+.btnSecondary:hover { background: var(--glow-crimson); }
+
+.confirmText {
+  font-size: 9px;
+  color: var(--bone-600);
+  padding: 4px 12px 8px;
+  line-height: 1.5;
+}
+
+/* ── Status ── */
+.statusOk   { font-size: 9px; color: var(--status-ok-text);   padding: 4px 12px 8px; }
+.statusErr  { font-size: 9px; color: var(--status-err-text);  padding: 4px 12px 8px; }
+.statusInfo { font-size: 9px; color: var(--bone-600);         padding: 4px 12px 8px; }
+
+/* ── IOC list ── */
+.iocList {
+  padding: 6px 0;
+}
+
+.iocRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 12px;
+}
+.iocRow:hover { background: var(--glow-crimson); }
+
+.iocLabel {
+  font-size: 8px;
+  color: var(--bone-800);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.iocValue {
+  font-size: 9px;
+  color: var(--bone-300);
+  text-align: right;
+  word-break: break-all;
+  cursor: pointer;
+}
+.iocValue:hover { color: var(--bone-100); }
+
+.empty {
+  font-size: 9px;
+  color: var(--bone-800);
+  font-style: italic;
+  padding: 6px 12px;
+}
+
+/* ── Diff / compare ── */
+.select {
+  display: block;
+  width: calc(100% - 24px);
+  margin: 8px 12px 4px;
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border-md);
+  border-radius: 2px;
+  color: var(--bone-200);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 4px 6px;
+  outline: none;
+}
+.select:focus { border-color: var(--crimson-500); }
+
+.diffWrap {
+  padding: 4px 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.diffHeader {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 12px 6px;
+  font-size: 8px;
+  color: var(--bone-600);
+  border-bottom: 1px solid var(--beige-border);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.diffRow {
+  padding: 3px 12px;
+  border-bottom: 1px solid rgba(239,239,218,0.04);
+}
+
+.diffKey {
+  font-size: 8px;
+  color: var(--crimson-400);
+  letter-spacing: 0.02em;
+  margin-bottom: 2px;
+  text-transform: lowercase;
+}
+
+.diffCells {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.diffA, .diffB {
+  font-size: 9px;
+  flex: 1;
+  word-break: break-all;
+}
+.diffA { color: var(--bone-400); }
+.diffB { color: var(--status-warn-text); }
+
+.cmdDiffCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cmdOnly {
+  font-size: 8px;
+  color: var(--bone-400);
+  background: rgba(60,120,70,0.15);
+  border: 1px solid rgba(60,120,70,0.3);
+  border-radius: 2px;
+  padding: 1px 5px;
+  width: fit-content;
+}
+
+.cmdOnlyB {
+  font-size: 8px;
+  color: var(--status-warn-text);
+  background: rgba(144,112,48,0.12);
+  border: 1px solid rgba(144,112,48,0.3);
+  border-radius: 2px;
+  padding: 1px 5px;
+  width: fit-content;
+}
+
+.diffNone {
+  font-size: 9px;
+  color: var(--bone-900);
+}

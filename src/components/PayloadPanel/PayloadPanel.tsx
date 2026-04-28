@@ -10,6 +10,7 @@ import { GET_PAYLOADS, DELETE_PAYLOAD } from '@/apollo/operations'
 import { useStore }              from '@/store'
 import { parseTs }               from '@/components/Sidebar/utils'
 import { CreatePayloadModal }    from './CreatePayloadModal'
+import { PayloadContextMenu }    from './PayloadContextMenu'
 import styles                    from './PayloadPanel.module.css'
 
 // ── Types ─────────────────────────────────────────────
@@ -26,19 +27,32 @@ interface PayloadBuildStep {
   step_stderr:      string
 }
 
-interface Payload {
+export interface C2ParamInstance {
+  value: string
+  c2profileparameter: { name: string; c2profile: { name: string; is_p2p: boolean } }
+}
+
+export interface BuildParamInstance {
+  value: string
+  buildparameter: { name: string }
+}
+
+export interface Payload {
   id:             number
   uuid:           string
   description:    string
   os:             string
-  build_phase:    string   // 'success' | 'building' | 'error' | 'cancelled'
+  build_phase:    string
   creation_time:  string
   auto_generated: boolean
   operator:       { username: string }
   payloadtype:    { name: string }
-  filemetum:      { agent_file_id: string; filename_text: string } | null
+  filemetum:      { id: number; agent_file_id: string; filename_text: string; md5: string; sha1: string } | null
   callbacks_aggregate: { aggregate: { count: number } }
-  payload_build_steps: PayloadBuildStep[]
+  c2profileparametersinstances: C2ParamInstance[]
+  buildparameterinstances:      BuildParamInstance[]
+  payloadcommands:              { command: { cmd: string } }[]
+  payload_build_steps:          PayloadBuildStep[]
 }
 
 // ── Helpers ───────────────────────────────────────────
@@ -107,9 +121,10 @@ function AgentIcon({ name, color }: { name: string; color: string }) {
 // ── Payload list row ──────────────────────────────────
 
 function PayloadRow({
-  payload, selected, onClick,
+  payload, selected, onClick, onContextMenu,
 }: {
   payload: Payload; selected: boolean; onClick: () => void
+  onContextMenu: (e: React.MouseEvent) => void
 }) {
   const agent     = agentStyle(payload.payloadtype.name)
   const callCount = payload.callbacks_aggregate.aggregate.count
@@ -118,6 +133,7 @@ function PayloadRow({
     <button
       className={`${styles.row} ${selected ? styles.rowSelected : ''}`}
       onClick={onClick}
+      onContextMenu={onContextMenu}
     >
       <AgentIcon name={payload.payloadtype.name} color={agent.color} />
 
@@ -261,6 +277,21 @@ function PayloadDetail({ payload, onDelete }: { payload: Payload; onDelete: () =
           <span className={`${styles.phasePill} ${buildPhaseStyle(payload.build_phase)}`}>
             {buildPhaseLabel(payload.build_phase)}
           </span>
+          <div className={styles.headerActions}>
+            {downloadUrl ? (
+              <a className={styles.dlBtn} href={downloadUrl} download={filename}>↓ download</a>
+            ) : (
+              <span className={styles.dlBtnDisabled}>↓ download</span>
+            )}
+            <button
+              className={`${styles.delBtn} ${confirmDel ? styles.delBtnConfirm : ''}`}
+              onClick={handleDelete}
+              disabled={deleting}
+              onBlur={() => setConfirmDel(false)}
+            >
+              {deleting ? '…' : confirmDel ? 'confirm' : '✕'}
+            </button>
+          </div>
         </div>
         <div className={styles.detailDesc}>
           {payload.description || <em>(no description)</em>}
@@ -308,28 +339,80 @@ function PayloadDetail({ payload, onDelete }: { payload: Payload; onDelete: () =
         </div>
       )}
 
-      {/* ── Actions ── */}
-      <div className={styles.detailSection}>
-        <div className="sec-label">Actions</div>
-        <div className={styles.actions}>
-          {downloadUrl ? (
-            <a className={styles.dlBtn} href={downloadUrl} download={filename}>
-              ↓ download payload
-            </a>
-          ) : (
-            <span className={styles.dlBtnDisabled}>↓ download payload</span>
+      {/* ── Configuration ── */}
+      {(payload.c2profileparametersinstances.length > 0
+        || payload.buildparameterinstances.length > 0
+        || payload.payloadcommands.length > 0) && (
+        <div className={styles.detailSection}>
+          <div className="sec-label">Configuration</div>
+
+          {/* C2 profiles — group by profile name */}
+          {(() => {
+            const byProfile = new Map<string, C2ParamInstance[]>()
+            for (const inst of payload.c2profileparametersinstances) {
+              const prof = inst.c2profileparameter.c2profile.name
+              if (!byProfile.has(prof)) byProfile.set(prof, [])
+              byProfile.get(prof)!.push(inst)
+            }
+            return [...byProfile.entries()].map(([profName, params]) => (
+              <div key={profName} className={styles.configGroup}>
+                <div className={styles.configGroupLabel}>{profName}</div>
+                <table className={styles.infoTable}>
+                  <tbody>
+                    {params.map(p => (
+                      <tr key={p.c2profileparameter.name}>
+                        <td className={styles.tdKey}>{p.c2profileparameter.name}</td>
+                        <td className={`${styles.tdVal} ${styles.tdValMono}`}>
+                          {p.value || '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))
+          })()}
+
+          {/* Build parameters */}
+          {payload.buildparameterinstances.length > 0 && (
+            <div className={styles.configGroup}>
+              <div className={styles.configGroupLabel}>Build Parameters</div>
+              <table className={styles.infoTable}>
+                <tbody>
+                  {payload.buildparameterinstances.map(p => (
+                    <tr key={p.buildparameter.name}>
+                      <td className={styles.tdKey}>{p.buildparameter.name}</td>
+                      <td className={`${styles.tdVal} ${styles.tdValMono}`}>
+                        {p.value || '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
 
-          <button
-            className={`${styles.delBtn} ${confirmDel ? styles.delBtnConfirm : ''}`}
-            onClick={handleDelete}
-            disabled={deleting}
-            onBlur={() => setConfirmDel(false)}
-          >
-            {deleting ? '…' : confirmDel ? 'confirm delete' : '✕ delete'}
-          </button>
+          {/* Commands */}
+          {payload.payloadcommands.length > 0 && (
+            <div className={styles.configGroup}>
+              <div className={styles.configGroupLabel}>
+                Commands
+                <span className={styles.configGroupCount}>{payload.payloadcommands.length}</span>
+              </div>
+              <div className={styles.cmdChips}>
+                {[...payload.payloadcommands]
+                  .sort((a, b) => a.command.cmd.localeCompare(b.command.cmd))
+                  .map(pc => (
+                    <span key={pc.command.cmd} className={styles.cmdChip}>
+                      {pc.command.cmd}
+                    </span>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
+
 
     </div>
   )
@@ -348,10 +431,20 @@ function EmptyDetail() {
 
 // ── Main panel ────────────────────────────────────────
 
+interface CtxMenu { payload: Payload; x: number; y: number }
+
 export function PayloadPanel() {
   const activeOp = useStore((s) => s.activeOperation)
-  const [selectedId,  setSelectedId]  = useState<number | null>(null)
-  const [showCreate,  setShowCreate]  = useState(false)
+  const [selectedId,    setSelectedId]    = useState<number | null>(null)
+  const [showCreate,    setShowCreate]    = useState(false)
+  const [rebuildPayload, setRebuildPayload] = useState<Payload | null>(null)
+  const [ctxMenu,       setCtxMenu]       = useState<CtxMenu | null>(null)
+
+  const openCtx = useCallback((e: React.MouseEvent, payload: Payload) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setCtxMenu({ payload, x: e.clientX, y: e.clientY })
+  }, [])
 
   const { data, loading, refetch } = useQuery(GET_PAYLOADS, {
     variables: { operation_id: activeOp?.id ?? 0 },
@@ -364,12 +457,18 @@ export function PayloadPanel() {
 
   const handleModalClose = useCallback(() => {
     setShowCreate(false)
+    setRebuildPayload(null)
     refetch()
   }, [refetch])
 
   return (
     <div className={styles.panel}>
-      {showCreate && <CreatePayloadModal onClose={handleModalClose} />}
+      {showCreate && (
+        <CreatePayloadModal
+          onClose={handleModalClose}
+          initialPayload={rebuildPayload ?? undefined}
+        />
+      )}
 
       {/* ── Left: list ── */}
       <div className={styles.listPane}>
@@ -395,6 +494,7 @@ export function PayloadPanel() {
               payload={p}
               selected={p.id === selectedId}
               onClick={() => setSelectedId(p.id)}
+              onContextMenu={(e) => openCtx(e, p)}
             />
           ))}
         </div>
@@ -408,6 +508,17 @@ export function PayloadPanel() {
         }
       </div>
 
+      {ctxMenu && (
+        <PayloadContextMenu
+          payload={ctxMenu.payload}
+          payloads={payloads}
+          x={ctxMenu.x}
+          y={ctxMenu.y}
+          onClose={() => setCtxMenu(null)}
+          onRebuilt={() => { setCtxMenu(null); refetch() }}
+          onRebuildWithEdits={() => { setCtxMenu(null); setRebuildPayload(ctxMenu.payload); setShowCreate(true) }}
+        />
+      )}
     </div>
   )
 }

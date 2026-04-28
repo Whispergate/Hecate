@@ -11,7 +11,49 @@ import {
   CREATE_PAYLOAD,
   SUB_PAYLOAD_BUILD,
 } from '@/apollo/operations'
+import type { Payload } from './PayloadPanel'
 import styles from './CreatePayloadModal.module.css'
+
+// ── Pre-fill helpers ───────────────────────────────────
+
+interface InitialConfig {
+  os:          string
+  description: string
+  filename:    string
+  buildParams: Record<string, string>
+  c2Name:      string
+  c2Params:    Record<string, string>
+  commands:    string[]
+}
+
+function decodeB64(b64: string | undefined | null): string {
+  if (!b64) return ''
+  try { return decodeURIComponent(escape(atob(b64))) } catch { return b64 ?? '' }
+}
+
+function payloadToInitialConfig(payload: Payload): InitialConfig {
+  const buildParams: Record<string, string> = {}
+  for (const inst of payload.buildparameterinstances)
+    buildParams[inst.buildparameter.name] = inst.value
+
+  const c2Name = payload.c2profileparametersinstances[0]
+    ?.c2profileparameter.c2profile.name ?? ''
+
+  const c2Params: Record<string, string> = {}
+  for (const inst of payload.c2profileparametersinstances)
+    if (inst.c2profileparameter.c2profile.name === c2Name)
+      c2Params[inst.c2profileparameter.name] = inst.value
+
+  return {
+    os:          payload.os,
+    description: payload.description,
+    filename:    decodeB64(payload.filemetum?.filename_text) || payload.payloadtype.name,
+    buildParams,
+    c2Name,
+    c2Params,
+    commands:    payload.payloadcommands.map(pc => pc.command.cmd),
+  }
+}
 
 // ── Types ──────────────────────────────────────────────
 
@@ -493,20 +535,25 @@ function PickAgent({
 // ── Step 2: Configure ──────────────────────────────────
 
 function Configure({
-  type, onBack, onBuild,
+  type, onBack, onBuild, initialConfig,
 }: {
   type: PayloadType
   onBack: () => void
   onBuild: (def: string) => void
+  initialConfig?: InitialConfig
 }) {
   const osList: string[] = type.supported_os?.length > 0
     ? type.supported_os
     : ['Windows', 'Linux', 'macOS']
 
-  const [os,          setOs]          = useState(osList[0] ?? 'Windows')
-  const [description, setDescription] = useState('')
-  const [filename,    setFilename]    = useState(`${type.name}${type.file_extension ?? ''}`)
+  const [os,          setOs]          = useState(initialConfig?.os ?? osList[0] ?? 'Windows')
+  const [description, setDescription] = useState(initialConfig?.description ?? '')
+  const [filename,    setFilename]    = useState(
+    initialConfig?.filename ?? `${type.name}${type.file_extension ?? ''}`
+  )
   const [buildParams, setBuildParams] = useState<Record<string, string>>(() => {
+    if (initialConfig?.buildParams && Object.keys(initialConfig.buildParams).length > 0)
+      return initialConfig.buildParams
     const defaults: Record<string, string> = {}
     for (const p of type.buildparameters) {
       if (p.crypto_type && p.randomize) continue
@@ -514,7 +561,6 @@ function Configure({
       if (p.parameter_type === 'Dictionary') {
         def = dictDefaultFromChoices(p)
       } else if (p.parameter_type === 'Date' && p.default_value) {
-        // default_value is a day offset from today
         const d = new Date()
         d.setDate(d.getDate() + parseInt(p.default_value, 10))
         def = d.toISOString().slice(0, 10)
@@ -526,7 +572,7 @@ function Configure({
     return defaults
   })
   const [selectedC2,  setSelectedC2]  = useState<string>(
-    type.payloadtypec2profiles[0]?.c2profile.name ?? ''
+    initialConfig?.c2Name ?? type.payloadtypec2profiles[0]?.c2profile.name ?? ''
   )
 
   const defaultsForC2 = useCallback((profile: C2Profile | null, c2Name?: string): Record<string, string> => {
@@ -549,12 +595,14 @@ function Configure({
       if (def) defaults[p.name] = def
     }
     return defaults
-  }, [])
+  }, [type])
 
   const firstC2Name = type.payloadtypec2profiles[0]?.c2profile.name ?? ''
-  const [c2Params, setC2Params] = useState<Record<string, string>>(() =>
-    defaultsForC2(type.payloadtypec2profiles[0]?.c2profile ?? null, firstC2Name)
-  )
+  const [c2Params, setC2Params] = useState<Record<string, string>>(() => {
+    if (initialConfig?.c2Params && Object.keys(initialConfig.c2Params).length > 0)
+      return initialConfig.c2Params
+    return defaultsForC2(type.payloadtypec2profiles[0]?.c2profile ?? null, firstC2Name)
+  })
   const [selectedCmds, setSelectedCmds] = useState<Set<string>>(new Set())
   const [allCmds,      setAllCmds]      = useState<Command[]>([])
   const [cmdsLoaded,   setCmdsLoaded]   = useState(false)
@@ -570,7 +618,12 @@ function Configure({
     if (cmdData?.command) {
       const cmds: Command[] = cmdData.command
       setAllCmds(cmds)
-      setSelectedCmds(new Set(cmds.map((c: Command) => c.cmd)))
+      if (initialConfig?.commands.length) {
+        const available = new Set(cmds.map(c => c.cmd))
+        setSelectedCmds(new Set(initialConfig.commands.filter(c => available.has(c))))
+      } else {
+        setSelectedCmds(new Set(cmds.map((c: Command) => c.cmd)))
+      }
       setCmdsLoaded(true)
     }
   }, [cmdData])
@@ -937,9 +990,16 @@ function Building({
 
 // ── Modal root ─────────────────────────────────────────
 
-export function CreatePayloadModal({ onClose }: { onClose: () => void }) {
+export function CreatePayloadModal({
+  onClose,
+  initialPayload,
+}: {
+  onClose: () => void
+  initialPayload?: Payload
+}) {
   const [step, setStep]         = useState<'pick' | 'configure' | 'building'>('pick')
   const [selType, setSelType]   = useState<PayloadType | null>(null)
+  const [initialConfig, setInitialConfig] = useState<InitialConfig | undefined>(undefined)
   const [buildUuid, setBuildUuid] = useState('')
   const [buildError, setBuildError] = useState('')
 
@@ -947,6 +1007,17 @@ export function CreatePayloadModal({ onClose }: { onClose: () => void }) {
     fetchPolicy: 'cache-and-network',
   })
   const types: PayloadType[] = data?.payloadtype ?? []
+
+  // When rebuilding with edits: find the matching type and jump to configure
+  useEffect(() => {
+    if (!initialPayload || !types.length) return
+    const match = types.find(t => t.name === initialPayload.payloadtype.name)
+    if (match) {
+      setSelType(match)
+      setInitialConfig(payloadToInitialConfig(initialPayload))
+      setStep('configure')
+    }
+  }, [initialPayload, types])
 
   const [createPayload, { loading: creating }] = useMutation(CREATE_PAYLOAD)
 
@@ -998,8 +1069,9 @@ export function CreatePayloadModal({ onClose }: { onClose: () => void }) {
           {step === 'configure' && selType && (
             <Configure
               type={selType}
-              onBack={() => setStep('pick')}
+              onBack={() => { setStep('pick'); setInitialConfig(undefined) }}
               onBuild={handleBuild}
+              initialConfig={initialConfig}
             />
           )}
 
