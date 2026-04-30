@@ -11,7 +11,7 @@ import styles from './FileBrowser.module.css'
 
 // ── Types ─────────────────────────────────────────────
 
-interface LsFile {
+export interface LsFile {
   name:       string
   full_name:  string
   is_file:    boolean
@@ -23,7 +23,7 @@ interface LsFile {
   directory?: string
 }
 
-interface LsResult {
+export interface LsResult {
   success:     boolean
   host?:       string
   name?:       string
@@ -124,6 +124,27 @@ export function parseLsOutput(raw: string): LsResult | null {
   return parseApolloTextLs(raw)
 }
 
+// ── Text file detection ───────────────────────────────
+
+const TEXT_EXTENSIONS = new Set([
+  'txt','log','conf','config','cfg','ini','yaml','yml','json','xml','csv','tsv',
+  'md','markdown','rst','toml','env','properties','sh','bash','zsh','fish',
+  'ps1','psm1','psd1','bat','cmd','py','rb','php','pl','lua','go','rs',
+  'c','cpp','h','hpp','cs','java','js','ts','jsx','tsx','html','htm','css',
+  'scss','less','sql','dockerfile','makefile','gitignore','htaccess','reg',
+])
+
+export function isTextFile(name: string): boolean {
+  const dot = name.lastIndexOf('.')
+  if (dot === -1) {
+    // no extension — treat common extensionless names as text
+    const base = name.toLowerCase()
+    return ['dockerfile','makefile','readme','license','changelog',
+            'hosts','passwd','shadow','crontab'].includes(base)
+  }
+  return TEXT_EXTENSIONS.has(name.slice(dot + 1).toLowerCase())
+}
+
 // ── Formatters ────────────────────────────────────────
 
 function fmtSize(bytes?: number): string {
@@ -217,13 +238,24 @@ export function FileBrowser({ result, callbackDisplayId }: Props) {
               <td className={styles.tdDate}>{fmtDate(f.modify_time)}</td>
               <td className={styles.tdAct}>
                 {f.is_file ? (
-                  <button
-                    className={styles.actBtn}
-                    title={`download ${f.full_name}`}
-                    onClick={() => issueCmd('download', f.full_name ?? f.name)}
-                  >
-                    ↓ dl
-                  </button>
+                  <div className={styles.actGroup}>
+                    {isTextFile(f.name) && (
+                      <button
+                        className={`${styles.actBtn} ${styles.actCat}`}
+                        title={`cat ${f.full_name}`}
+                        onClick={() => issueCmd('cat', f.full_name ?? f.name)}
+                      >
+                        cat
+                      </button>
+                    )}
+                    <button
+                      className={styles.actBtn}
+                      title={`download ${f.full_name}`}
+                      onClick={() => issueCmd('download', f.full_name ?? f.name)}
+                    >
+                      ↓ dl
+                    </button>
+                  </div>
                 ) : (
                   <button
                     className={`${styles.actBtn} ${styles.actNav}`}

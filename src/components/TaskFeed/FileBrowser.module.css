@@ -63,7 +63,7 @@
 .thSize  { width: 72px; text-align: right; }
 .thOwner { width: 90px; }
 .thDate  { width: 110px; }
-.thAct   { width: 48px; }
+.thAct   { width: 88px; }
 
 /* ── Rows ── */
 .row {
@@ -128,6 +128,13 @@
 
 .tdAct {
   padding: 4px 8px 4px 4px;
+  white-space: nowrap;
+}
+
+.actGroup {
+  display: flex;
+  gap: 4px;
+  align-items: center;
 }
 
 /* ── Action buttons ── */
@@ -155,6 +162,16 @@
   color: var(--beige);
   background: var(--beige-dim);
   border-color: var(--beige-border-md);
+}
+
+.actCat {
+  color: var(--bone-600);
+  border-color: var(--border-subtle);
+}
+.actCat:hover {
+  color: var(--bone-100);
+  background: rgba(60,120,180,0.15);
+  border-color: rgba(60,120,180,0.4);
 }
 
 /* ── Footer ── */

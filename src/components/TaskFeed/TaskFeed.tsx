@@ -10,13 +10,18 @@ import type { Task }                    from '@/store'
 import { TaskList }                     from './TaskList'
 import { TaskOutputPanel }              from './TaskOutputPanel'
 import { ConsoleView }                  from './ConsoleView'
+import { FileBrowserPanel }             from './FileBrowserPanel'
 import styles                           from './TaskFeed.module.css'
 
-type ViewMode = 'feed' | 'console'
+type ViewMode = 'feed' | 'console' | 'browser'
 
 export function TaskFeed() {
   const selectedCallbackId = useStore((s) => s.selectedCallbackId)
+  const callbacks          = useStore((s) => s.callbacks)
   const setCurrentTasks    = useStore((s) => s.setCurrentTasks)
+
+  const selectedCb         = callbacks.find(c => c.id === selectedCallbackId)
+  const callbackDisplayId  = selectedCb?.display_id ?? 0
   const [viewMode, setViewMode]         = useState<ViewMode>('feed')
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null)
 
@@ -99,11 +104,24 @@ export function TaskFeed() {
           >
             ▮ console
           </button>
+          <button
+            className={`${styles.viewBtn} ${viewMode === 'browser' ? styles.viewBtnActive : ''}`}
+            onClick={() => setViewMode('browser')}
+            title="File browser"
+          >
+            ⊟ files
+          </button>
         </div>
       </div>
 
       {/* ── Content ── */}
-      {viewMode === 'console' ? (
+      {viewMode === 'browser' ? (
+        <FileBrowserPanel
+          key={selectedCallbackId ?? 0}
+          callbackId={selectedCallbackId ?? 0}
+          callbackDisplayId={callbackDisplayId}
+        />
+      ) : viewMode === 'console' ? (
         <ConsoleView tasks={tasks} />
       ) : (
         <div className={styles.splitPane}>

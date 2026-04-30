@@ -276,6 +276,18 @@ export const GET_WRAPPABLE_PAYLOADS = gql`
   }
 `
 
+// One-time fetch of all response chunks for a task (for file browser)
+export const GET_TASK_RESPONSE = gql`
+  query GetTaskResponse($task_id: Int!) {
+    response(
+      where:    { task_id: { _eq: $task_id } }
+      order_by: { id: asc }
+    ) {
+      response: response_text
+    }
+  }
+`
+
 // Soft-delete a payload via Hasura action (update_payload_by_pk is not exposed)
 export const DELETE_PAYLOAD = gql`
   mutation DeletePayload($payload_uuid: String!) {
@@ -802,6 +814,62 @@ export const UPDATE_OPERATOR_OPERATION = gql`
     ) {
       status
       error
+    }
+  }
+`
+
+// ─────────────────────────────────────────────────────
+// MYTHICTREE — file browser
+// ─────────────────────────────────────────────────────
+
+// Initial load: all file-type tree nodes for a callback (non-deleted).
+export const GET_MYTHIC_TREE = gql`
+  query GetMythicTree($callback_id: Int!) {
+    mythictree(
+      where: {
+        callback_id: { _eq: $callback_id }
+        tree_type:   { _eq: "file" }
+        deleted:     { _eq: false }
+      }
+      order_by: { id: asc }
+    ) {
+      id
+      full_path_text
+      parent_path_text
+      name_text
+      can_have_children
+      has_children
+      success
+      host
+      metadata
+      filemeta { agent_file_id }
+    }
+  }
+`
+
+// Streaming subscription: new/updated nodes after mount (cursor = now).
+// Does NOT filter deleted so we catch soft-delete events from update_deleted.
+export const SUB_MYTHIC_TREE = gql`
+  subscription SubMythicTree($callback_id: Int!, $now: timestamp!) {
+    mythictree_stream(
+      batch_size: 200
+      cursor: { initial_value: { timestamp: $now } }
+      where: {
+        callback_id: { _eq: $callback_id }
+        tree_type:   { _eq: "file" }
+      }
+    ) {
+      id
+      full_path_text
+      parent_path_text
+      name_text
+      can_have_children
+      has_children
+      success
+      deleted
+      host
+      metadata
+      filemeta { agent_file_id }
     }
   }
 `
