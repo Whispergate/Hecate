@@ -10,6 +10,7 @@ import { useSubscription }             from '@apollo/client'
 import { SUB_TASK_RESPONSES }          from '@/apollo/operations'
 import type { Task }                   from '@/store'
 import { FileBrowser, parseLsOutput }  from './FileBrowser'
+import { ProcessBrowser, parsePsOutput } from './ProcessBrowser'
 import { KillTaskButton }              from './KillTaskButton'
 import styles                          from './ConsoleView.module.css'
 
@@ -67,6 +68,7 @@ function ConsoleEntry({ task, isLast, onOutputChange }: EntryProps) {
     if (fullOutput && onOutputChange) onOutputChange(task.id, fullOutput)
   }, [fullOutput, task.id, onOutputChange])
   const lsResult   = fullOutput ? parseLsOutput(fullOutput) : null
+  const psResult   = (!lsResult && fullOutput) ? parsePsOutput(fullOutput) : null
 
   const displayArgs = (task.display_params && task.display_params !== '{}' && task.display_params !== '')
     ? task.display_params
@@ -90,7 +92,6 @@ function ConsoleEntry({ task, isLast, onOutputChange }: EntryProps) {
       {/* Output */}
       {fullOutput && (
         lsResult ? (
-          // File-explorer output — collapsed by default to avoid giant scroll
           <div className={styles.lsWrap}>
             <button className={styles.lsToggle} onClick={() => setExpanded(x => !x)}>
               <span className={styles.lsIcon}>📂</span>
@@ -104,10 +105,21 @@ function ConsoleEntry({ task, isLast, onOutputChange }: EntryProps) {
             </button>
             {expanded && (
               <div className={styles.lsBrowserWrap}>
-                <FileBrowser
-                  result={lsResult}
-                  callbackDisplayId={task.callback.display_id}
-                />
+                <FileBrowser result={lsResult} callbackDisplayId={task.callback.display_id} />
+              </div>
+            )}
+          </div>
+        ) : psResult ? (
+          <div className={styles.lsWrap}>
+            <button className={styles.lsToggle} onClick={() => setExpanded(x => !x)}>
+              <span className={styles.lsIcon}>⚙</span>
+              <span className={styles.lsPath}>process list</span>
+              <span className={styles.lsMeta}>{psResult.length} processes</span>
+              <span className={styles.lsChevron}>{expanded ? '▲' : '▼'}</span>
+            </button>
+            {expanded && (
+              <div className={styles.lsBrowserWrap}>
+                <ProcessBrowser processes={psResult} callbackDisplayId={task.callback.display_id} />
               </div>
             )}
           </div>

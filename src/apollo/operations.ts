@@ -1088,6 +1088,24 @@ export const RESOLVE_ALL_WARNINGS = gql`
   }
 `
 
+export const GET_INJECT_PAYLOADS = gql`
+  query GetInjectPayloads {
+    payload(
+      where: { deleted: { _eq: false }, build_phase: { _eq: "success" } }
+      order_by: { id: desc }
+    ) {
+      uuid
+      description
+      payloadtype { name }
+      filemetum { filename_text }
+      buildparameterinstances {
+        value
+        buildparameter { name }
+      }
+    }
+  }
+`
+
 export const SUB_OPERATION_ALERT_COUNT = gql`
   subscription SubOperationAlertCount {
     operation_stream(

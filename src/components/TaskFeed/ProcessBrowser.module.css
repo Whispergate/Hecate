@@ -1,0 +1,403 @@
+/* src/components/TaskFeed/ProcessBrowser.module.css */
+
+.browser {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+}
+
+/* ── Toolbar ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--beige-border);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--beige);
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-700);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  padding: 1px 5px;
+}
+
+.search {
+  background: transparent;
+  border: 1px solid var(--beige-border);
+  color: var(--bone-400);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 7px;
+  outline: none;
+  width: 160px;
+  transition: border-color var(--t-fast);
+}
+.search::placeholder { color: var(--bone-900); }
+.search:focus { border-color: rgba(239,239,218,0.4); color: var(--bone-200); }
+
+.pills {
+  display: flex;
+  gap: 3px;
+}
+
+.pill {
+  background: transparent;
+  border: 1px solid var(--beige-border);
+  color: var(--bone-800);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 1px 7px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+}
+.pill:hover { background: rgba(239,239,218,0.06); color: var(--bone-400); }
+.pillActive { background: rgba(239,239,218,0.1); color: var(--beige); border-color: rgba(239,239,218,0.4); }
+
+.pillSystem.pillActive { background: rgba(181,40,40,0.15); color: var(--crimson-400); border-color: rgba(181,40,40,0.35); }
+.pillHigh.pillActive   { background: rgba(212,145,107,0.12); color: #d4916b; border-color: rgba(212,145,107,0.3); }
+
+/* ── Table wrap (scrollable) ── */
+.tableWrap {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  min-height: 0;
+}
+
+/* ── Table ── */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-raised);
+}
+
+.table thead tr {
+  border-bottom: 1px solid var(--beige-border);
+}
+
+.table th {
+  text-align: left;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bone-700);
+  padding: 4px 8px;
+  font-weight: 400;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.table th:hover { color: var(--bone-300); }
+
+.arrow {
+  font-size: 8px;
+  color: var(--crimson-400);
+  margin-left: 2px;
+}
+
+/* Column widths */
+.thPid     { width: 58px; }
+.thPpid    { width: 58px; }
+.thName    { min-width: 140px; }
+.thUser    { min-width: 100px; }
+.thArch    { width: 54px; }
+.thIl      { width: 82px; }
+.thSession { width: 46px; }
+.thAct     { width: 110px; text-align: right; }
+
+/* ── Rows ── */
+.row {
+  border-bottom: 1px solid rgba(239,239,218,0.04);
+  transition: background var(--t-fast);
+}
+.row:hover { background: rgba(239,239,218,0.04); }
+.rowExpanded { background: rgba(239,239,218,0.06) !important; }
+
+.rowSystem { background: rgba(181,40,40,0.06); }
+.rowSystem:hover { background: rgba(181,40,40,0.10); }
+
+.rowHigh { background: rgba(212,145,107,0.05); }
+.rowHigh:hover { background: rgba(212,145,107,0.09); }
+
+/* Cells */
+.table td {
+  padding: 3px 8px;
+  vertical-align: middle;
+}
+
+.tdPid, .tdPpid, .tdSession {
+  color: var(--bone-700);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.tdName {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 260px;
+}
+
+.procName {
+  color: var(--bone-200);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.unsignedBadge {
+  flex-shrink: 0;
+  font-size: 8px;
+  color: #d4916b;
+  border: 1px solid rgba(212,145,107,0.4);
+  border-radius: 2px;
+  padding: 0 3px;
+  line-height: 13px;
+  cursor: default;
+}
+
+.expandHint {
+  flex-shrink: 0;
+  font-size: 7px;
+  color: var(--bone-900);
+  margin-left: auto;
+}
+
+.tdUser {
+  color: var(--bone-500);
+  font-size: 9px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tdArch {
+  font-size: 9px;
+  color: var(--bone-600);
+  white-space: nowrap;
+}
+.archX86 { color: #6b8fd4; }
+
+/* Integrity level colors */
+.tdIl { font-size: 9px; white-space: nowrap; color: var(--bone-600); }
+.ilSystem { color: var(--crimson-400); font-weight: 700; }
+.ilHigh   { color: #d4916b; }
+.ilLow    { color: var(--bone-900); }
+
+/* Actions */
+.tdAct { text-align: right; padding-right: 10px; }
+
+.actGroup {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.actBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  cursor: pointer;
+  padding: 1px 6px;
+  border-radius: 2px;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+  white-space: nowrap;
+}
+
+.actInject {
+  color: var(--bone-700);
+  border-color: rgba(239,239,218,0.12);
+}
+.actInject:hover {
+  color: var(--crimson-300);
+  border-color: rgba(181,40,40,0.4);
+  background: rgba(181,40,40,0.1);
+}
+
+.actKill {
+  color: var(--bone-700);
+  border-color: rgba(239,239,218,0.12);
+}
+.actKill:hover {
+  color: #d4916b;
+  border-color: rgba(212,145,107,0.35);
+  background: rgba(212,145,107,0.08);
+}
+
+/* ── Detail row ── */
+.detailRow { background: rgba(239,239,218,0.03); }
+.detailCell {
+  padding: 6px 14px 8px 24px;
+  border-bottom: 1px solid var(--beige-border);
+}
+
+.detailLine {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 3px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.detailKey {
+  color: var(--bone-800);
+  min-width: 54px;
+  flex-shrink: 0;
+}
+
+.detailVal {
+  color: var(--bone-400);
+  word-break: break-all;
+}
+
+/* ── Footer ── */
+.footer {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-top: 1px solid rgba(239,239,218,0.06);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--bone-800);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Inject modal ── */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  background: var(--bg-elevated);
+  border: 1px solid var(--beige-border);
+  padding: 18px 20px 16px;
+  min-width: 340px;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modalTitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bone-200);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.modalSub {
+  font-size: 9px;
+  color: var(--bone-700);
+}
+
+.modalEmpty {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-700);
+  line-height: 1.6;
+  padding: 6px 0;
+}
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modalLabel {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bone-800);
+}
+
+.modalSelect {
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border);
+  color: var(--bone-300);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 5px 8px;
+  outline: none;
+  width: 100%;
+  cursor: pointer;
+}
+.modalSelect:focus { border-color: rgba(239,239,218,0.4); }
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.modalCancel {
+  background: transparent;
+  border: 1px solid var(--beige-border);
+  color: var(--bone-700);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 4px 14px;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.modalCancel:hover { background: rgba(239,239,218,0.06); color: var(--bone-300); }
+
+.modalConfirm {
+  background: rgba(181,40,40,0.15);
+  border: 1px solid rgba(181,40,40,0.4);
+  color: var(--crimson-400);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 4px 14px;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.modalConfirm:hover:not(:disabled) { background: rgba(181,40,40,0.28); color: var(--crimson-200); }
+.modalConfirm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Empty ── */
+.empty {
+  padding: 20px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-800);
+}
