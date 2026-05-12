@@ -54,12 +54,38 @@ export interface Task {
 
 export interface Operation { id: number; name: string }
 
+export interface CallbackPort {
+  id: number
+  callback_id: number
+  local_port: number
+  remote_port: number
+  remote_ip: string
+  port_type: string
+  bytes_sent: number
+  bytes_received: number
+  updated_at: string
+  callback: { host: string; display_id: number; payload: { payloadtype: { name: string } } }
+  task: { display_id: number }
+}
+
 export interface CallbackToast {
   id: number
   callbackId: number
   display_id: number
   host: string
   user: string
+  agent: string
+}
+
+export interface ProxyToast {
+  id: number
+  portId: number
+  portType: string
+  localPort: number
+  remoteIp: string
+  remotePort: number
+  callbackHost: string
+  callbackDisplayId: number
   agent: string
 }
 
@@ -76,11 +102,13 @@ export interface HecateStore {
   setMultiSelectedIds: (ids: number[]) => void
   callbackAnnotations: Record<number, string>
   setCallbackAnnotation: (displayId: number, color: string) => void
+  activeCallbackPorts: CallbackPort[]
+  setActiveCallbackPorts: (ports: CallbackPort[]) => void
   callbacks: Callback[]
   setCallbacks: (cbs: Callback[]) => void
   currentTasks: Task[]
   setCurrentTasks: (tasks: Task[]) => void
-  activeRailView: 'overview' | 'callbacks' | 'payloads' | 'services' | 'credentials' | 'files' | 'attack' | 'logs' | 'report' | 'operations'
+  activeRailView: 'overview' | 'callbacks' | 'payloads' | 'services' | 'proxies' | 'credentials' | 'files' | 'attack' | 'logs' | 'report' | 'operations'
   setActiveRailView: (v: HecateStore['activeRailView']) => void
   theme: 'dark' | 'light'
   setTheme: (t: 'dark' | 'light') => void
@@ -91,6 +119,9 @@ export interface HecateStore {
   toasts: CallbackToast[]
   addToast: (t: Omit<CallbackToast, 'id'>) => void
   removeToast: (id: number) => void
+  proxyToasts: ProxyToast[]
+  addProxyToast: (t: Omit<ProxyToast, 'id'>) => void
+  removeProxyToast: (id: number) => void
   unresolvedWarnings: number
   setUnresolvedWarnings: (n: number) => void
 }
@@ -117,12 +148,14 @@ export const useStore = create<HecateStore>((set) => ({
         if (raw) callbackAnnotations = JSON.parse(raw) as Record<number, string>
       } catch { /* ignore */ }
     }
-    set({ activeOperation: op, selectedCallbackId: null, multiSelectedIds: [], currentTasks: [], callbacks: [], callbackAnnotations })
+    set({ activeOperation: op, selectedCallbackId: null, multiSelectedIds: [], currentTasks: [], callbacks: [], callbackAnnotations, activeCallbackPorts: [], proxyToasts: [] })
   },
   selectedCallbackId: null,
   setSelectedCallbackId: (id) => set({ selectedCallbackId: id, currentTasks: [] }),
   multiSelectedIds: [],
   setMultiSelectedIds: (multiSelectedIds) => set({ multiSelectedIds }),
+  activeCallbackPorts: [],
+  setActiveCallbackPorts: (activeCallbackPorts) => set({ activeCallbackPorts }),
   callbackAnnotations: {},
   setCallbackAnnotation: (displayId, color) => set((s) => {
     const next = { ...s.callbackAnnotations }
@@ -155,6 +188,9 @@ export const useStore = create<HecateStore>((set) => ({
   toasts: [],
   addToast: (t) => set((s) => ({ toasts: [...s.toasts, { ...t, id: Date.now() + Math.random() }] })),
   removeToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+  proxyToasts: [],
+  addProxyToast: (t) => set((s) => ({ proxyToasts: [...s.proxyToasts, { ...t, id: Date.now() + Math.random() }] })),
+  removeProxyToast: (id) => set((s) => ({ proxyToasts: s.proxyToasts.filter((t) => t.id !== id) })),
   unresolvedWarnings: 0,
   setUnresolvedWarnings: (unresolvedWarnings) => set({ unresolvedWarnings }),
 }))

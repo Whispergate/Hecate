@@ -109,6 +109,22 @@
 .integrityIconMed  { margin-left: 5px; font-size: 7px; color: var(--integrity-med);  vertical-align: middle; }
 .integrityIconHigh { margin-left: 5px; font-size: 7px; color: var(--integrity-high); vertical-align: middle; }
 
+.proxyChip {
+  display: inline-block;
+  font-size: 7px;
+  font-weight: 700;
+  color: #3ab8d8;
+  background: rgba(42, 122, 154, 0.18);
+  border: 1px solid rgba(42, 122, 154, 0.35);
+  border-radius: 3px;
+  padding: 0px 3px;
+  margin-left: 5px;
+  vertical-align: middle;
+  line-height: 12px;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
 .annotDot {
   display: inline-block;
   width: 7px;

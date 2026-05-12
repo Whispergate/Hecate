@@ -910,6 +910,38 @@ export const CREATE_TASK = gql`
 `
 
 // ─────────────────────────────────────────────────────
+// CALLBACK PORTS (SOCKS / RPFWD)
+// ─────────────────────────────────────────────────────
+
+export const SUB_CALLBACK_PORTS = gql`
+  subscription SubCallbackPorts($operation_id: Int!) {
+    callbackport(
+      where: {
+        operation_id: { _eq: $operation_id }
+        deleted: { _eq: false }
+      }
+      order_by: { id: asc }
+    ) {
+      id
+      callback_id
+      local_port
+      remote_port
+      remote_ip
+      port_type
+      bytes_sent
+      bytes_received
+      updated_at
+      callback {
+        host
+        display_id
+        payload { payloadtype { name } }
+      }
+      task { display_id }
+    }
+  }
+`
+
+// ─────────────────────────────────────────────────────
 // CALLBACK MUTATIONS
 // ─────────────────────────────────────────────────────
 

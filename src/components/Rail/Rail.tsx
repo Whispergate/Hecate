@@ -4,6 +4,7 @@
 
 import { useStore } from '@/store'
 import type { HecateStore } from '@/store'
+import { useMemo } from 'react'
 import styles from './Rail.module.css'
 
 const SETTINGS_ICON = (
@@ -58,6 +59,18 @@ const ITEMS: { id: RailView; title: string; icon: React.ReactNode }[] = [
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
         <circle cx="8" cy="8" r="3" />
         <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" />
+      </svg>
+    ),
+  },
+  {
+    id: 'proxies',
+    title: 'Proxies & Tunnels',
+    icon: (
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+        <rect x="1" y="6" width="4" height="4" rx="0.8" />
+        <rect x="11" y="6" width="4" height="4" rx="0.8" />
+        <path d="M5 8h2M9 8h2" />
+        <circle cx="8" cy="8" r="1.5" />
       </svg>
     ),
   },
@@ -128,7 +141,9 @@ const ITEMS: { id: RailView; title: string; icon: React.ReactNode }[] = [
 
 export function Rail() {
   const { activeRailView, setActiveRailView, isSettingsOpen, setSettingsOpen } = useStore()
-  const unresolvedWarnings = useStore((s) => s.unresolvedWarnings)
+  const unresolvedWarnings  = useStore((s) => s.unresolvedWarnings)
+  const activeCallbackPorts = useStore((s) => s.activeCallbackPorts)
+  const activePortCount = useMemo(() => activeCallbackPorts.length, [activeCallbackPorts])
 
   return (
     <nav className={styles.rail}>
@@ -145,6 +160,9 @@ export function Rail() {
             </button>
             {item.id === 'logs' && unresolvedWarnings > 0 && (
               <span className={styles.badge}>{unresolvedWarnings > 99 ? '99+' : unresolvedWarnings}</span>
+            )}
+            {item.id === 'proxies' && activePortCount > 0 && (
+              <span className={`${styles.badge} ${styles.badgeProxy}`}>{activePortCount}</span>
             )}
           </div>
         </>

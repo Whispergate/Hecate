@@ -18,9 +18,11 @@ import { OverviewPanel }     from '@/components/OverviewPanel/OverviewPanel'
 import { OperationsPanel }     from '@/components/OperationsPanel/OperationsPanel'
 import { CredentialsPanel }   from '@/components/CredentialsPanel/CredentialsPanel'
 import { EventLogPanel }      from '@/components/EventLogPanel/EventLogPanel'
-import { CallbackToastContainer } from '@/components/Toast/CallbackToast'
+import { ProxiesPanel }            from '@/components/ProxiesPanel/ProxiesPanel'
+import { CallbackToastContainer }  from '@/components/Toast/CallbackToast'
+import { ProxyToastContainer }     from '@/components/Toast/ProxyToast'
 import { SettingsPanel }         from '@/components/SettingsPanel/SettingsPanel'
-import { SUB_CALLBACKS, SUB_OPERATION_ALERT_COUNT } from '@/apollo/operations'
+import { SUB_CALLBACKS, SUB_OPERATION_ALERT_COUNT, SUB_CALLBACK_PORTS } from '@/apollo/operations'
 import { parseTs }       from '@/components/Sidebar/utils'
 import { useStore, useSelectedCallback } from '@/store'
 import styles from './Dashboard.module.css'
@@ -93,6 +95,51 @@ function useCallbackSubscription() {
   })
 }
 
+function useCallbackPortsSubscription() {
+  const activeOperation        = useStore((s) => s.activeOperation)
+  const setActiveCallbackPorts = useStore((s) => s.setActiveCallbackPorts)
+  const addProxyToast          = useStore((s) => s.addProxyToast)
+
+  const seenIdsRef    = useRef<Set<number>>(new Set())
+  const firstLoadDone = useRef(false)
+
+  useEffect(() => {
+    seenIdsRef.current = new Set()
+    firstLoadDone.current = false
+  }, [activeOperation?.id])
+
+  useSubscription(SUB_CALLBACK_PORTS, {
+    variables: { operation_id: activeOperation?.id ?? 0 },
+    skip:      !activeOperation,
+    onData: ({ data }) => {
+      const ports = data.data?.callbackport ?? []
+      setActiveCallbackPorts(ports)
+
+      if (!firstLoadDone.current) {
+        for (const p of ports) seenIdsRef.current.add(p.id)
+        firstLoadDone.current = true
+        return
+      }
+
+      for (const p of ports) {
+        if (!seenIdsRef.current.has(p.id)) {
+          seenIdsRef.current.add(p.id)
+          addProxyToast({
+            portId:            p.id,
+            portType:          p.port_type,
+            localPort:         p.local_port,
+            remoteIp:          p.remote_ip,
+            remotePort:        p.remote_port,
+            callbackHost:      p.callback.host,
+            callbackDisplayId: p.callback.display_id,
+            agent:             p.callback.payload.payloadtype.name,
+          })
+        }
+      }
+    },
+  })
+}
+
 function useWarningBadge() {
   const setUnresolvedWarnings = useStore((s) => s.setUnresolvedWarnings)
   const activeOperation       = useStore((s) => s.activeOperation)
@@ -109,16 +156,18 @@ function useWarningBadge() {
 
 export function Dashboard() {
   useCallbackSubscription()
+  useCallbackPortsSubscription()
   useWarningBadge()
 
   const activeRailView = useStore((s) => s.activeRailView)
-  const isFullPanel    = activeRailView === 'overview' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'report' || activeRailView === 'files' || activeRailView === 'operations' || activeRailView === 'credentials' || activeRailView === 'logs'
+  const isFullPanel    = activeRailView === 'overview' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'proxies' || activeRailView === 'report' || activeRailView === 'files' || activeRailView === 'operations' || activeRailView === 'credentials' || activeRailView === 'logs'
 
   return (
     <div className={styles.root}>
       <div className={styles.stripe} />
       <Topbar />
       <CallbackToastContainer />
+      <ProxyToastContainer />
       <SettingsPanel />
 
       <div className={styles.body}>
@@ -129,6 +178,7 @@ export function Dashboard() {
             {activeRailView === 'overview'  && <OverviewPanel />}
             {activeRailView === 'payloads'  && <PayloadPanel />}
             {activeRailView === 'services'  && <ServicesPanel />}
+            {activeRailView === 'proxies'   && <ProxiesPanel />}
             {activeRailView === 'report'    && <ReportPanel />}
             {activeRailView === 'files'       && <FilesPanel />}
             {activeRailView === 'operations'    && <OperationsPanel />}

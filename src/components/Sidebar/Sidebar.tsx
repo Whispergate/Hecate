@@ -13,7 +13,7 @@ interface CtxMenu { cb: Callback; x: number; y: number }
 type StatusFilter = 'alive' | 'idle' | 'dead'
 
 export function Sidebar() {
-  const { selectedCallbackId, setSelectedCallbackId, multiSelectedIds, setMultiSelectedIds, callbacks, callbackAnnotations } = useStore()
+  const { selectedCallbackId, setSelectedCallbackId, multiSelectedIds, setMultiSelectedIds, callbacks, callbackAnnotations, activeCallbackPorts } = useStore()
   const callbackAliveMs       = useStore((s) => s.settings.callbackAliveMs)
   const callbackIdleMs        = useStore((s) => s.settings.callbackIdleMs)
   const showCallbackDisplayId = useStore((s) => s.settings.showCallbackDisplayId)
@@ -80,6 +80,15 @@ export function Sidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [callbacks, callbackAliveMs, callbackIdleMs]
   )
+
+  const portsByCallbackId = useMemo(() => {
+    const map = new Map<number, number[]>()
+    for (const p of activeCallbackPorts) {
+      if (!map.has(p.callback_id)) map.set(p.callback_id, [])
+      map.get(p.callback_id)!.push(p.local_port)
+    }
+    return map
+  }, [activeCallbackPorts])
 
   const visible = sorted.filter(({ cb, elapsed }) => {
     if (filterStatus.size > 0 && !filterStatus.has(getStatus(elapsed))) return false
@@ -161,8 +170,9 @@ export function Sidebar() {
                                 : cb.integrity_level === 2 ? styles.integrityIconMed : ''
 
           const isMultiSelected = multiSelectedIds.includes(cb.id)
-          const annotColor = callbackAnnotations[cb.display_id] ?? ''
-          const annotTitle = cb.description || annotColor
+          const annotColor  = callbackAnnotations[cb.display_id] ?? ''
+          const annotTitle  = cb.description || annotColor
+          const activePorts = portsByCallbackId.get(cb.id) ?? []
           return (
             <div
               key={cb.id}
@@ -176,6 +186,14 @@ export function Sidebar() {
                 {cb.host}
                 {cb.locked && <span className={styles.lockBadge}>🔒</span>}
                 {cb.integrity_level >= 2 && <span className={integrityIcon}>▲</span>}
+                {activePorts.length > 0 && (
+                  <span
+                    className={styles.proxyChip}
+                    title={activePorts.map(p => `:${p}`).join(', ')}
+                  >
+                    {activePorts.length === 1 ? `:${activePorts[0]}` : `${activePorts.length}⇄`}
+                  </span>
+                )}
                 {annotColor && (
                   <span
                     className={styles.annotDot}

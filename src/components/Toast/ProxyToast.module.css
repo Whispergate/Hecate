@@ -1,0 +1,196 @@
+/* hecate/src/components/Toast/ProxyToast.module.css */
+
+.container {
+  position: fixed;
+  top: calc(var(--topbar-h) + 12px);
+  right: 16px;
+  z-index: 9998;           /* just below CallbackToast */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+/* ── Toast card ── */
+.toast {
+  display: flex;
+  width: 296px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(42, 122, 154, 0.35);
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(42,122,154,0.12),
+    0 2px 12px rgba(42,122,154,0.15);
+  overflow: hidden;
+  cursor: pointer;
+  pointer-events: all;
+  transition: box-shadow var(--t-fast), transform var(--t-fast);
+}
+.toast:hover {
+  box-shadow:
+    0 6px 28px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(42,122,154,0.5),
+    0 2px 16px rgba(42,122,154,0.25);
+  transform: translateX(-2px);
+}
+
+/* ── Animations ── */
+.enter { animation: slideIn 0.28s cubic-bezier(0.22,1,0.36,1) both; }
+.exit  { animation: slideOut 0.28s ease-in both; }
+
+@keyframes slideIn {
+  from { transform: translateX(calc(100% + 24px)); opacity: 0; }
+  to   { transform: translateX(0);                opacity: 1; }
+}
+@keyframes slideOut {
+  from { transform: translateX(0);                opacity: 1; max-height: 160px; margin-bottom: 0; }
+  to   { transform: translateX(calc(100% + 24px)); opacity: 0; max-height: 0;    margin-bottom: -8px; }
+}
+
+/* ── Teal accent bar ── */
+.accentBar {
+  width: 3px;
+  flex-shrink: 0;
+  background: linear-gradient(to bottom, #3dd8f0, #2a7a9a);
+}
+
+/* ── Body ── */
+.body {
+  flex: 1;
+  padding: 10px 10px 0;
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3ab8d8;
+  box-shadow: 0 0 6px rgba(58,184,216,0.7);
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(58,184,216,0.6); }
+  50%       { box-shadow: 0 0 10px rgba(58,184,216,0.9), 0 0 20px rgba(58,184,216,0.3); }
+}
+
+.label {
+  font-family: var(--font-serif);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: #3ab8d8;
+  flex: 1;
+}
+
+.close {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--bone-800);
+  font-size: 9px;
+  cursor: pointer;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity var(--t-fast), color var(--t-fast);
+}
+.close:hover { opacity: 1; color: var(--bone-200); }
+
+/* ── Port number ── */
+.port {
+  font-size: 22px;
+  font-weight: 700;
+  color: #3ab8d8;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 5px;
+  font-family: var(--font-mono);
+}
+
+/* ── Callback meta ── */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  margin-bottom: 8px;
+}
+.host      { color: var(--bone-200); font-weight: 700; }
+.sep       { color: var(--bone-900); }
+.displayId { color: var(--bone-800); }
+.agent     { color: var(--bone-600); }
+
+/* ── Config line ── */
+.configRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-raised);
+  border: 1px solid rgba(42,122,154,0.25);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  margin-bottom: 4px;
+}
+
+.configLine {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-300);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.04em;
+  user-select: text;
+}
+
+.copyBtn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid rgba(42,122,154,0.35);
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: #3ab8d8;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+  min-width: 34px;
+  text-align: center;
+}
+.copyBtn:hover     { background: rgba(42,122,154,0.2); border-color: #3ab8d8; }
+.copyDone          { color: var(--status-ok-text) !important; border-color: var(--status-ok-text) !important; }
+
+/* ── Hint text ── */
+.hint {
+  font-size: 8px;
+  color: var(--bone-900);
+  margin-bottom: 8px;
+  letter-spacing: 0.03em;
+}
+
+/* ── Progress bar ── */
+.progress {
+  height: 2px;
+  background: var(--border-subtle);
+  margin: 0 -10px;
+}
+.progressBar {
+  height: 100%;
+  background: linear-gradient(to right, #2a7a9a, #3ab8d8);
+  animation: drain linear both;
+  transform-origin: left;
+}
+@keyframes drain {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
