@@ -20,7 +20,7 @@ import { CredentialsPanel }   from '@/components/CredentialsPanel/CredentialsPan
 import { EventLogPanel }      from '@/components/EventLogPanel/EventLogPanel'
 import { CallbackToastContainer } from '@/components/Toast/CallbackToast'
 import { SettingsPanel }         from '@/components/SettingsPanel/SettingsPanel'
-import { SUB_CALLBACKS } from '@/apollo/operations'
+import { SUB_CALLBACKS, SUB_OPERATION_ALERT_COUNT } from '@/apollo/operations'
 import { parseTs }       from '@/components/Sidebar/utils'
 import { useStore, useSelectedCallback } from '@/store'
 import styles from './Dashboard.module.css'
@@ -93,8 +93,23 @@ function useCallbackSubscription() {
   })
 }
 
+function useWarningBadge() {
+  const setUnresolvedWarnings = useStore((s) => s.setUnresolvedWarnings)
+  const activeOperation       = useStore((s) => s.activeOperation)
+
+  useSubscription(SUB_OPERATION_ALERT_COUNT, {
+    skip: !activeOperation,
+    onData: ({ data }) => {
+      const ops: Array<{ id: number; alert_count: number }> = data.data?.operation_stream ?? []
+      const match = ops.find(o => o.id === activeOperation?.id)
+      if (match != null) setUnresolvedWarnings(match.alert_count)
+    },
+  })
+}
+
 export function Dashboard() {
   useCallbackSubscription()
+  useWarningBadge()
 
   const activeRailView = useStore((s) => s.activeRailView)
   const isFullPanel    = activeRailView === 'overview' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'report' || activeRailView === 'files' || activeRailView === 'operations' || activeRailView === 'credentials' || activeRailView === 'logs'

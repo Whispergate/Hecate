@@ -6,7 +6,7 @@
    Operators can send team messages via compose bar.
    ═══════════════════════════════════════════════════ */
 
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { useState, useMemo, useRef, useCallback } from 'react'
 import { useQuery, useSubscription, useMutation }            from '@apollo/client'
 import {
   GET_EVENT_LOG, SUB_EVENT_LOG,
@@ -23,6 +23,7 @@ interface EventLog {
   message:   string
   source:    string
   resolved:  boolean
+  warning:   boolean
   count:     number
   timestamp: string
   operator:  { username: string } | null
@@ -30,7 +31,7 @@ interface EventLog {
 
 // ── Helpers ───────────────────────────────────────────
 
-const LEVELS = ['all', 'info', 'warning', 'agent', 'auth', 'debug', 'api'] as const
+const LEVELS = ['all', 'unresolved', 'info', 'warning', 'agent', 'auth', 'debug', 'api'] as const
 
 function levelClass(level: string): string {
   switch (level) {
@@ -57,10 +58,9 @@ interface RowProps {
 }
 
 function EventRow({ event, onResolve }: RowProps) {
-  const isWarning  = event.level === 'warning'
-  const rowCls     = [
+  const rowCls = [
     styles.row,
-    isWarning  ? styles.rowWarning  : '',
+    event.warning  ? styles.rowWarning  : '',
     event.resolved ? styles.rowResolved : '',
   ].filter(Boolean).join(' ')
 
@@ -73,14 +73,14 @@ function EventRow({ event, onResolve }: RowProps) {
       <span className={styles.ts}>{fmtTs(event.timestamp)}</span>
       <span className={`${styles.levelBadge} ${levelClass(event.level)}`}>[{event.level}]</span>
       <span className={styles.source} title={event.source}>{event.source || '—'}</span>
-      <span className={`${styles.message} ${isWarning && !event.resolved ? styles.messageWarning : ''}`}>
+      <span className={`${styles.message} ${event.warning && !event.resolved ? styles.messageWarning : ''}`}>
         {label}
       </span>
       <div className={styles.rowMeta}>
         {event.count > 1 && (
           <span className={styles.countBadge}>×{event.count}</span>
         )}
-        {(isWarning || event.resolved) && (
+        {(event.warning || event.resolved) && (
           <button
             className={`${styles.resolveToggle} ${event.resolved ? styles.resolveToggleActive : ''}`}
             onClick={() => onResolve(event.id, !event.resolved)}
@@ -132,13 +132,14 @@ export function EventLogPanel() {
   const [resolveAll,    { loading: resolving }] = useMutation(RESOLVE_ALL_WARNINGS)
 
   const unresolvedWarnings = useMemo(
-    () => events.filter(e => e.level === 'warning' && !e.resolved).length,
+    () => events.filter(e => e.warning && !e.resolved).length,
     [events],
   )
 
   const filtered = useMemo(() => {
     let list = events
-    if (levelFilter !== 'all') list = list.filter(e => e.level === levelFilter)
+    if (levelFilter === 'unresolved') list = list.filter(e => e.warning && !e.resolved)
+    else if (levelFilter !== 'all')   list = list.filter(e => e.level === levelFilter)
     if (query.trim()) {
       const q = query.toLowerCase()
       list = list.filter(e =>
@@ -191,7 +192,7 @@ export function EventLogPanel() {
               onClick={() => setLevelFilter(l)}
             >
               {l}
-              {l === 'warning' && unresolvedWarnings > 0 && (
+              {(l === 'warning' || l === 'unresolved') && unresolvedWarnings > 0 && (
                 <span className={styles.warningCount}>{unresolvedWarnings}</span>
               )}
             </button>

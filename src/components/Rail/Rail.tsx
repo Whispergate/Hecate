@@ -128,20 +128,25 @@ const ITEMS: { id: RailView; title: string; icon: React.ReactNode }[] = [
 
 export function Rail() {
   const { activeRailView, setActiveRailView, isSettingsOpen, setSettingsOpen } = useStore()
+  const unresolvedWarnings = useStore((s) => s.unresolvedWarnings)
 
   return (
     <nav className={styles.rail}>
       {ITEMS.map((item, idx) => (
         <>
           {idx === 4 && <div key="sep" className={styles.sep} />}
-          <button
-            key={item.id}
-            className={`${styles.btn} ${activeRailView === item.id ? styles.active : ''}`}
-            title={item.title}
-            onClick={() => setActiveRailView(item.id)}
-          >
-            {item.icon}
-          </button>
+          <div key={item.id} className={styles.btnWrap}>
+            <button
+              className={`${styles.btn} ${activeRailView === item.id ? styles.active : ''}`}
+              title={item.title}
+              onClick={() => setActiveRailView(item.id)}
+            >
+              {item.icon}
+            </button>
+            {item.id === 'logs' && unresolvedWarnings > 0 && (
+              <span className={styles.badge}>{unresolvedWarnings > 99 ? '99+' : unresolvedWarnings}</span>
+            )}
+          </div>
         </>
       ))}
 

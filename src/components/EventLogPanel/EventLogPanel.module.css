@@ -185,17 +185,15 @@
 
 .resolveToggle {
   background: transparent;
-  border: 1px solid transparent;
-  color: var(--bone-800);
+  border: 1px solid rgba(239,239,218,0.15);
+  color: var(--bone-700);
   font-family: var(--font-mono);
   font-size: 9px;
   cursor: pointer;
-  padding: 1px 5px;
+  padding: 1px 6px;
   border-radius: 2px;
-  opacity: 0;
-  transition: opacity var(--t-fast), background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
 }
-.row:hover .resolveToggle { opacity: 1; }
 .resolveToggle:hover {
   background: rgba(239,239,218,0.08);
   border-color: var(--beige-border);

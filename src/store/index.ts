@@ -87,6 +87,8 @@ export interface HecateStore {
   toasts: CallbackToast[]
   addToast: (t: Omit<CallbackToast, 'id'>) => void
   removeToast: (id: number) => void
+  unresolvedWarnings: number
+  setUnresolvedWarnings: (n: number) => void
 }
 
 export const useStore = create<HecateStore>((set) => ({
@@ -128,6 +130,8 @@ export const useStore = create<HecateStore>((set) => ({
   toasts: [],
   addToast: (t) => set((s) => ({ toasts: [...s.toasts, { ...t, id: Date.now() + Math.random() }] })),
   removeToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+  unresolvedWarnings: 0,
+  setUnresolvedWarnings: (unresolvedWarnings) => set({ unresolvedWarnings }),
 }))
 
 export const useSelectedCallback = () =>

@@ -10,6 +10,13 @@
   gap: 3px;
 }
 
+.btnWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .btn {
   width: 30px;
   height: 30px;
@@ -23,6 +30,25 @@
   color: var(--bone-800);
   opacity: var(--rail-icon-opacity, 0.4);
   transition: opacity var(--t-fast), background var(--t-fast), border-color var(--t-fast);
+}
+
+.badge {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  min-width: 13px;
+  height: 13px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: var(--crimson-600, #b52828);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 13px;
+  text-align: center;
+  pointer-events: none;
+  opacity: 1;
 }
 
 .btn svg {

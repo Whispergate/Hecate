@@ -1034,7 +1034,7 @@ export const DELETE_CREDENTIAL = gql`
 
 const EVENT_FIELDS = gql`
   fragment EventFields on operationeventlog {
-    id level message source resolved count timestamp
+    id level message source resolved warning count timestamp
     operator { username }
   }
 `
@@ -1082,8 +1082,20 @@ export const UPDATE_EVENT_RESOLVED = gql`
 export const RESOLVE_ALL_WARNINGS = gql`
   mutation ResolveAllWarnings {
     update_operationeventlog(
-      where: { resolved: { _eq: false }, level: { _eq: "warning" }, deleted: { _eq: false } }
+      where: { resolved: { _eq: false }, warning: { _eq: true }, deleted: { _eq: false } }
       _set: { resolved: true }
     ) { returning { id resolved } }
+  }
+`
+
+export const SUB_OPERATION_ALERT_COUNT = gql`
+  subscription SubOperationAlertCount {
+    operation_stream(
+      cursor: { initial_value: { updated_at: "1970-01-01" }, ordering: ASC }
+      batch_size: 1
+    ) {
+      id
+      alert_count
+    }
   }
 `
