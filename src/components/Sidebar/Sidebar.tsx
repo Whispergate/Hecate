@@ -13,7 +13,7 @@ interface CtxMenu { cb: Callback; x: number; y: number }
 type StatusFilter = 'alive' | 'idle' | 'dead'
 
 export function Sidebar() {
-  const { selectedCallbackId, setSelectedCallbackId, callbacks } = useStore()
+  const { selectedCallbackId, setSelectedCallbackId, multiSelectedIds, setMultiSelectedIds, callbacks } = useStore()
   const callbackAliveMs       = useStore((s) => s.settings.callbackAliveMs)
   const callbackIdleMs        = useStore((s) => s.settings.callbackIdleMs)
   const showCallbackDisplayId = useStore((s) => s.settings.showCallbackDisplayId)
@@ -28,6 +28,24 @@ export function Sidebar() {
     e.preventDefault()
     e.stopPropagation()
     setCtxMenu({ cb, x: e.clientX, y: e.clientY })
+  }
+
+  const handleCallbackClick = (e: React.MouseEvent, cbId: number) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault()
+      const already = multiSelectedIds.includes(cbId)
+      if (already) {
+        const next = multiSelectedIds.filter(id => id !== cbId)
+        setMultiSelectedIds(next)
+        if (cbId === selectedCallbackId) setSelectedCallbackId(next[next.length - 1] ?? null)
+      } else {
+        setMultiSelectedIds([...multiSelectedIds, cbId])
+        setSelectedCallbackId(cbId)
+      }
+    } else {
+      setSelectedCallbackId(cbId)
+      setMultiSelectedIds([])
+    }
   }
 
   const agentTypes = useMemo(() =>
@@ -77,8 +95,18 @@ export function Sidebar() {
     <aside className={styles.sidebar}>
       {/* ── Callback list ── */}
       <div className={styles.section}>
-        <div className="sec-label">
-          Callbacks ({visible.length}{visible.length !== callbacks.length ? `/${callbacks.length}` : ''})
+        <div className={`sec-label ${styles.callbacksHeader}`}>
+          <span>Callbacks ({visible.length}{visible.length !== callbacks.length ? `/${callbacks.length}` : ''})</span>
+          {multiSelectedIds.length > 1 && (
+            <span className={styles.multiBadge}>
+              {multiSelectedIds.length} selected
+              <button
+                className={styles.multiClear}
+                onClick={() => setMultiSelectedIds([])}
+                title="Clear multi-selection"
+              >✕</button>
+            </span>
+          )}
         </div>
 
         {/* ── Filters ── */}
@@ -132,11 +160,12 @@ export function Sidebar() {
           const integrityIcon   = cb.integrity_level >= 3 ? styles.integrityIconHigh
                                 : cb.integrity_level === 2 ? styles.integrityIconMed : ''
 
+          const isMultiSelected = multiSelectedIds.includes(cb.id)
           return (
             <div
               key={cb.id}
-              className={`${styles.callbackItem} ${cb.id === selectedCallbackId ? styles.active : ''} ${integrityBorder}`}
-              onClick={() => setSelectedCallbackId(cb.id)}
+              className={`${styles.callbackItem} ${cb.id === selectedCallbackId ? styles.active : ''} ${isMultiSelected && cb.id !== selectedCallbackId ? styles.multiSelected : ''} ${integrityBorder}`}
+              onClick={(e) => handleCallbackClick(e, cb.id)}
               onContextMenu={(e) => openMenu(e, cb)}
             >
               <span className={`${styles.statusDot} ${statusClass}`} />

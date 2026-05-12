@@ -72,6 +72,8 @@ export interface HecateStore {
   setActiveOperation: (op: Operation | null) => void
   selectedCallbackId: number | null
   setSelectedCallbackId: (id: number | null) => void
+  multiSelectedIds: number[]
+  setMultiSelectedIds: (ids: number[]) => void
   callbacks: Callback[]
   setCallbacks: (cbs: Callback[]) => void
   currentTasks: Task[]
@@ -105,9 +107,11 @@ export const useStore = create<HecateStore>((set) => ({
     set({ userId })
   },
   activeOperation: null,
-  setActiveOperation: (op) => set({ activeOperation: op, selectedCallbackId: null, currentTasks: [], callbacks: [] }),
+  setActiveOperation: (op) => set({ activeOperation: op, selectedCallbackId: null, multiSelectedIds: [], currentTasks: [], callbacks: [] }),
   selectedCallbackId: null,
   setSelectedCallbackId: (id) => set({ selectedCallbackId: id, currentTasks: [] }),
+  multiSelectedIds: [],
+  setMultiSelectedIds: (multiSelectedIds) => set({ multiSelectedIds }),
   callbacks: [],
   setCallbacks: (callbacks) => set({ callbacks }),
   currentTasks: [],

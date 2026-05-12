@@ -75,12 +75,18 @@ export function CommandBar() {
   const inputRef  = useRef<HTMLInputElement>(null)
   const menuRef   = useRef<HTMLDivElement>(null)
 
-  const { selectedCallbackId, callbacks } = useStore()
+  const { selectedCallbackId, multiSelectedIds, callbacks } = useStore()
 
   const cb        = callbacks.find(c => c.id === selectedCallbackId)
   const displayId = cb?.display_id ?? null
-  const prompt    = cb ? `${cb.host}` : 'hecate'
   const agentName = cb?.payload.payloadtype.name ?? ''
+
+  const targetIds: number[] = multiSelectedIds.length > 1 ? multiSelectedIds : (selectedCallbackId ? [selectedCallbackId] : [])
+  const targetDisplayIds = targetIds
+    .map(id => callbacks.find(c => c.id === id)?.display_id)
+    .filter((d): d is number => d != null)
+  const isMultiTarget = targetDisplayIds.length > 1
+  const prompt = isMultiTarget ? `[${targetDisplayIds.length} callbacks]` : (cb ? cb.host : 'hecate')
 
   // Fetch commands for the current agent type (includes commandparameters)
   const { data: cmdData } = useQuery(GET_COMMANDS, {
@@ -119,7 +125,7 @@ export function CommandBar() {
   // ── Submit ────────────────────────────────────────────
   const handleSubmit = useCallback(async () => {
     const raw = input.trim()
-    if (!raw || !displayId) return
+    if (!raw || !targetDisplayIds.length) return
 
     setError(null)
     setComp(EMPTY_COMP)
@@ -128,8 +134,8 @@ export function CommandBar() {
     const command  = spaceIdx === -1 ? raw : raw.slice(0, spaceIdx)
     const params   = spaceIdx === -1 ? '' : raw.slice(spaceIdx + 1)
 
-    // Only intercept when no args typed — user-supplied args mean they know what they're doing
-    if (!params) {
+    // File/cred param modal — use primary callback only (not multi-tasked)
+    if (!params && displayId) {
       const cmdParams         = cmdParamsMap[command] ?? []
       const hasRequiredFile   = cmdParams.some(
         p => (p.type === 'File' || p.type === 'FileMultiple') && p.required
@@ -139,7 +145,6 @@ export function CommandBar() {
       )
 
       if (hasRequiredFile || hasRequiredCred) {
-        // Open modal — it handles upload + task creation
         setHistory(h => [raw, ...h.slice(0, 99)])
         setHistIdx(-1)
         setInput('')
@@ -152,20 +157,23 @@ export function CommandBar() {
     setHistIdx(-1)
     setInput('')
 
-    const result = await createTask({
-      variables: {
-        callback_id:      displayId,
-        command,
-        params,
-        tasking_location: 'command_line',
-        original_params:  params,
-      },
-    }).catch(() => null)
+    const results = await Promise.all(
+      targetDisplayIds.map(did =>
+        createTask({
+          variables: {
+            callback_id:      did,
+            command,
+            params,
+            tasking_location: 'command_line',
+            original_params:  params,
+          },
+        }).catch(() => null)
+      )
+    )
 
-    if (result?.data?.createTask?.status === 'error') {
-      setError(result.data.createTask.error ?? 'Task creation failed')
-    }
-  }, [input, displayId, createTask, cmdParamsMap])
+    const firstError = results.find(r => r?.data?.createTask?.status === 'error')
+    if (firstError) setError(firstError.data.createTask.error ?? 'Task creation failed')
+  }, [input, displayId, targetDisplayIds, createTask, cmdParamsMap, cb])
 
   // ── Apply a completion choice ─────────────────────────
   const applyCompletion = useCallback((cmd: string) => {
@@ -316,8 +324,8 @@ export function CommandBar() {
           value={input}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder={selectedCallbackId ? 'command [args]…' : 'select a callback first…'}
-          disabled={!selectedCallbackId || loading}
+          placeholder={targetDisplayIds.length ? 'command [args]…' : 'select a callback first…'}
+          disabled={!targetDisplayIds.length || loading}
           autoFocus
           autoComplete="off"
           spellCheck={false}

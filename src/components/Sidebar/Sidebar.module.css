@@ -40,6 +40,12 @@
   background: rgba(155,32,32,0.2);
   border-color: var(--border-strong);
 }
+.callbackItem.multiSelected {
+  background: rgba(155,32,32,0.1);
+  border-color: rgba(155,32,32,0.45);
+  border-left-width: 3px;
+  border-left-color: var(--crimson-400);
+}
 
 .statusDot {
   position: absolute;
@@ -122,6 +128,34 @@
   padding: 4px 0 6px;
   border-bottom: 1px solid rgba(155,32,32,0.12);
 }
+
+/* ── Multi-select header ── */
+.callbacksHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.multiBadge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 8px;
+  color: var(--crimson-300);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.multiClear {
+  background: transparent;
+  border: none;
+  color: var(--bone-700);
+  cursor: pointer;
+  font-size: 8px;
+  padding: 0 2px;
+  line-height: 1;
+}
+.multiClear:hover { color: var(--bone-300); }
 
 /* ── Filter bar ── */
 .filterBar {
