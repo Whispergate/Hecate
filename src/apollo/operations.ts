@@ -1029,3 +1029,61 @@ export const DELETE_CREDENTIAL = gql`
     ) { id deleted }
   }
 `
+
+// ── Event Log ─────────────────────────────────────────
+
+const EVENT_FIELDS = gql`
+  fragment EventFields on operationeventlog {
+    id level message source resolved count timestamp
+    operator { username }
+  }
+`
+
+export const GET_EVENT_LOG = gql`
+  ${EVENT_FIELDS}
+  query GetEventLog($limit: Int!) {
+    operationeventlog(
+      where: { deleted: { _eq: false } }
+      order_by: { id: desc }
+      limit: $limit
+    ) { ...EventFields }
+  }
+`
+
+export const SUB_EVENT_LOG = gql`
+  ${EVENT_FIELDS}
+  subscription SubEventLog($now: timestamp!) {
+    operationeventlog_stream(
+      batch_size: 50
+      cursor: { initial_value: { timestamp: $now } }
+      where: { deleted: { _eq: false } }
+    ) { ...EventFields }
+  }
+`
+
+export const INSERT_EVENT = gql`
+  ${EVENT_FIELDS}
+  mutation InsertEvent($message: String!) {
+    insert_operationeventlog_one(object: { message: $message, level: "info" }) {
+      ...EventFields
+    }
+  }
+`
+
+export const UPDATE_EVENT_RESOLVED = gql`
+  mutation UpdateEventResolved($id: Int!, $resolved: Boolean!) {
+    update_operationeventlog_by_pk(
+      pk_columns: { id: $id }
+      _set: { resolved: $resolved }
+    ) { id resolved }
+  }
+`
+
+export const RESOLVE_ALL_WARNINGS = gql`
+  mutation ResolveAllWarnings {
+    update_operationeventlog(
+      where: { resolved: { _eq: false }, level: { _eq: "warning" }, deleted: { _eq: false } }
+      _set: { resolved: true }
+    ) { returning { id resolved } }
+  }
+`

@@ -17,6 +17,7 @@ import { FilesPanel }     from '@/components/FilesPanel/FilesPanel'
 import { OverviewPanel }     from '@/components/OverviewPanel/OverviewPanel'
 import { OperationsPanel }     from '@/components/OperationsPanel/OperationsPanel'
 import { CredentialsPanel }   from '@/components/CredentialsPanel/CredentialsPanel'
+import { EventLogPanel }      from '@/components/EventLogPanel/EventLogPanel'
 import { CallbackToastContainer } from '@/components/Toast/CallbackToast'
 import { SettingsPanel }         from '@/components/SettingsPanel/SettingsPanel'
 import { SUB_CALLBACKS } from '@/apollo/operations'
@@ -96,7 +97,7 @@ export function Dashboard() {
   useCallbackSubscription()
 
   const activeRailView = useStore((s) => s.activeRailView)
-  const isFullPanel    = activeRailView === 'overview' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'report' || activeRailView === 'files' || activeRailView === 'operations' || activeRailView === 'credentials'
+  const isFullPanel    = activeRailView === 'overview' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'report' || activeRailView === 'files' || activeRailView === 'operations' || activeRailView === 'credentials' || activeRailView === 'logs'
 
   return (
     <div className={styles.root}>
@@ -117,6 +118,7 @@ export function Dashboard() {
             {activeRailView === 'files'       && <FilesPanel />}
             {activeRailView === 'operations'    && <OperationsPanel />}
             {activeRailView === 'credentials'  && <CredentialsPanel />}
+            {activeRailView === 'logs'         && <EventLogPanel />}
           </div>
         ) : (
           <>
