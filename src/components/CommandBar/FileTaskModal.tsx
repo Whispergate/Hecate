@@ -5,19 +5,30 @@
    ═══════════════════════════════════════════════════ */
 
 import { useState, useRef } from 'react'
-import { useMutation }       from '@apollo/client'
-import { CREATE_TASK }       from '@/apollo/operations'
+import { useMutation, useQuery } from '@apollo/client'
+import { CREATE_TASK, GET_CREDENTIALS } from '@/apollo/operations'
 import { useStore }          from '@/store'
 import styles                from './FileTaskModal.module.css'
 
+interface CredentialOption {
+  id:              number
+  type:            string
+  account:         string
+  realm:           string
+  credential_text: string | null
+  comment:         string
+  metadata:        string
+}
+
 export interface CommandParam {
-  name:                string
-  display_name:        string
-  type:                string
-  required:            boolean
-  default_value:       string | null
-  choices:             string[] | null
-  parameter_group_name:string
+  name:                    string
+  display_name:            string
+  type:                    string
+  required:                boolean
+  default_value:           string | null
+  choices:                 string[] | null
+  parameter_group_name:    string
+  limit_credentials_by_type: string[] | null
 }
 
 interface Props {
@@ -69,10 +80,11 @@ async function uploadTaskFile(file: File, token: string): Promise<string | null>
 export function FileTaskModal({ command, params, displayId, defaultCwd, onClose }: Props) {
   const { token } = useStore()
 
-  // Pick the parameter group that contains the File-type param.
-  // Sending params from multiple groups causes Mythic to reject with "don't match any parameter group".
+  // Pick the group containing a File or CredentialJson param — sending params from multiple
+  // groups causes Mythic to reject with "don't match any parameter group".
+  const credParam      = params.find(p => p.type === 'CredentialJson')
   const fileParam      = params.find(p => p.type === 'File' || p.type === 'FileMultiple')
-  const activeGroup    = fileParam?.parameter_group_name ?? 'Default Parameter Group'
+  const activeGroup    = (credParam ?? fileParam)?.parameter_group_name ?? 'Default Parameter Group'
   const groupParams    = params.filter(p => p.parameter_group_name === activeGroup)
 
   // Within that group: skip None (crypto), skip filename params (auto-populated from file.name), dedupe by name.
@@ -108,6 +120,10 @@ export function FileTaskModal({ command, params, displayId, defaultCwd, onClose 
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const [createTask] = useMutation(CREATE_TASK)
+
+  const hasCredentialParam = visibleParams.some(p => p.type === 'CredentialJson')
+  const { data: credData } = useQuery(GET_CREDENTIALS, { skip: !hasCredentialParam })
+  const credentials: CredentialOption[] = credData?.credential ?? []
 
   function setValue(name: string, val: string) {
     setValues(v => ({ ...v, [name]: val }))
@@ -182,6 +198,8 @@ export function FileTaskModal({ command, params, displayId, defaultCwd, onClose 
         } else if (p.type === 'Array' || p.type === 'TypedArray' || p.type === 'ChooseMultiple') {
           paramsObj[p.name] = (values[p.name] ?? '')
             .split(',').map(s => s.trim()).filter(Boolean)
+        } else if (p.type === 'CredentialJson') {
+          try { paramsObj[p.name] = JSON.parse(values[p.name] ?? '{}') } catch { paramsObj[p.name] = {} }
         } else if (p.type !== 'None') {
           paramsObj[p.name] = values[p.name] ?? ''
         }
@@ -288,6 +306,34 @@ export function FileTaskModal({ command, params, displayId, defaultCwd, onClose 
                   {(p.choices ?? []).map(c => (
                     <option key={c} value={c}>{c}</option>
                   ))}
+                </select>
+
+              ) : p.type === 'CredentialJson' ? (
+                <select
+                  className={styles.select}
+                  value={values[p.name] ?? ''}
+                  onChange={e => setValue(p.name, e.target.value)}
+                  disabled={loading}
+                >
+                  <option value="">— select credential —</option>
+                  {credentials
+                    .filter(c =>
+                      !p.limit_credentials_by_type?.length ||
+                      p.limit_credentials_by_type.includes(c.type)
+                    )
+                    .map(c => {
+                      const preview = (c.credential_text ?? '').slice(0, 40)
+                      const label   = `${c.account}${c.realm ? `@${c.realm}` : ''} — ${preview}${(c.credential_text?.length ?? 0) > 40 ? '…' : ''}${c.comment ? ` (${c.comment})` : ''}`
+                      const val     = JSON.stringify({
+                        type:       c.type,
+                        account:    c.account,
+                        realm:      c.realm,
+                        credential: c.credential_text ?? '',
+                        comment:    c.comment,
+                      })
+                      return <option key={c.id} value={val}>{label}</option>
+                    })
+                  }
                 </select>
 
               ) : (

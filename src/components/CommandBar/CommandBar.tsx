@@ -134,8 +134,11 @@ export function CommandBar() {
       const hasRequiredFile   = cmdParams.some(
         p => (p.type === 'File' || p.type === 'FileMultiple') && p.required
       )
+      const hasRequiredCred   = cmdParams.some(
+        p => p.type === 'CredentialJson' && p.required
+      )
 
-      if (hasRequiredFile) {
+      if (hasRequiredFile || hasRequiredCred) {
         // Open modal — it handles upload + task creation
         setHistory(h => [raw, ...h.slice(0, 99)])
         setHistIdx(-1)

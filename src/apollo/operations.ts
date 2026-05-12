@@ -543,6 +543,7 @@ export const GET_COMMANDS = gql`
         default_value
         choices
         parameter_group_name
+        limit_credentials_by_type
       }
     }
   }
@@ -956,5 +957,75 @@ export const GET_JOB_KILL_COMMAND = gql`
     }) {
       command { cmd }
     }
+  }
+`
+
+// ── Credentials ───────────────────────────────────────
+
+const CREDENTIAL_FIELDS = gql`
+  fragment CredentialFields on credential {
+    id type account realm credential_text comment metadata timestamp deleted
+    operator { username }
+    task { display_id callback { host display_id } }
+  }
+`
+
+export const GET_CREDENTIALS = gql`
+  ${CREDENTIAL_FIELDS}
+  query GetCredentials {
+    credential(
+      where: { deleted: { _eq: false } }
+      order_by: { timestamp: desc }
+    ) { ...CredentialFields }
+  }
+`
+
+export const SUB_CREDENTIALS = gql`
+  ${CREDENTIAL_FIELDS}
+  subscription SubCredentials($now: timestamp!) {
+    credential_stream(
+      batch_size: 50
+      cursor: { initial_value: { timestamp: $now } }
+    ) { ...CredentialFields }
+  }
+`
+
+export const CREATE_CREDENTIAL = gql`
+  mutation CreateCredential(
+    $credential_type: String, $account: String, $realm: String,
+    $credential: String, $comment: String
+  ) {
+    createCredential(
+      credential_type: $credential_type, account: $account, realm: $realm,
+      credential: $credential, comment: $comment
+    ) {
+      status
+      error
+    }
+  }
+`
+
+export const UPDATE_CREDENTIAL = gql`
+  ${CREDENTIAL_FIELDS}
+  mutation UpdateCredential(
+    $id: Int!, $type: String!, $account: String!, $realm: String!,
+    $credential: bytea!, $comment: String!, $metadata: String!
+  ) {
+    update_credential_by_pk(
+      pk_columns: { id: $id }
+      _set: {
+        type: $type, account: $account, realm: $realm,
+        credential_raw: $credential, comment: $comment, metadata: $metadata
+      }
+    ) { ...CredentialFields }
+  }
+`
+
+export const DELETE_CREDENTIAL = gql`
+  mutation DeleteCredential($id: Int!) {
+    update_credential_by_pk(
+      pk_columns: { id: $id }
+      _set: { deleted: true }
+    ) { id deleted }
   }
 `
