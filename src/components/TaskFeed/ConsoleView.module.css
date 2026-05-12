@@ -1,5 +1,51 @@
 /* src/components/TaskFeed/ConsoleView.module.css */
 
+/* ── Wrapper (search bar + scroll area) ── */
+.consoleWrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--beige-border);
+  flex-shrink: 0;
+  background: var(--bg-base);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  color: var(--bone-300);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 2px 6px;
+  outline: none;
+  letter-spacing: 0.03em;
+}
+.searchInput::placeholder { color: var(--bone-900); }
+.searchInput:focus {
+  border-color: var(--border-default);
+  background: var(--bg-elevated);
+}
+
+.searchCount {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--bone-800);
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
+}
+
 /* ── Outer scrollable pane ── */
 .console {
   flex: 1;

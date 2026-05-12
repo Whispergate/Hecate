@@ -50,6 +50,25 @@
   cursor: pointer;
 }
 
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  color: var(--bone-300);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 2px 6px;
+  outline: none;
+  letter-spacing: 0.03em;
+}
+.searchInput::placeholder { color: var(--bone-900); }
+.searchInput:focus {
+  border-color: var(--border-default);
+  background: var(--bg-elevated);
+}
+
 .clearBtn {
   background: none;
   border: 1px solid var(--border-subtle);
@@ -110,10 +129,11 @@
 
 .arrow {
   font-size: 9px;
-  color: var(--bone-800);
   width: 10px;
   flex-shrink: 0;
 }
+.arrowLoaded   { color: var(--bone-600); }
+.arrowUnloaded { color: var(--bone-900); }
 
 .dirIcon {
   font-size: 10px;
@@ -123,6 +143,15 @@
 .dirName {
   font-size: 10px;
   color: var(--beige);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dirNameUnloaded {
+  font-size: 10px;
+  color: var(--bone-600);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -163,6 +192,39 @@
   color: var(--bone-900);
   font-style: italic;
   padding: 3px 8px;
+}
+
+/* ── Flat search results ── */
+.flatRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 10px;
+  font-family: var(--font-mono);
+  transition: background var(--t-fast);
+}
+.flatRow:hover { background: var(--beige-dim); }
+
+.flatIcon { font-size: 10px; flex-shrink: 0; }
+
+.flatName {
+  font-size: 10px;
+  color: var(--beige);
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flatPath {
+  font-size: 8px;
+  color: var(--bone-800);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── File rows ── */

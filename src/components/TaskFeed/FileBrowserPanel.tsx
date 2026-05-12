@@ -4,7 +4,7 @@
    No response-text parsing; all path handling lives in Postgres/Hasura.
 */
 
-import { useState, useEffect, useRef, useCallback, useReducer } from 'react'
+import { useState, useEffect, useRef, useCallback, useReducer, useMemo } from 'react'
 import { useQuery, useSubscription, useMutation } from '@apollo/client'
 import { GET_MYTHIC_TREE, SUB_MYTHIC_TREE, CREATE_TASK } from '@/apollo/operations'
 import { isTextFile } from './FileBrowser'
@@ -77,9 +77,11 @@ function DirRow({
         style={{ paddingLeft: depth * 14 + 6 }}
         onClick={handleClick}
       >
-        <span className={styles.arrow}>{hasLoaded ? (isOpen ? '▾' : '▸') : '▹'}</span>
-        <span className={styles.dirIcon}>📁</span>
-        <span className={styles.dirName}>{node.name_text}</span>
+        <span className={`${styles.arrow} ${hasLoaded ? styles.arrowLoaded : styles.arrowUnloaded}`}>
+          {hasLoaded ? (isOpen ? '▾' : '▸') : '▹'}
+        </span>
+        <span className={styles.dirIcon}>{hasLoaded ? '📂' : '📁'}</span>
+        <span className={hasLoaded ? styles.dirName : styles.dirNameUnloaded}>{node.name_text}</span>
         {!hasLoaded && (
           <button
             className={styles.lsBtn}
@@ -172,6 +174,7 @@ export function FileBrowserPanel({ callbackId, callbackDisplayId }: Props) {
 
   const [, forceUpdate] = useReducer(x => x + 1, 0)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const [query, setQuery]       = useState('')
 
   const [createTask] = useMutation(CREATE_TASK)
 
@@ -267,20 +270,77 @@ export function FileBrowserPanel({ callbackId, callbackDisplayId }: Props) {
   const totalDirs  = [...nodesRef.current.values()].filter(n => n.can_have_children).length
   const totalFiles = [...nodesRef.current.values()].filter(n => !n.can_have_children).length
 
+  // Flat search results — match name or full path
+  const searchResults = useMemo(() => {
+    if (!query.trim()) return null
+    const q = query.toLowerCase()
+    return [...nodesRef.current.values()]
+      .filter(n => !n.deleted && (
+        n.name_text.toLowerCase().includes(q) ||
+        n.full_path_text.toLowerCase().includes(q)
+      ))
+      .sort((a, b) => a.full_path_text.localeCompare(b.full_path_text))
+  }, [query, totalDirs, totalFiles]) // re-derive when tree contents change
+
   return (
     <div className={styles.panel}>
       <div className={styles.toolbar}>
         <span className={styles.toolbarTitle}>File Browser</span>
-        <span className={styles.toolbarMeta}>
-          {totalDirs}d · {totalFiles}f
-        </span>
+        <span className={styles.toolbarMeta}>{totalDirs}d · {totalFiles}f</span>
+        <input
+          className={styles.searchInput}
+          placeholder="/ search…"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => e.key === 'Escape' && setQuery('')}
+          spellCheck={false}
+        />
         <button className={styles.clearBtn} onClick={handleClear} title="Clear tree">
           ✕ clear
         </button>
       </div>
 
       <div className={styles.tree}>
-        {roots.length === 0 ? (
+        {searchResults !== null ? (
+          searchResults.length === 0 ? (
+            <div className={styles.empty}>No matches for "{query}"</div>
+          ) : (
+            searchResults.map(n => (
+              n.can_have_children ? (
+                <div key={n.full_path_text} className={styles.flatRow}>
+                  <span className={styles.flatIcon}>📂</span>
+                  <span className={styles.flatName}>{n.name_text}</span>
+                  <span className={styles.flatPath}>{n.parent_path_text}</span>
+                  <div className={styles.fileActions}>
+                    <button
+                      className={styles.actBtn}
+                      onClick={() => { setQuery(''); handleLs(n.full_path_text) }}
+                      title={`ls ${n.full_path_text}`}
+                    >→ ls</button>
+                  </div>
+                </div>
+              ) : (
+                <div key={n.full_path_text} className={styles.flatRow}>
+                  <span className={styles.flatIcon}>📄</span>
+                  <span className={styles.flatName}>{n.name_text}</span>
+                  <span className={styles.flatPath}>{n.parent_path_text}</span>
+                  <div className={styles.fileActions}>
+                    {isTextFile(n.name_text) && (
+                      <button
+                        className={`${styles.actBtn} ${styles.actCat}`}
+                        onClick={() => issueCmd('cat', n.full_path_text)}
+                      >cat</button>
+                    )}
+                    <button
+                      className={styles.actBtn}
+                      onClick={() => issueCmd('download', n.full_path_text)}
+                    >↓ dl</button>
+                  </div>
+                </div>
+              )
+            ))
+          )
+        ) : roots.length === 0 ? (
           <div className={styles.empty}>
             No directories explored yet — run <code className={styles.code}>ls</code> to populate the tree.
           </div>

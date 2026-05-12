@@ -5,7 +5,7 @@
    in one scrolling pane, oldest → newest.
    ═══════════════════════════════════════════════════ */
 
-import { useRef, useEffect, useLayoutEffect, useState } from 'react'
+import { useRef, useEffect, useLayoutEffect, useState, useCallback } from 'react'
 import { useSubscription }             from '@apollo/client'
 import { SUB_TASK_RESPONSES }          from '@/apollo/operations'
 import type { Task }                   from '@/store'
@@ -34,7 +34,13 @@ function formatTimestamp(iso: string): string {
 
 // ── Single task entry inside the console ─────────────
 
-function ConsoleEntry({ task, isLast }: { task: Task; isLast: boolean }) {
+interface EntryProps {
+  task: Task
+  isLast: boolean
+  onOutputChange?: (taskId: number, text: string) => void
+}
+
+function ConsoleEntry({ task, isLast, onOutputChange }: EntryProps) {
   const [lines,    setLines]    = useState<Array<{ id: number; response: string }>>([])
   const [expanded, setExpanded] = useState(false)
   const hasOutput = task.response_count > 0
@@ -56,6 +62,10 @@ function ConsoleEntry({ task, isLast }: { task: Task; isLast: boolean }) {
   })
 
   const fullOutput = lines.map(r => decodeResponse(r.response)).join('')
+
+  useEffect(() => {
+    if (fullOutput && onOutputChange) onOutputChange(task.id, fullOutput)
+  }, [fullOutput, task.id, onOutputChange])
   const lsResult   = fullOutput ? parseLsOutput(fullOutput) : null
 
   const displayArgs = (task.display_params && task.display_params !== '{}' && task.display_params !== '')
@@ -131,35 +141,73 @@ interface Props { tasks: Task[] }
 
 export function ConsoleView({ tasks }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const [query, setQuery] = useState('')
+  const [outputCache, setOutputCache] = useState<Record<number, string>>({})
+
+  const handleOutputChange = useCallback((taskId: number, text: string) => {
+    setOutputCache(prev => prev[taskId] === text ? prev : { ...prev, [taskId]: text })
+  }, [])
+
+  const isFiltered = query.trim().length > 0
 
   // Instant scroll on mount (opening console view)
   useLayoutEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'instant' })
+    if (!isFiltered) bottomRef.current?.scrollIntoView({ behavior: 'instant' })
   }, [])
 
-  // Smooth scroll when new tasks arrive
+  // Smooth scroll when new tasks arrive — disabled while searching
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [tasks.length])
+    if (!isFiltered) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [tasks.length, isFiltered])
 
   // Oldest first for terminal feel
   const ordered = [...tasks].reverse()
 
+  const filtered = isFiltered
+    ? ordered.filter(t => {
+        const q = query.toLowerCase()
+        const line = `${t.command_name} ${t.display_params ?? ''} ${t.params ?? ''}`.toLowerCase()
+        const out  = (outputCache[t.id] ?? '').toLowerCase()
+        return line.includes(q) || out.includes(q)
+      })
+    : ordered
+
   return (
-    <div className={styles.console}>
-      <div className={styles.consoleInner}>
-        {tasks.length === 0 ? (
-          <div className={styles.empty}>No tasks yet — issue a command below</div>
-        ) : (
-          ordered.map((task, i) => (
-            <ConsoleEntry
-              key={task.id}
-              task={task}
-              isLast={i === ordered.length - 1}
-            />
-          ))
+    <div className={styles.consoleWrapper}>
+      <div className={styles.searchBar}>
+        <input
+          className={styles.searchInput}
+          placeholder="/ filter tasks + output…"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => e.key === 'Escape' && setQuery('')}
+          spellCheck={false}
+        />
+        {isFiltered && (
+          <span className={styles.searchCount}>
+            {filtered.length} / {tasks.length}
+          </span>
         )}
-        <div ref={bottomRef} />
+      </div>
+
+      <div className={styles.console}>
+        <div className={styles.consoleInner}>
+          {tasks.length === 0 ? (
+            <div className={styles.empty}>No tasks yet — issue a command below</div>
+          ) : filtered.length === 0 ? (
+            <div className={styles.empty}>No tasks match "{query}"</div>
+          ) : (
+            filtered.map((task, i) => (
+              <ConsoleEntry
+                key={task.id}
+                task={task}
+                isLast={i === filtered.length - 1}
+                onOutputChange={handleOutputChange}
+              />
+            ))
+          )}
+          <div ref={bottomRef} />
+        </div>
       </div>
     </div>
   )
