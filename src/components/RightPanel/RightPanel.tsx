@@ -6,7 +6,7 @@ import { useQuery, useSubscription }                        from '@apollo/client
 import { useRef, useState, useCallback, useEffect }         from 'react'
 import { CallbackContextMenu }                              from '@/components/CallbackContextMenu/CallbackContextMenu'
 import { GET_OPERATIONS, SUB_ALL_CALLBACKS }                from '@/apollo/operations'
-import { useStore, useSelectedCallback, useAliveCallbacks } from '@/store'
+import { useStore, useSelectedCallback, useAliveCallbacks, type HecateStore } from '@/store'
 import type { Callback }                                    from '@/store'
 import { parseTs, formatSleepInterval, formatSleepJitter }  from '@/components/Sidebar/utils'
 import styles                                               from './RightPanel.module.css'
@@ -82,10 +82,11 @@ const NODE_MIN_SPACING = 26
 
 interface CtxMenu { cb: Callback; x: number; y: number }
 
-function NetworkTopology({ callbacks, selectedId, onSelect }: {
+function NetworkTopology({ callbacks, selectedId, onSelect, annotations }: {
   callbacks: Callback[]
   selectedId: number | null
   onSelect: (id: number) => void
+  annotations: HecateStore['callbackAnnotations']
 }) {
   const [ctxMenu, setCtxMenu] = useState<CtxMenu | null>(null)
   const n = callbacks.length
@@ -196,6 +197,11 @@ function NetworkTopology({ callbacks, selectedId, onSelect }: {
             const lineColor   = !alive ? 'var(--topo-dead-line)' : proto.color
             const lineDash    = !alive ? '3 3' : late ? '2 8' : proto.dash
             const lineOpacity = alive ? (late ? 0.35 : 0.75) : 0.4
+            const annotColor  = annotations[cb.display_id]
+            const nodeStroke  = annotColor || (alive ? lineColor : 'var(--topo-dead-line)')
+            const nodeFill    = annotColor
+              ? (isSel ? `${annotColor}40` : `${annotColor}22`)
+              : (isSel ? 'var(--topo-node-sel)' : 'var(--topo-node-bg)')
 
             // Line endpoints: C2 edge → node edge (along the connecting vector)
             const dx  = nx - cx, dy = ny - cy
@@ -238,10 +244,10 @@ function NetworkTopology({ callbacks, selectedId, onSelect }: {
                 {/* Agent node */}
                 <circle
                   cx={nx} cy={ny} r="9"
-                  fill={isSel ? 'var(--topo-node-sel)' : 'var(--topo-node-bg)'}
-                  stroke={alive ? lineColor : 'var(--topo-dead-line)'}
-                  strokeWidth={isSel ? 1.8 : 1}
-                  strokeOpacity={isSel ? 1 : (alive ? 0.6 : 1)}
+                  fill={nodeFill}
+                  stroke={nodeStroke}
+                  strokeWidth={isSel ? 2 : (annotColor ? 1.8 : 1)}
+                  strokeOpacity={isSel ? 1 : (alive ? (annotColor ? 0.9 : 0.6) : 1)}
                 />
 
                 {/* Agent icon */}
@@ -263,7 +269,8 @@ function NetworkTopology({ callbacks, selectedId, onSelect }: {
                   textAnchor="middle"
                   fontFamily="monospace"
                   fontSize="5.5"
-                  fill={isSel ? 'var(--topo-text-node-sel)' : 'var(--topo-text-node)'}
+                  fill={annotColor || (isSel ? 'var(--topo-text-node-sel)' : 'var(--topo-text-node)')}
+                  fontWeight={annotColor ? '700' : 'normal'}
                 >
                   {cb.host.slice(0, 10)}
                 </text>
@@ -297,12 +304,13 @@ function NetworkTopology({ callbacks, selectedId, onSelect }: {
 // ── Main panel ────────────────────────────────────────
 
 export function RightPanel() {
-  const aliveCallbacks     = useAliveCallbacks()       // active:true only — for stats
-  const currentTasks       = useStore((s) => s.currentTasks)
+  const aliveCallbacks        = useAliveCallbacks()       // active:true only — for stats
+  const currentTasks          = useStore((s) => s.currentTasks)
   const selectedCallbackId    = useStore((s) => s.selectedCallbackId)
   const setSelectedCallbackId = useStore((s) => s.setSelectedCallbackId)
   const selected              = useSelectedCallback()
-  const activeOp           = useStore((s) => s.activeOperation)
+  const activeOp              = useStore((s) => s.activeOperation)
+  const callbackAnnotations   = useStore((s) => s.callbackAnnotations)
 
   // All callbacks (including inactive) for topology — shows dead nodes too
   const { data: allCbData } = useSubscription(SUB_ALL_CALLBACKS, {
@@ -346,7 +354,7 @@ export function RightPanel() {
       {/* ── Network topology ── */}
       <div className={styles.section}>
         <div className="sec-label">Network topology</div>
-        <NetworkTopology callbacks={allCallbacks} selectedId={selectedCallbackId} onSelect={setSelectedCallbackId} />
+        <NetworkTopology callbacks={allCallbacks} selectedId={selectedCallbackId} onSelect={setSelectedCallbackId} annotations={callbackAnnotations} />
       </div>
 
       {/* ── Selected agent detail ── */}

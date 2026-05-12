@@ -13,7 +13,7 @@ interface CtxMenu { cb: Callback; x: number; y: number }
 type StatusFilter = 'alive' | 'idle' | 'dead'
 
 export function Sidebar() {
-  const { selectedCallbackId, setSelectedCallbackId, multiSelectedIds, setMultiSelectedIds, callbacks } = useStore()
+  const { selectedCallbackId, setSelectedCallbackId, multiSelectedIds, setMultiSelectedIds, callbacks, callbackAnnotations } = useStore()
   const callbackAliveMs       = useStore((s) => s.settings.callbackAliveMs)
   const callbackIdleMs        = useStore((s) => s.settings.callbackIdleMs)
   const showCallbackDisplayId = useStore((s) => s.settings.showCallbackDisplayId)
@@ -161,6 +161,8 @@ export function Sidebar() {
                                 : cb.integrity_level === 2 ? styles.integrityIconMed : ''
 
           const isMultiSelected = multiSelectedIds.includes(cb.id)
+          const annotColor = callbackAnnotations[cb.display_id] ?? ''
+          const annotTitle = cb.description || annotColor
           return (
             <div
               key={cb.id}
@@ -174,6 +176,13 @@ export function Sidebar() {
                 {cb.host}
                 {cb.locked && <span className={styles.lockBadge}>🔒</span>}
                 {cb.integrity_level >= 2 && <span className={integrityIcon}>▲</span>}
+                {annotColor && (
+                  <span
+                    className={styles.annotDot}
+                    style={{ background: annotColor }}
+                    title={annotTitle || annotColor}
+                  />
+                )}
               </div>
               <div className={styles.cbMeta}>
                 <span>{cb.payload.payloadtype.name} · {cb.os}</span>

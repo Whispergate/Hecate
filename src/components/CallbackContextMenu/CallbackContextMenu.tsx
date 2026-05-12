@@ -9,7 +9,9 @@ import {
   HIDE_CALLBACK,
   CREATE_TASK,
 } from '@/apollo/operations'
+import { useStore } from '@/store'
 import type { Callback } from '@/store'
+import { ANNOT_SWATCHES } from '@/annotationColors'
 import styles from './CallbackContextMenu.module.css'
 
 interface Props {
@@ -19,12 +21,17 @@ interface Props {
   onClose: () => void
 }
 
-type View = 'menu' | 'editDesc' | 'confirmExit'
+type View = 'menu' | 'annotate' | 'confirmExit'
 
 export function CallbackContextMenu({ cb, x, y, onClose }: Props) {
   const menuRef = useRef<HTMLDivElement>(null)
-  const [view, setView]   = useState<View>('menu')
-  const [desc, setDesc]   = useState(cb.description)
+
+  const storedColor           = useStore((s) => s.callbackAnnotations[cb.display_id] ?? '')
+  const setCallbackAnnotation = useStore((s) => s.setCallbackAnnotation)
+
+  const [view,  setView]  = useState<View>('menu')
+  const [desc,  setDesc]  = useState(cb.description ?? '')
+  const [color, setColor] = useState(storedColor)
 
   const [updateDesc] = useMutation(UPDATE_CALLBACK_DESCRIPTION)
   const [lockCb]     = useMutation(LOCK_CALLBACK)
@@ -33,7 +40,7 @@ export function CallbackContextMenu({ cb, x, y, onClose }: Props) {
   const [createTask] = useMutation(CREATE_TASK)
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const onKey  = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     const onDown = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose()
     }
@@ -45,15 +52,19 @@ export function CallbackContextMenu({ cb, x, y, onClose }: Props) {
     }
   }, [onClose])
 
-  const menuHeight = view === 'editDesc' ? 140 : view === 'confirmExit' ? 100 : 170
+  const menuHeight = view === 'annotate' ? 200 : view === 'confirmExit' ? 100 : 175
+  const menuWidth  = view === 'annotate' ? 230 : 180
   const style: React.CSSProperties = {
     position: 'fixed',
     top:  y + menuHeight > window.innerHeight ? y - menuHeight : y,
-    left: x + 180        > window.innerWidth  ? x - 180        : x,
+    left: x + menuWidth  > window.innerWidth  ? x - menuWidth  : x,
   }
 
-  const submitDesc = () => {
-    updateDesc({ variables: { callback_display_id: cb.display_id, description: desc } })
+  const submitAnnotate = () => {
+    if (color !== storedColor) setCallbackAnnotation(cb.display_id, color)
+    if (desc !== (cb.description ?? '')) {
+      updateDesc({ variables: { callback_display_id: cb.display_id, description: desc } })
+    }
     onClose()
   }
 
@@ -67,20 +78,55 @@ export function CallbackContextMenu({ cb, x, y, onClose }: Props) {
     onClose()
   }
 
-  if (view === 'editDesc') {
+  if (view === 'annotate') {
     return (
-      <div ref={menuRef} className={styles.menu} style={style} onContextMenu={e => e.preventDefault()}>
-        <div className={styles.editLabel}>Description</div>
+      <div
+        ref={menuRef}
+        className={`${styles.menu} ${styles.menuWide}`}
+        style={style}
+        onContextMenu={e => e.preventDefault()}
+      >
+        <div className={styles.editLabel}>Annotate #{cb.display_id} · {cb.host}</div>
+
+        <div className={styles.swatchRow}>
+          {ANNOT_SWATCHES.map((c) => (
+            <button
+              key={c}
+              className={`${styles.swatch} ${color === c ? styles.swatchActive : ''}`}
+              style={{ background: c }}
+              onClick={() => setColor(c)}
+            />
+          ))}
+          {/* Free color input */}
+          <label className={styles.colorPickWrap} title="Custom color">
+            <input
+              type="color"
+              className={styles.colorPick}
+              value={color || '#888888'}
+              onChange={e => setColor(e.target.value)}
+            />
+            <span className={styles.colorPickIcon} style={color && !ANNOT_SWATCHES.includes(color as typeof ANNOT_SWATCHES[number]) ? { background: color, borderColor: 'rgba(255,255,255,0.7)' } : {}}>+</span>
+          </label>
+          <button
+            className={`${styles.swatch} ${styles.swatchClear} ${!color ? styles.swatchClearActive : ''}`}
+            onClick={() => setColor('')}
+            title="Clear"
+          >✕</button>
+        </div>
+
         <textarea
           className={styles.editInput}
+          placeholder="Note (optional)…"
           value={desc}
           onChange={e => setDesc(e.target.value)}
           autoFocus
-          rows={3}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitDesc() } }}
+          rows={2}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitAnnotate() }
+          }}
         />
         <div className={styles.editActions}>
-          <button className={styles.btnSave} onClick={submitDesc}>Save</button>
+          <button className={styles.btnSave} onClick={submitAnnotate}>Save</button>
           <button className={styles.btnCancel} onClick={onClose}>Cancel</button>
         </div>
       </div>
@@ -104,8 +150,8 @@ export function CallbackContextMenu({ cb, x, y, onClose }: Props) {
     <div ref={menuRef} className={styles.menu} style={style} onContextMenu={e => e.preventDefault()}>
       <div className={styles.header}>#{cb.display_id} {cb.host}</div>
 
-      <button className={styles.item} onClick={() => setView('editDesc')}>
-        Edit description
+      <button className={styles.item} onClick={() => setView('annotate')}>
+        Annotate callback
       </button>
 
       <button className={styles.item} onClick={() => {

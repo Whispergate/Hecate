@@ -109,6 +109,17 @@
 .integrityIconMed  { margin-left: 5px; font-size: 7px; color: var(--integrity-med);  vertical-align: middle; }
 .integrityIconHigh { margin-left: 5px; font-size: 7px; color: var(--integrity-high); vertical-align: middle; }
 
+.annotDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  margin-left: 5px;
+  vertical-align: middle;
+  flex-shrink: 0;
+  opacity: 0.90;
+}
+
 .cbDesc {
   color: var(--bone-600);
   font-size: 9px;

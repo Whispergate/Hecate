@@ -95,3 +95,75 @@
   color: var(--bone-600);
   padding: 2px 12px 8px;
 }
+
+/* ── Annotate view ── */
+.menuWide { min-width: 230px; }
+
+.swatchRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 6px 12px 8px;
+  align-items: center;
+}
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.1s;
+  outline: none;
+  flex-shrink: 0;
+}
+.swatch:hover { transform: scale(1.18); border-color: rgba(255,255,255,0.5) !important; }
+.swatchActive { border-color: rgba(255,255,255,0.9) !important; box-shadow: 0 0 5px rgba(255,255,255,0.25); }
+
+.swatchClear {
+  background: var(--bg-raised) !important;
+  border-color: var(--beige-border) !important;
+  color: var(--bone-600);
+  font-size: 11px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.swatchClear:hover { color: var(--bone-200) !important; border-color: var(--beige-border-md) !important; }
+.swatchClearActive { border-color: var(--beige-border-md) !important; color: var(--bone-300) !important; }
+
+/* Free color picker */
+.colorPickWrap {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.colorPick {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  padding: 0;
+  border: none;
+}
+.colorPickIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  border: 2px solid var(--beige-border);
+  background: var(--bg-raised);
+  color: var(--bone-600);
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;
+  transition: border-color 0.1s, color 0.1s;
+}
+.colorPickWrap:hover .colorPickIcon { border-color: var(--beige-border-md); color: var(--bone-300); }

@@ -74,6 +74,8 @@ export interface HecateStore {
   setSelectedCallbackId: (id: number | null) => void
   multiSelectedIds: number[]
   setMultiSelectedIds: (ids: number[]) => void
+  callbackAnnotations: Record<number, string>
+  setCallbackAnnotation: (displayId: number, color: string) => void
   callbacks: Callback[]
   setCallbacks: (cbs: Callback[]) => void
   currentTasks: Task[]
@@ -107,11 +109,30 @@ export const useStore = create<HecateStore>((set) => ({
     set({ userId })
   },
   activeOperation: null,
-  setActiveOperation: (op) => set({ activeOperation: op, selectedCallbackId: null, multiSelectedIds: [], currentTasks: [], callbacks: [] }),
+  setActiveOperation: (op) => {
+    let callbackAnnotations: Record<number, string> = {}
+    if (op) {
+      try {
+        const raw = localStorage.getItem(`hecate_annot_${op.id}`)
+        if (raw) callbackAnnotations = JSON.parse(raw) as Record<number, string>
+      } catch { /* ignore */ }
+    }
+    set({ activeOperation: op, selectedCallbackId: null, multiSelectedIds: [], currentTasks: [], callbacks: [], callbackAnnotations })
+  },
   selectedCallbackId: null,
   setSelectedCallbackId: (id) => set({ selectedCallbackId: id, currentTasks: [] }),
   multiSelectedIds: [],
   setMultiSelectedIds: (multiSelectedIds) => set({ multiSelectedIds }),
+  callbackAnnotations: {},
+  setCallbackAnnotation: (displayId, color) => set((s) => {
+    const next = { ...s.callbackAnnotations }
+    if (color) next[displayId] = color
+    else delete next[displayId]
+    if (s.activeOperation) {
+      localStorage.setItem(`hecate_annot_${s.activeOperation.id}`, JSON.stringify(next))
+    }
+    return { callbackAnnotations: next }
+  }),
   callbacks: [],
   setCallbacks: (callbacks) => set({ callbacks }),
   currentTasks: [],
