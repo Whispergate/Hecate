@@ -876,6 +876,21 @@ export const SUB_MYTHIC_TREE = gql`
   }
 `
 
+// Historical commands for a callback — seeds CommandBar history on first visit.
+// Uses display_params (always human-readable) rather than raw params.
+export const GET_CALLBACK_TASK_HISTORY = gql`
+  query GetCallbackTaskHistory($callback_id: Int!, $limit: Int = 50) {
+    task(
+      where:    { callback_id: { _eq: $callback_id } }
+      order_by: { id: desc }
+      limit:    $limit
+    ) {
+      command_name
+      display_params
+    }
+  }
+`
+
 // ─────────────────────────────────────────────────────
 // TASK MUTATIONS
 // ─────────────────────────────────────────────────────

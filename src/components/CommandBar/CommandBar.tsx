@@ -3,8 +3,8 @@
    ═══════════════════════════════════════════════════ */
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useMutation, useQuery }                    from '@apollo/client'
-import { CREATE_TASK, GET_COMMANDS }                from '@/apollo/operations'
+import { useMutation, useQuery, useLazyQuery }      from '@apollo/client'
+import { CREATE_TASK, GET_COMMANDS, GET_CALLBACK_TASK_HISTORY } from '@/apollo/operations'
 import { useStore }                                 from '@/store'
 import { FileTaskModal, type CommandParam }         from './FileTaskModal'
 import { SocksModal }                               from './SocksModal'
@@ -69,14 +69,14 @@ function extractCwd(extraInfo: string, description: string): string {
 export function CommandBar() {
   const [input,      setInput]      = useState('')
   const [histIdx,    setHistIdx]    = useState(-1)
-  const [history,    setHistory]    = useState<string[]>([])
   const [error,      setError]      = useState<string | null>(null)
   const [comp,       setComp]       = useState<CompletionState>(EMPTY_COMP)
   const [modal,      setModal]      = useState<ModalState | null>(null)
   const [socksModal, setSocksModal] = useState(false)
 
-  const inputRef  = useRef<HTMLInputElement>(null)
-  const menuRef   = useRef<HTMLDivElement>(null)
+  const inputRef   = useRef<HTMLInputElement>(null)
+  const menuRef    = useRef<HTMLDivElement>(null)
+  const historyRef = useRef<Record<number, string[]>>({})
 
   const { selectedCallbackId, multiSelectedIds, callbacks } = useStore()
   const activeCallbackPorts = useStore(s => s.activeCallbackPorts)
@@ -85,12 +85,33 @@ export function CommandBar() {
   const displayId = cb?.display_id ?? null
   const agentName = cb?.payload.payloadtype.name ?? ''
 
+  const [fetchHistory] = useLazyQuery(GET_CALLBACK_TASK_HISTORY, {
+    fetchPolicy: 'network-only',
+    onCompleted(data) {
+      if (!displayId) return
+      if (historyRef.current[displayId] !== undefined) return  // already seeded this session
+      const entries: string[] = (data?.task ?? []).map((t: { command_name: string; display_params: string }) => {
+        const p = (t.display_params ?? '').trim()
+        return p ? `${t.command_name} ${p}` : t.command_name
+      })
+      historyRef.current[displayId] = entries
+    },
+  })
+
   const targetIds: number[] = multiSelectedIds.length > 1 ? multiSelectedIds : (selectedCallbackId ? [selectedCallbackId] : [])
   const targetDisplayIds = targetIds
     .map(id => callbacks.find(c => c.id === id)?.display_id)
     .filter((d): d is number => d != null)
   const isMultiTarget = targetDisplayIds.length > 1
   const prompt = isMultiTarget ? `[${targetDisplayIds.length} callbacks]` : (cb ? cb.host : 'hecate')
+
+  // Reset history cursor when active callback changes; seed from server on first visit
+  useEffect(() => {
+    setHistIdx(-1)
+    if (selectedCallbackId != null && displayId != null && historyRef.current[displayId] === undefined) {
+      fetchHistory({ variables: { callback_id: selectedCallbackId } })
+    }
+  }, [displayId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch commands for the current agent type (includes commandparameters)
   const { data: cmdData } = useQuery(GET_COMMANDS, {
@@ -128,6 +149,16 @@ export function CommandBar() {
     return () => document.removeEventListener('mousedown', onDown)
   }, [comp.options.length])
 
+  // ── Per-callback history helpers ──────────────────────
+  function pushHistory(cbDisplayId: number | undefined, cmd: string) {
+    if (cbDisplayId == null) return
+    const prev = historyRef.current[cbDisplayId] ?? []
+    if (prev[0] !== cmd) {
+      historyRef.current[cbDisplayId] = [cmd, ...prev].slice(0, 50)
+    }
+    setHistIdx(-1)
+  }
+
   // ── Submit ────────────────────────────────────────────
   const handleSubmit = useCallback(async () => {
     const raw = input.trim()
@@ -142,8 +173,7 @@ export function CommandBar() {
 
     // Socks modal — intercept bare "socks" for primary callback
     if (command === 'socks' && !params && displayId) {
-      setHistory(h => [raw, ...h.slice(0, 99)])
-      setHistIdx(-1)
+      pushHistory(displayId, raw)
       setInput('')
       setSocksModal(true)
       return
@@ -162,16 +192,14 @@ export function CommandBar() {
       const isScriptOnly = cmdScriptOnlyMap[command] ?? false
 
       if (hasRequiredFile || hasRequiredCred || isScriptOnly) {
-        setHistory(h => [raw, ...h.slice(0, 99)])
-        setHistIdx(-1)
+        pushHistory(displayId, raw)
         setInput('')
         setModal({ command, params: cmdParams, displayId, defaultCwd: extractCwd(cb?.extra_info ?? '', cb?.description ?? '') })
         return
       }
     }
 
-    setHistory(h => [raw, ...h.slice(0, 99)])
-    setHistIdx(-1)
+    pushHistory(displayId ?? targetDisplayIds[0], raw)
     setInput('')
 
     const results = await Promise.all(
@@ -270,16 +298,18 @@ export function CommandBar() {
     // Regular arrow-up/down: history navigation (only when menu closed)
     if (e.key === 'ArrowUp') {
       e.preventDefault()
-      const next = Math.min(histIdx + 1, history.length - 1)
+      const h    = historyRef.current[displayId ?? -1] ?? []
+      const next = Math.min(histIdx + 1, h.length - 1)
       setHistIdx(next)
-      setInput(history[next] ?? '')
+      setInput(h[next] ?? '')
     }
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       const next = histIdx - 1
       if (next < 0) { setHistIdx(-1); setInput(''); return }
+      const h = historyRef.current[displayId ?? -1] ?? []
       setHistIdx(next)
-      setInput(history[next] ?? '')
+      setInput(h[next] ?? '')
     }
   }
 
