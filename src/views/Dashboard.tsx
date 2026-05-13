@@ -20,6 +20,7 @@ import { CredentialsPanel }   from '@/components/CredentialsPanel/CredentialsPan
 import { EventLogPanel }      from '@/components/EventLogPanel/EventLogPanel'
 import { ProxiesPanel }            from '@/components/ProxiesPanel/ProxiesPanel'
 import { TimelinePanel }          from '@/components/TimelinePanel/TimelinePanel'
+import { AttackPanel }            from '@/components/AttackPanel/AttackPanel'
 import { CallbackToastContainer }  from '@/components/Toast/CallbackToast'
 import { ProxyToastContainer }     from '@/components/Toast/ProxyToast'
 import { SettingsPanel }         from '@/components/SettingsPanel/SettingsPanel'
@@ -161,7 +162,7 @@ export function Dashboard() {
   useWarningBadge()
 
   const activeRailView = useStore((s) => s.activeRailView)
-  const isFullPanel    = activeRailView === 'overview' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'proxies' || activeRailView === 'report' || activeRailView === 'files' || activeRailView === 'operations' || activeRailView === 'credentials' || activeRailView === 'logs' || activeRailView === 'timeline'
+  const isFullPanel    = activeRailView === 'overview' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'proxies' || activeRailView === 'report' || activeRailView === 'files' || activeRailView === 'operations' || activeRailView === 'credentials' || activeRailView === 'logs' || activeRailView === 'timeline' || activeRailView === 'attack'
 
   return (
     <div className={styles.root}>
@@ -186,6 +187,7 @@ export function Dashboard() {
             {activeRailView === 'credentials'  && <CredentialsPanel />}
             {activeRailView === 'logs'         && <EventLogPanel />}
             {activeRailView === 'timeline'     && <TimelinePanel />}
+            {activeRailView === 'attack'       && <AttackPanel />}
           </div>
         ) : (
           <>

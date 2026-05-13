@@ -86,24 +86,6 @@
   border: 1px solid var(--border-strong);
 }
 
-/* ── Coverage bar ── */
-.miniBar {
-  height: 3px;
-  background: var(--border-subtle);
-  border-radius: 1px;
-  overflow: hidden;
-  margin-top: 10px;
-}
-.miniFill {
-  height: 100%;
-  background: var(--crimson-500);
-  border-radius: 1px;
-}
-.coverageLbl {
-  font-size: 9px;
-  color: var(--bone-600);
-  margin-top: 4px;
-}
 
 /* ── Task breakdown ── */
 .taskBreakdown { display: flex; flex-direction: column; gap: 4px; }

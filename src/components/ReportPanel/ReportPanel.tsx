@@ -5,7 +5,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { useQuery }                        from '@apollo/client'
-import { GET_REPORT_TASKS }                from '@/apollo/operations'
+import { GET_REPORT_TASKS, GET_REPORT_ATTACK_TASKS, GET_REPORT_ATTACK_COMMANDS } from '@/apollo/operations'
 import { useStore }                        from '@/store'
 import { parseTs }                         from '@/components/Sidebar/utils'
 import {
@@ -16,6 +16,8 @@ import {
   generateHtml,
   type ReportTask,
   type ReportOptions,
+  type AttackMapping,
+  type CommandMapping,
 } from './reportGenerator'
 import styles from './ReportPanel.module.css'
 
@@ -58,10 +60,20 @@ function displayArgs(task: ReportTask): string {
 
 // ── Live preview sections ─────────────────────────────
 
-function PreviewTaskRow({ task, opts }: { task: ReportTask; opts: ReportOptions }) {
-  const args   = displayArgs(task)
-  const sym    = task.status.toLowerCase().includes('error') ? '✗' : task.completed ? '✓' : '◌'
-  const ttpTags = task.tags.filter(tag => isMitreTtp(tag.tagtype.name))
+function PreviewTaskRow({
+  task, opts, taskTechMap,
+}: {
+  task:        ReportTask
+  opts:        ReportOptions
+  taskTechMap: Map<number, string[]>
+}) {
+  const args = displayArgs(task)
+  const sym  = task.status.toLowerCase().includes('error') ? '✗' : task.completed ? '✓' : '◌'
+
+  // Merge tag-based TTPs and attacktask-based techniques; deduplicate
+  const tagTtps  = task.tags.filter(tag => isMitreTtp(tag.tagtype.name)).map(tag => tag.tagtype.name)
+  const mapTtps  = taskTechMap.get(task.id) ?? []
+  const allTtps  = [...new Set([...tagTtps, ...mapTtps])].sort()
 
   return (
     <tr className={styles.taskRow}>
@@ -75,14 +87,10 @@ function PreviewTaskRow({ task, opts }: { task: ReportTask; opts: ReportOptions 
       {opts.includeOperators && <td className={styles.opCell}>{task.operator.username}</td>}
       {opts.includeTTPs && (
         <td className={styles.ttpsCell}>
-          {ttpTags.length > 0
-            ? ttpTags.map(tag => (
-                <span
-                  key={tag.tagtype.name}
-                  className={styles.ttpBadge}
-                  style={{ '--ttp-color': tag.tagtype.color } as React.CSSProperties}
-                >
-                  {tag.tagtype.name}
+          {allTtps.length > 0
+            ? allTtps.map(tnum => (
+                <span key={tnum} className={styles.ttpBadge}>
+                  {tnum}
                 </span>
               ))
             : <span className={styles.dim}>—</span>
@@ -93,7 +101,13 @@ function PreviewTaskRow({ task, opts }: { task: ReportTask; opts: ReportOptions 
   )
 }
 
-function PreviewTaskTable({ tasks, opts }: { tasks: ReportTask[]; opts: ReportOptions }) {
+function PreviewTaskTable({
+  tasks, opts, taskTechMap,
+}: {
+  tasks:       ReportTask[]
+  opts:        ReportOptions
+  taskTechMap: Map<number, string[]>
+}) {
   return (
     <table className={styles.taskTable}>
       <thead>
@@ -107,15 +121,41 @@ function PreviewTaskTable({ tasks, opts }: { tasks: ReportTask[]; opts: ReportOp
         </tr>
       </thead>
       <tbody>
-        {tasks.map(t => <PreviewTaskRow key={t.id} task={t} opts={opts} />)}
+        {tasks.map(t => (
+          <PreviewTaskRow key={t.id} task={t} opts={opts} taskTechMap={taskTechMap} />
+        ))}
       </tbody>
     </table>
   )
 }
 
-function LivePreview({ tasks, opts, opName }: { tasks: ReportTask[]; opts: ReportOptions; opName: string }) {
+function LivePreview({ tasks, opts, opName, attackMappings, commandMappings }: { tasks: ReportTask[]; opts: ReportOptions; opName: string; attackMappings: AttackMapping[]; commandMappings: CommandMapping[] }) {
   const filtered = useMemo(() => filterTasks(tasks, opts), [tasks, opts])
-  const ttps     = useMemo(() => opts.includeTTPs ? collectTtps(filtered) : [], [filtered, opts.includeTTPs])
+  const ttps     = useMemo(() => opts.includeTTPs ? collectTtps(filtered, attackMappings, commandMappings) : [], [filtered, opts.includeTTPs, attackMappings, commandMappings])
+
+  // task_id → [t_num, ...] for per-row display: merge attacktask + attackcommand inheritance
+  const taskTechMap = useMemo(() => {
+    // cmd → [t_num] from attackcommand
+    const cmdMap = new Map<string, string[]>()
+    for (const m of commandMappings) {
+      const arr = cmdMap.get(m.command.cmd) ?? []
+      if (!arr.includes(m.attack.t_num)) arr.push(m.attack.t_num)
+      cmdMap.set(m.command.cmd, arr)
+    }
+    const result = new Map<number, string[]>()
+    const add = (taskId: number, tnum: string) => {
+      const arr = result.get(taskId) ?? []
+      if (!arr.includes(tnum)) arr.push(tnum)
+      result.set(taskId, arr)
+    }
+    // Per-instance mappings (attacktask)
+    for (const m of attackMappings) add(m.task_id, m.attack.t_num)
+    // Inherited from command type (attackcommand)
+    for (const t of tasks) {
+      for (const tnum of cmdMap.get(t.command_name) ?? []) add(t.id, tnum)
+    }
+    return result
+  }, [attackMappings, commandMappings, tasks])
 
   const oldest   = filtered.length ? parseTs(filtered[0].timestamp).toLocaleDateString() : '—'
   const newest   = filtered.length ? parseTs(filtered[filtered.length - 1].timestamp).toLocaleDateString() : '—'
@@ -191,7 +231,7 @@ function LivePreview({ tasks, opts, opName }: { tasks: ReportTask[]; opts: Repor
         {sections.map((s, i) => (
           <div key={i} className={styles.taskGroup}>
             {s.heading && <div className={styles.groupHeading}>{s.heading}</div>}
-            <PreviewTaskTable tasks={s.tasks} opts={opts} />
+            <PreviewTaskTable tasks={s.tasks} opts={opts} taskTechMap={taskTechMap} />
           </div>
         ))}
       </div>
@@ -211,12 +251,23 @@ export function ReportPanel() {
   const [copied, setCopied] = useState(false)
 
   const { data, loading } = useQuery(GET_REPORT_TASKS, {
-    variables: { operation_id: activeOperation?.id ?? 0 },
+    variables:   { operation_id: activeOperation?.id ?? 0 },
     fetchPolicy: 'cache-and-network',
-    skip: !activeOperation,
+    skip:        !activeOperation,
   })
 
-  const tasks: ReportTask[] = data?.task ?? []
+  const { data: attackData } = useQuery(GET_REPORT_ATTACK_TASKS, {
+    fetchPolicy: 'cache-and-network',
+    skip:        !activeOperation,
+  })
+
+  const { data: cmdData } = useQuery(GET_REPORT_ATTACK_COMMANDS, {
+    fetchPolicy: 'cache-first',
+  })
+
+  const tasks: ReportTask[]             = data?.task          ?? []
+  const attackMappings: AttackMapping[] = attackData?.attacktask  ?? []
+  const commandMappings: CommandMapping[] = cmdData?.attackcommand ?? []
 
   // Unique callbacks from task data
   const callbackList = useMemo(() => {
@@ -248,7 +299,7 @@ export function ReportPanel() {
   const opName = activeOperation?.name ?? ''
 
   function doExportMd() {
-    const md = generateMarkdown(tasks, opts, opName)
+    const md = generateMarkdown(tasks, opts, opName, attackMappings, commandMappings)
     const blob = new Blob([md], { type: 'text/markdown' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
@@ -259,7 +310,7 @@ export function ReportPanel() {
   }
 
   function doExportHtml() {
-    const html = generateHtml(tasks, opts, opName)
+    const html = generateHtml(tasks, opts, opName, attackMappings, commandMappings)
     const blob = new Blob([html], { type: 'text/html' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
@@ -270,7 +321,7 @@ export function ReportPanel() {
   }
 
   function doCopyMd() {
-    const md = generateMarkdown(tasks, opts, opName)
+    const md = generateMarkdown(tasks, opts, opName, attackMappings, commandMappings)
     navigator.clipboard.writeText(md).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
@@ -419,7 +470,7 @@ export function ReportPanel() {
             <span>No active operation</span>
           </div>
         ) : (
-          <LivePreview tasks={tasks} opts={opts} opName={opName} />
+          <LivePreview tasks={tasks} opts={opts} opName={opName} attackMappings={attackMappings} commandMappings={commandMappings} />
         )}
       </div>
     </div>

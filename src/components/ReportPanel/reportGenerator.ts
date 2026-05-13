@@ -22,6 +22,16 @@ export interface ReportTask {
   tags:          Array<{ tagtype: { name: string; color: string } }>
 }
 
+export interface AttackMapping {
+  task_id: number
+  attack:  { t_num: string; name: string }
+}
+
+export interface CommandMapping {
+  command: { cmd: string }
+  attack:  { t_num: string }
+}
+
 export interface ReportOptions {
   title:             string
   groupBy:           'chronological' | 'callback' | 'operator'
@@ -89,31 +99,62 @@ export function filterTasks(tasks: ReportTask[], opts: ReportOptions): ReportTas
   })
 }
 
-export function collectTtps(tasks: ReportTask[]): Array<{ name: string; color: string; count: number }> {
-  const map = new Map<string, { color: string; count: number }>()
-  tasks.forEach(t =>
-    t.tags.forEach(tag => {
-      if (isMitreTtp(tag.tagtype.name)) {
-        const existing = map.get(tag.tagtype.name)
-        if (existing) existing.count++
-        else map.set(tag.tagtype.name, { color: tag.tagtype.color, count: 1 })
-      }
-    })
-  )
+export function collectTtps(
+  tasks:           ReportTask[],
+  attackMappings:  AttackMapping[]  = [],
+  commandMappings: CommandMapping[] = [],
+): Array<{ name: string; color: string; count: number }> {
+  const taskIdSet = new Set(tasks.map(t => t.id))
+
+  // cmd → [t_num] lookup from attackcommand
+  const cmdTechMap = new Map<string, string[]>()
+  for (const m of commandMappings) {
+    const arr = cmdTechMap.get(m.command.cmd) ?? []
+    if (!arr.includes(m.attack.t_num)) arr.push(m.attack.t_num)
+    cmdTechMap.set(m.command.cmd, arr)
+  }
+
+  const map = new Map<string, { color: string; taskIds: Set<number> }>()
+
+  function add(tnum: string, taskId: number, color = '#c03030') {
+    if (!map.has(tnum)) map.set(tnum, { color, taskIds: new Set() })
+    map.get(tnum)!.taskIds.add(taskId)
+  }
+
+  for (const t of tasks) {
+    // Source 1: generic tags (manually applied T-number strings)
+    for (const tag of t.tags) {
+      if (isMitreTtp(tag.tagtype.name)) add(tag.tagtype.name, t.id, tag.tagtype.color)
+    }
+    // Source 2: attacktask (explicit per-instance mapping)
+    // handled below via attackMappings
+    // Source 3: attackcommand (inherited from command type)
+    for (const tnum of cmdTechMap.get(t.command_name) ?? []) {
+      add(tnum, t.id)
+    }
+  }
+
+  // Source 2: attacktask (only tasks in filtered set)
+  for (const m of attackMappings) {
+    if (taskIdSet.has(m.task_id)) add(m.attack.t_num, m.task_id)
+  }
+
   return Array.from(map.entries())
-    .map(([name, v]) => ({ name, ...v }))
+    .map(([name, v]) => ({ name, color: v.color, count: v.taskIds.size }))
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
 // ── Markdown generator ────────────────────────────────
 
 export function generateMarkdown(
-  tasks: ReportTask[],
-  opts:  ReportOptions,
-  opName: string,
+  tasks:           ReportTask[],
+  opts:            ReportOptions,
+  opName:          string,
+  attackMappings:  AttackMapping[]  = [],
+  commandMappings: CommandMapping[] = [],
 ): string {
   const filtered = filterTasks(tasks, opts)
-  const ttps     = opts.includeTTPs ? collectTtps(filtered) : []
+  const ttps     = opts.includeTTPs ? collectTtps(filtered, attackMappings, commandMappings) : []
   const lines: string[] = []
 
   const now    = new Date().toLocaleString([], { hour12: false })
@@ -213,12 +254,14 @@ function appendTaskTable(lines: string[], tasks: ReportTask[], opts: ReportOptio
 // ── HTML generator ────────────────────────────────────
 
 export function generateHtml(
-  tasks: ReportTask[],
-  opts:  ReportOptions,
-  opName: string,
+  tasks:           ReportTask[],
+  opts:            ReportOptions,
+  opName:          string,
+  attackMappings:  AttackMapping[]  = [],
+  commandMappings: CommandMapping[] = [],
 ): string {
   const filtered = filterTasks(tasks, opts)
-  const ttps     = opts.includeTTPs ? collectTtps(filtered) : []
+  const ttps     = opts.includeTTPs ? collectTtps(filtered, attackMappings, commandMappings) : []
   const now      = new Date().toLocaleString([], { hour12: false })
   const oldest   = filtered.length ? fmtDate(filtered[0].timestamp) : '—'
   const newest   = filtered.length ? fmtDate(filtered[filtered.length - 1].timestamp) : '—'

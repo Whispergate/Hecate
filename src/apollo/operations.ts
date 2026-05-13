@@ -876,6 +876,78 @@ export const SUB_MYTHIC_TREE = gql`
   }
 `
 
+// ─────────────────────────────────────────────────────
+// MITRE ATT&CK
+// ─────────────────────────────────────────────────────
+
+// All techniques — no RLS, global table.
+// os and tactic are stored as JSON strings; parse client-side.
+export const GET_ATTACK = gql`
+  query GetAttack {
+    attack(order_by: { t_num: asc }) {
+      id
+      t_num
+      name
+      os
+      tactic
+    }
+  }
+`
+
+// Commands mapped to techniques — no RLS, global.
+export const GET_ATTACK_COMMANDS = gql`
+  query GetAttackCommands {
+    attackcommand {
+      attack_id
+      command {
+        cmd
+        payloadtype { name }
+      }
+    }
+  }
+`
+
+// Tasks mapped to techniques — RLS auto-filters to current operation.
+export const GET_ATTACK_TASKS = gql`
+  query GetAttackTasks {
+    attacktask {
+      attack_id
+      task {
+        id
+        display_id
+        command_name
+        display_params
+        callback { display_id host }
+      }
+    }
+  }
+`
+
+// cmd → technique mapping for ReportPanel — inherits ATT&CK coverage from attackcommand.
+// No RLS (global table). Used to derive per-task TTPs from command type.
+export const GET_REPORT_ATTACK_COMMANDS = gql`
+  query GetReportAttackCommands {
+    attackcommand {
+      command { cmd }
+      attack  { t_num }
+    }
+  }
+`
+
+// Lean join for ReportPanel TTP section — task_id + technique metadata only.
+// RLS auto-filters to current operation via task → callback → operation_id.
+export const GET_REPORT_ATTACK_TASKS = gql`
+  query GetReportAttackTasks {
+    attacktask {
+      task_id
+      attack {
+        t_num
+        name
+      }
+    }
+  }
+`
+
 // All tasks for the operation — used by TimelinePanel swimlane view.
 // Lean shape: no tags, no response_count. Limit 2000.
 export const GET_TIMELINE_TASKS = gql`

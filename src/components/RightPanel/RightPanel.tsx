@@ -401,19 +401,6 @@ export function RightPanel() {
         </div>
       )}
 
-      {/* ── MITRE ATT&CK ── */}
-      <div className={styles.section}>
-        <div className="sec-label">MITRE ATT&CK</div>
-        <div className={styles.tags}>
-          {['TA0002','TA0004','TA0005','TA0006','T1059.001','T1055','T1003','T1078','T1105'].map(t => (
-            <span key={t} className={styles.tag}>{t}</span>
-          ))}
-        </div>
-        <div className={styles.miniBar}>
-          <div className={styles.miniFill} style={{ width: '38%' }} />
-        </div>
-        <div className={styles.coverageLbl}>38% technique coverage</div>
-      </div>
 
     </aside>
   )
