@@ -876,6 +876,28 @@ export const SUB_MYTHIC_TREE = gql`
   }
 `
 
+// All tasks for the operation — used by TimelinePanel swimlane view.
+// Lean shape: no tags, no response_count. Limit 2000.
+export const GET_TIMELINE_TASKS = gql`
+  query GetTimelineTasks($operation_id: Int!, $limit: Int = 2000) {
+    task(
+      where:    { callback: { operation_id: { _eq: $operation_id } } }
+      order_by: { timestamp: asc }
+      limit:    $limit
+    ) {
+      id
+      display_id
+      command_name
+      display_params
+      status
+      completed
+      timestamp
+      operator { username }
+      callback  { id display_id host }
+    }
+  }
+`
+
 // Historical commands for a callback — seeds CommandBar history on first visit.
 // Uses display_params (always human-readable) rather than raw params.
 export const GET_CALLBACK_TASK_HISTORY = gql`

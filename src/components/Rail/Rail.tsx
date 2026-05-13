@@ -106,6 +106,19 @@ const ITEMS: { id: RailView; title: string; icon: React.ReactNode }[] = [
     ),
   },
   {
+    id: 'timeline',
+    title: 'Attack Timeline',
+    icon: (
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+        <path d="M2 8h12" />
+        <circle cx="4"  cy="8" r="1.5" fill="currentColor" stroke="none" />
+        <circle cx="8"  cy="8" r="1.5" fill="currentColor" stroke="none" />
+        <circle cx="12" cy="8" r="1.5" fill="currentColor" stroke="none" />
+        <path d="M4 5v1.2M8 4v2.2M12 6v0.2" />
+      </svg>
+    ),
+  },
+  {
     id: 'attack',
     title: 'ATT&CK Matrix',
     icon: (

@@ -1,0 +1,313 @@
+/* ═══════════════════════════════════════════════════
+   src/components/TimelinePanel/TimelinePanel.module.css
+   ═══════════════════════════════════════════════════ */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+/* ── Header ──────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--beige-border);
+  flex-shrink: 0;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--beige);
+  letter-spacing: 0.04em;
+}
+
+.meta {
+  font-size: 11px;
+  color: var(--bone-700);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filterInput {
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border);
+  border-radius: 3px;
+  color: var(--bone-400);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 8px;
+  width: 200px;
+  outline: none;
+}
+.filterInput::placeholder { color: var(--bone-800); }
+.filterInput:focus { border-color: var(--crimson-600); }
+
+.zoomBtns {
+  display: flex;
+  gap: 2px;
+}
+
+.zoomBtn {
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border);
+  border-radius: 3px;
+  color: var(--bone-600);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 3px 7px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+.zoomBtn:hover { background: var(--bg-elevated); color: var(--bone-400); }
+.zoomActive {
+  background: var(--crimson-900);
+  border-color: var(--crimson-600);
+  color: var(--crimson-300);
+}
+
+/* ── Scroll area ─────────────────────────────────── */
+
+.scrollArea {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+}
+
+.empty {
+  padding: 48px 24px;
+  color: var(--bone-700);
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+/* ── Time axis ───────────────────────────────────── */
+
+.axisRow {
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--beige-border);
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--bg-base);
+}
+
+.axisLabel {
+  font-size: 9px;
+  color: var(--bone-800);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.axisTrack {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  min-width: 0;
+}
+
+.tick {
+  position: absolute;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.tickNub {
+  width: 1px;
+  height: 6px;
+  background: var(--bone-700);
+}
+
+.tickLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-600);
+  white-space: nowrap;
+  padding-bottom: 3px;
+}
+
+/* ── Label cell (sticky left) ────────────────────── */
+
+.labelCell {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--bg-base);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-right: 1px solid var(--beige-border);
+}
+
+/* ── Callback tracks ─────────────────────────────── */
+
+.trackRow {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid color-mix(in srgb, var(--beige-border) 50%, transparent);
+}
+.trackRow:hover .labelCell { background: var(--bg-raised); }
+.trackRow:hover .trackArea { background: color-mix(in srgb, var(--bg-raised) 40%, transparent); }
+
+.trackDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.trackHost {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bone-500);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 110px;
+}
+
+.trackId {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-700);
+  flex-shrink: 0;
+}
+
+.trackArea {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  min-width: 0;
+}
+
+.trackLine {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+/* ── Events ──────────────────────────────────────── */
+
+.event {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s, border-color 0.1s, box-shadow 0.1s;
+}
+.event:hover {
+  transform: translate(-50%, -50%) scale(1.5);
+  z-index: 1;
+}
+
+.ev_done    { background: var(--crimson-400); }
+.ev_error   { background: #7a1515; opacity: 0.85; }
+.ev_running { background: var(--bone-700); }
+
+.evSelected {
+  border-color: var(--beige) !important;
+  transform: translate(-50%, -50%) scale(1.4) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--beige) 25%, transparent);
+  z-index: 2;
+}
+
+/* ── Detail bar ──────────────────────────────────── */
+
+.detail {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 12px 0 8px;
+  height: 52px;
+  border-top: 1px solid var(--beige-border);
+  background: var(--bg-raised);
+  overflow: hidden;
+}
+
+.detailClose {
+  background: none;
+  border: none;
+  color: var(--bone-700);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 4px 8px 4px 4px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.detailClose:hover { color: var(--bone-400); }
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 14px;
+  border-right: 1px solid var(--beige-border);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.detailItem:last-child { border-right: none; flex-shrink: 1; overflow: hidden; }
+
+.diLabel {
+  font-size: 9px;
+  color: var(--bone-800);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.diValue {
+  font-size: 12px;
+  color: var(--bone-400);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.diMono {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.diSt_done    { color: var(--crimson-400); }
+.diSt_error   { color: #c04040; }
+.diSt_running { color: var(--bone-600); }
