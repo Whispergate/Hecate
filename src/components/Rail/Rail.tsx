@@ -64,7 +64,7 @@ const ITEMS: { id: RailView; title: string; icon: React.ReactNode }[] = [
   },
   {
     id: 'proxies',
-    title: 'Proxies & Tunnels',
+    title: 'Proxies & Pivots',
     icon: (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
         <rect x="1" y="6" width="4" height="4" rx="0.8" />

@@ -1,0 +1,223 @@
+/* src/components/CommandBar/SocksModal.module.css */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-md);
+  width: min(360px, 94vw);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--beige-border);
+  background: var(--bg-void);
+  flex-shrink: 0;
+}
+
+.title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--crimson-300);
+  letter-spacing: 0.06em;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--bone-800);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: color var(--t-fast);
+}
+.closeBtn:hover { color: var(--bone-200); }
+
+.body {
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bone-600);
+}
+
+.labelSub {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--bone-800);
+}
+
+.actionRow {
+  display: flex;
+  gap: 6px;
+}
+
+.actionBtn {
+  flex: 1;
+  padding: 8px 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  background: var(--bg-void);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--bone-600);
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+}
+.actionBtn:hover {
+  border-color: var(--bone-600);
+  color: var(--bone-200);
+}
+
+.actionStart {
+  background: rgba(180,30,30,0.15);
+  border-color: var(--crimson-600);
+  color: var(--crimson-300);
+}
+
+.actionStop {
+  background: rgba(180,60,60,0.15);
+  border-color: #b44040;
+  color: #e08080;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.portChip {
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--bg-void);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: #3ab8d8;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.portChip:hover {
+  background: rgba(42,122,154,0.15);
+  border-color: #3ab8d8;
+}
+.portChipActive {
+  background: rgba(42,122,154,0.2);
+  border-color: #3ab8d8;
+  box-shadow: 0 0 0 1px rgba(42,122,154,0.3);
+}
+
+.portInput {
+  width: 100%;
+  background: var(--bg-void);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--bone-200);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color var(--t-fast);
+  appearance: textfield;
+}
+.portInput::-webkit-outer-spin-button,
+.portInput::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.portInput:focus { border-color: var(--crimson-600); }
+
+.error {
+  font-size: 9px;
+  color: var(--crimson-300);
+  font-family: var(--font-mono);
+  padding: 6px 10px;
+  background: rgba(180,30,30,0.1);
+  border: 1px solid var(--crimson-900);
+  border-radius: var(--radius-sm);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--beige-border);
+  background: var(--bg-void);
+  flex-shrink: 0;
+}
+
+.cancelBtn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-600);
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: border-color var(--t-fast), color var(--t-fast);
+}
+.cancelBtn:hover { border-color: var(--bone-600); color: var(--bone-200); }
+
+.submitBtn {
+  background: var(--crimson-900);
+  border: 1px solid var(--crimson-600);
+  border-radius: var(--radius-sm);
+  padding: 6px 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--crimson-200);
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.submitBtn:hover:not(:disabled) {
+  background: var(--crimson-700);
+  border-color: var(--crimson-400);
+}
+.submitBtn:disabled { opacity: 0.5; cursor: default; }
+
+.submitStop {
+  background: rgba(120,30,30,0.6);
+  border-color: #b44040;
+  color: #e08080;
+}
+.submitStop:hover:not(:disabled) {
+  background: rgba(160,40,40,0.7);
+  border-color: #d05050;
+}

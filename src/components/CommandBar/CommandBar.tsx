@@ -7,6 +7,7 @@ import { useMutation, useQuery }                    from '@apollo/client'
 import { CREATE_TASK, GET_COMMANDS }                from '@/apollo/operations'
 import { useStore }                                 from '@/store'
 import { FileTaskModal, type CommandParam }         from './FileTaskModal'
+import { SocksModal }                               from './SocksModal'
 import styles                                       from './CommandBar.module.css'
 
 // ── Tab completion ────────────────────────────────────
@@ -30,6 +31,7 @@ function matchCommands(allCmds: string[], prefix: string): string[] {
 interface RawCmd {
   cmd:               string
   description:       string
+  script_only:       boolean
   commandparameters: CommandParam[]
 }
 
@@ -65,17 +67,19 @@ function extractCwd(extraInfo: string, description: string): string {
 }
 
 export function CommandBar() {
-  const [input,   setInput]   = useState('')
-  const [histIdx, setHistIdx] = useState(-1)
-  const [history, setHistory] = useState<string[]>([])
-  const [error,   setError]   = useState<string | null>(null)
-  const [comp,    setComp]    = useState<CompletionState>(EMPTY_COMP)
-  const [modal,   setModal]   = useState<ModalState | null>(null)
+  const [input,      setInput]      = useState('')
+  const [histIdx,    setHistIdx]    = useState(-1)
+  const [history,    setHistory]    = useState<string[]>([])
+  const [error,      setError]      = useState<string | null>(null)
+  const [comp,       setComp]       = useState<CompletionState>(EMPTY_COMP)
+  const [modal,      setModal]      = useState<ModalState | null>(null)
+  const [socksModal, setSocksModal] = useState(false)
 
   const inputRef  = useRef<HTMLInputElement>(null)
   const menuRef   = useRef<HTMLDivElement>(null)
 
   const { selectedCallbackId, multiSelectedIds, callbacks } = useStore()
+  const activeCallbackPorts = useStore(s => s.activeCallbackPorts)
 
   const cb        = callbacks.find(c => c.id === selectedCallbackId)
   const displayId = cb?.display_id ?? null
@@ -98,9 +102,11 @@ export function CommandBar() {
   const cmdDescMap: Record<string, string> = Object.fromEntries(
     (cmdData?.command ?? []).map((c: RawCmd) => [c.cmd, c.description])
   )
-  // Map command name → parameter list (for file-param detection)
   const cmdParamsMap: Record<string, CommandParam[]> = Object.fromEntries(
     (cmdData?.command ?? []).map((c: RawCmd) => [c.cmd, c.commandparameters ?? []])
+  )
+  const cmdScriptOnlyMap: Record<string, boolean> = Object.fromEntries(
+    (cmdData?.command ?? []).map((c: RawCmd) => [c.cmd, c.script_only ?? false])
   )
 
   const [createTask, { loading }] = useMutation(CREATE_TASK, {
@@ -134,17 +140,28 @@ export function CommandBar() {
     const command  = spaceIdx === -1 ? raw : raw.slice(0, spaceIdx)
     const params   = spaceIdx === -1 ? '' : raw.slice(spaceIdx + 1)
 
-    // File/cred param modal — use primary callback only (not multi-tasked)
+    // Socks modal — intercept bare "socks" for primary callback
+    if (command === 'socks' && !params && displayId) {
+      setHistory(h => [raw, ...h.slice(0, 99)])
+      setHistIdx(-1)
+      setInput('')
+      setSocksModal(true)
+      return
+    }
+
+    // Param modal — primary callback only (not multi-tasked)
     if (!params && displayId) {
-      const cmdParams         = cmdParamsMap[command] ?? []
-      const hasRequiredFile   = cmdParams.some(
+      const cmdParams       = cmdParamsMap[command] ?? []
+      const hasRequiredFile = cmdParams.some(
         p => (p.type === 'File' || p.type === 'FileMultiple') && p.required
       )
-      const hasRequiredCred   = cmdParams.some(
+      const hasRequiredCred = cmdParams.some(
         p => p.type === 'CredentialJson' && p.required
       )
+      // script_only commands (like socks, rpfwd) require modal — raw CLI args are not valid
+      const isScriptOnly = cmdScriptOnlyMap[command] ?? false
 
-      if (hasRequiredFile || hasRequiredCred) {
+      if (hasRequiredFile || hasRequiredCred || isScriptOnly) {
         setHistory(h => [raw, ...h.slice(0, 99)])
         setHistIdx(-1)
         setInput('')
@@ -173,7 +190,7 @@ export function CommandBar() {
 
     const firstError = results.find(r => r?.data?.createTask?.status === 'error')
     if (firstError) setError(firstError.data.createTask.error ?? 'Task creation failed')
-  }, [input, displayId, targetDisplayIds, createTask, cmdParamsMap, cb])
+  }, [input, displayId, targetDisplayIds, createTask, cmdParamsMap, cmdScriptOnlyMap, cb, activeCallbackPorts])
 
   // ── Apply a completion choice ─────────────────────────
   const applyCompletion = useCallback((cmd: string) => {
@@ -285,6 +302,17 @@ export function CommandBar() {
         displayId={modal.displayId}
         defaultCwd={modal.defaultCwd}
         onClose={() => { setModal(null); inputRef.current?.focus() }}
+      />
+    )}
+    {socksModal && displayId && (
+      <SocksModal
+        displayId={displayId}
+        activePorts={
+          activeCallbackPorts
+            .filter(p => p.port_type === 'socks' && p.callback.display_id === displayId)
+            .map(p => p.local_port)
+        }
+        onClose={() => { setSocksModal(false); inputRef.current?.focus() }}
       />
     )}
     <div className={styles.wrap}>

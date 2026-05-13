@@ -3,7 +3,8 @@
 .panel {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   background: var(--bg-base);
   overflow: hidden;
 }
@@ -72,14 +73,31 @@
   line-height: 1.6;
 }
 
-/* ── Body ── */
-.body {
+/* ── Split layout ── */
+.split {
+  display: flex;
+  flex-direction: row;
   flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.listPane {
+  width: 580px;
+  flex-shrink: 0;
   overflow-y: auto;
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
   gap: 28px;
+  border-right: 1px solid var(--beige-border);
+}
+
+.graphPane {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
 }
 
 .sectionLabel {
@@ -98,21 +116,21 @@
   gap: 2px;
 }
 
-/* SOCKS row: 6 columns */
+/* SOCKS row: 7 columns */
 .row {
   display: grid;
-  grid-template-columns: 2fr 1fr 90px 80px 80px 60px;
-  gap: 0 14px;
+  grid-template-columns: 2fr 1fr 80px 72px 72px 54px 44px;
+  gap: 0 10px;
   align-items: center;
   padding: 8px 12px;
   border-radius: var(--radius-sm);
   font-size: 10px;
 }
 
-/* rpfwd row: 7 columns */
+/* rpfwd row: 8 columns */
 .rowFwd,
 .theadFwd {
-  grid-template-columns: 2fr 1fr 90px 160px 80px 80px 60px;
+  grid-template-columns: 2fr 1fr 80px 120px 72px 72px 54px 44px;
 }
 
 .thead,
@@ -181,4 +199,51 @@
   color: var(--bone-800);
   font-size: 9px;
   text-align: right;
+}
+
+/* ── Stop button ── */
+.stopBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 3px 6px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--bone-800);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+  white-space: nowrap;
+}
+.stopBtn:hover:not(:disabled) {
+  background: rgba(180,40,40,0.15);
+  border-color: #b44040;
+  color: #e08080;
+}
+.stopBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ── Panel-level error bar ── */
+.errBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 24px;
+  background: rgba(180,40,40,0.1);
+  border-bottom: 1px solid rgba(180,40,40,0.3);
+  font-size: 9px;
+  color: #e08080;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+.errDismiss {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 9px;
+  color: #e08080;
+  padding: 0 2px;
 }

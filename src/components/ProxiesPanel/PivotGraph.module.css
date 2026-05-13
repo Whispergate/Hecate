@@ -1,0 +1,45 @@
+/* src/components/ProxiesPanel/PivotGraph.module.css */
+
+.wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg-void);
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Reset button ── */
+.resetBtn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16,8,8,0.85);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-sm);
+  color: var(--bone-600);
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+  backdrop-filter: blur(4px);
+}
+.resetBtn:hover {
+  color: var(--bone-200);
+  border-color: var(--bone-600);
+  background: rgba(24,12,12,0.92);
+}
+.resetBtn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}

@@ -535,6 +535,7 @@ export const GET_COMMANDS = gql`
     ) {
       cmd
       description
+      script_only
       commandparameters(order_by: { ui_position: asc }) {
         name
         display_name
