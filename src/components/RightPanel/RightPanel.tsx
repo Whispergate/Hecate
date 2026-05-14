@@ -318,6 +318,8 @@ export function RightPanel() {
     skip: !activeOp,
   })
   const allCallbacks: Callback[] = allCbData?.callback ?? aliveCallbacks
+  const [topoAliveOnly, setTopoAliveOnly] = useState(false)
+  const topoCallbacks = topoAliveOnly ? allCallbacks.filter(cb => cb.active && !isLateCheckin(cb)) : allCallbacks
 
   useQuery(GET_OPERATIONS, { skip: !activeOp, fetchPolicy: 'cache-first' })
 
@@ -353,8 +355,19 @@ export function RightPanel() {
 
       {/* ── Network topology ── */}
       <div className={styles.section}>
-        <div className="sec-label">Network topology</div>
-        <NetworkTopology callbacks={allCallbacks} selectedId={selectedCallbackId} onSelect={setSelectedCallbackId} annotations={callbackAnnotations} />
+        <div className={styles.sectionHeader}>
+          <span className="sec-label" style={{ margin: 0 }}>Network topology</span>
+          <label className={styles.aliveFilter}>
+            <input
+              type="checkbox"
+              className={styles.aliveCheckbox}
+              checked={topoAliveOnly}
+              onChange={e => setTopoAliveOnly(e.target.checked)}
+            />
+            alive only
+          </label>
+        </div>
+        <NetworkTopology callbacks={topoCallbacks} selectedId={selectedCallbackId} onSelect={setSelectedCallbackId} annotations={callbackAnnotations} />
       </div>
 
       {/* ── Selected agent detail ── */}

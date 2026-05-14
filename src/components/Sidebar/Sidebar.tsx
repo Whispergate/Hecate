@@ -9,6 +9,13 @@ import { integrityLabel, timeSince, parseTs, formatSleepInterval, formatSleepJit
 import { CallbackContextMenu } from '@/components/CallbackContextMenu/CallbackContextMenu'
 import styles from './Sidebar.module.css'
 
+// Deterministic hue from agent name — consistent across renders, works for any agent.
+function agentColor(name: string): string {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0
+  return `hsl(${h % 360}, 65%, 62%)`
+}
+
 interface CtxMenu { cb: Callback; x: number; y: number }
 type StatusFilter = 'alive' | 'idle' | 'dead'
 
@@ -20,6 +27,8 @@ export function Sidebar() {
 
   const selected = useSelectedCallback()
   const [ctxMenu, setCtxMenu] = useState<CtxMenu | null>(null)
+
+  const impersonatedUser = selected?.impersonation_context?.trim() ?? ''
   const [filterText, setFilterText]     = useState('')
   const [filterStatus, setFilterStatus] = useState<Set<StatusFilter>>(new Set())
   const [filterAgents, setFilterAgents] = useState<Set<string>>(new Set())
@@ -202,10 +211,40 @@ export function Sidebar() {
                   />
                 )}
               </div>
+              <div className={styles.agentIconWrap} title={cb.payload.payloadtype.name}>
+                <span
+                  className={styles.agentIconFallback}
+                  style={{ color: agentColor(cb.payload.payloadtype.name) }}
+                >
+                  {cb.payload.payloadtype.name.slice(0, 2).toUpperCase()}
+                </span>
+                <img
+                  src={`/static/${cb.payload.payloadtype.name}_dark.svg`}
+                  className={styles.agentIconImg}
+                  onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  alt=""
+                />
+              </div>
               <div className={styles.cbMeta}>
                 <span>{cb.payload.payloadtype.name} · {cb.os}</span>
                 <span>{timeSince(cb.last_checkin)}</span>
               </div>
+              {cb.user && (
+                <div className={styles.cbUser}>
+                  <span
+                    className={styles.cbUserName}
+                    style={cb.impersonation_context?.trim() ? { opacity: 0.45 } : undefined}
+                  >
+                    {cb.user}
+                  </span>
+                  {cb.impersonation_context?.trim() && (
+                    <>
+                      <span className={styles.cbUserArrow}> → </span>
+                      <span className={styles.cbUserToken}>⚡ {cb.impersonation_context.trim()}</span>
+                    </>
+                  )}
+                </div>
+              )}
               {cb.description && (
                 <div className={styles.cbDesc}>{cb.description}</div>
               )}
@@ -230,6 +269,15 @@ export function Sidebar() {
             <div className={styles.descRow}>{selected.description}</div>
           )}
 
+          {impersonatedUser && (
+            <div className={styles.infoRow}>
+              <span className={styles.infoKey}>Token</span>
+              <span className={`${styles.infoVal} ${styles.tokenVal}`} title={`Impersonating: ${impersonatedUser}`}>
+                ⚡ {impersonatedUser}
+              </span>
+            </div>
+          )}
+
           {[
             ['Integrity', integrityLabel(selected.integrity_level)],
             ['User',      selected.user || '—'],
@@ -245,12 +293,21 @@ export function Sidebar() {
             <div key={k} className={styles.infoRow}>
               <span className={styles.infoKey}>{k}</span>
               <span
-                className={`${styles.infoVal} ${k === 'Integrity' && selected.integrity_level >= 3 ? styles.hiVal : ''}`}
+                className={`${styles.infoVal} ${k === 'Integrity' && selected.integrity_level >= 3 ? styles.hiVal : ''} ${k === 'User' && impersonatedUser ? styles.mutedVal : ''}`}
               >
                 {v}
               </span>
             </div>
           ))}
+
+          {selected.cwd?.trim() && (
+            <div className={styles.infoRow}>
+              <span className={styles.infoKey}>Dir</span>
+              <span className={`${styles.infoVal} ${styles.cwdVal}`} title={selected.cwd}>
+                {selected.cwd}
+              </span>
+            </div>
+          )}
         </div>
       )}
 

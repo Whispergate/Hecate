@@ -79,6 +79,54 @@
   flex-shrink: 0;
 }
 
+/* ── Context status bar ── */
+.statusBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 3px 18px;
+  border-top: 1px solid var(--beige-border);
+  background: var(--bg-elevated);
+  min-width: 0;
+}
+
+.statusCwd {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.statusSpacer { flex: 1; }
+
+.statusArrow {
+  font-size: 9px;
+  color: var(--bone-800);
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+
+.statusUser {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-500);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.statusToken {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #d4a017;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
 /* ── Tab completion menu ── */
 .compMenu {
   display: flex;

@@ -53,6 +53,39 @@
 }
 .closeBtn:hover:not(:disabled) { color: var(--bone-200); }
 
+/* ── Group tab switcher ── */
+.groupTabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--beige-border);
+  flex-shrink: 0;
+}
+
+.groupTab {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--bg-void);
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--bone-600);
+  cursor: pointer;
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+  text-transform: lowercase;
+}
+.groupTab:hover:not(:disabled) {
+  color: var(--bone-200);
+  background: var(--bg-elevated);
+}
+.groupTabActive {
+  color: var(--crimson-300);
+  border-bottom-color: var(--crimson-500);
+  background: var(--bg-raised);
+}
+.groupTab:disabled { opacity: 0.4; cursor: default; }
+
 /* ── Body ── */
 .body {
   overflow-y: auto;

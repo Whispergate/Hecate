@@ -7,7 +7,7 @@ import { useMutation, useSubscription } from '@apollo/client'
 import { CREATE_TASK, SUB_ALL_CALLBACKS } from '@/apollo/operations'
 import { useStore, useAliveCallbacks }   from '@/store'
 import type { Callback, CallbackPort }   from '@/store'
-import { PivotGraph }                    from './PivotGraph'
+import { PivotGraph, isLateCheckin }      from './PivotGraph'
 import styles                            from './ProxiesPanel.module.css'
 
 function fmtBytes(n: number): string {
@@ -32,6 +32,9 @@ export function ProxiesPanel() {
     skip: !activeOp,
   })
   const allCallbacks: Callback[] = allCbData?.callback ?? aliveCallbacks
+
+  const [graphAliveOnly, setGraphAliveOnly] = useState(false)
+  const graphCallbacks = graphAliveOnly ? allCallbacks.filter(cb => cb.active && !isLateCheckin(cb)) : allCallbacks
 
   const [stoppingIds, setStoppingIds] = useState<Set<number>>(new Set())
   const [stopError,   setStopError]   = useState<string | null>(null)
@@ -194,8 +197,17 @@ export function ProxiesPanel() {
 
         {/* ── Right pane: pivot graph ── */}
         <div className={styles.graphPane}>
+          <label className={styles.graphFilter}>
+            <input
+              type="checkbox"
+              className={styles.graphFilterCheck}
+              checked={graphAliveOnly}
+              onChange={e => setGraphAliveOnly(e.target.checked)}
+            />
+            alive only
+          </label>
           <PivotGraph
-            callbacks={allCallbacks}
+            callbacks={graphCallbacks}
             ports={ports}
             onNavigate={onNavigate}
             annotations={callbackAnnotations}

@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════ */
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useMutation, useQuery, useLazyQuery }      from '@apollo/client'
+import { useMutation, useQuery, useLazyQuery } from '@apollo/client'
 import { CREATE_TASK, GET_COMMANDS, GET_CALLBACK_TASK_HISTORY } from '@/apollo/operations'
 import { useStore }                                 from '@/store'
 import { FileTaskModal, type CommandParam }         from './FileTaskModal'
@@ -84,6 +84,10 @@ export function CommandBar() {
   const cb        = callbacks.find(c => c.id === selectedCallbackId)
   const displayId = cb?.display_id ?? null
   const agentName = cb?.payload.payloadtype.name ?? ''
+
+  const cwdPath          = cb?.cwd?.trim() ?? ''
+  const impersonatedUser = cb?.impersonation_context?.trim() ?? ''
+  const currentUser      = cb?.user?.trim() ?? ''
 
   const [fetchHistory] = useLazyQuery(GET_CALLBACK_TASK_HISTORY, {
     fetchPolicy: 'network-only',
@@ -351,6 +355,35 @@ export function CommandBar() {
         <div className={styles.errorBar}>
           <span className={styles.errorText}>{error}</span>
           <button className={styles.errorDismiss} onClick={() => setError(null)}>✕</button>
+        </div>
+      )}
+
+      {/* ── Context status bar (user / CWD / impersonation) ── */}
+      {cb && (
+        <div className={styles.statusBar}>
+          {cwdPath && (
+            <span className={styles.statusCwd} title={cwdPath}>
+              {cwdPath}
+            </span>
+          )}
+          <span className={styles.statusSpacer} />
+          {currentUser && (
+            <span
+              className={styles.statusUser}
+              title="Process user"
+              style={impersonatedUser ? { opacity: 0.45 } : undefined}
+            >
+              {currentUser}
+            </span>
+          )}
+          {impersonatedUser && (
+            <>
+              <span className={styles.statusArrow}>→</span>
+              <span className={styles.statusToken} title={`Impersonating: ${impersonatedUser}`}>
+                ⚡ {impersonatedUser}
+              </span>
+            </>
+          )}
         </div>
       )}
 

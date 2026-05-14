@@ -12,6 +12,34 @@
   border-bottom: 1px solid var(--beige-border);
 }
 
+/* ── Section header with inline filter ── */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.aliveFilter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--bone-700);
+  cursor: pointer;
+  user-select: none;
+}
+.aliveFilter:hover { color: var(--bone-400); }
+
+.aliveCheckbox {
+  width: 10px;
+  height: 10px;
+  cursor: pointer;
+  accent-color: var(--crimson-400);
+  margin: 0;
+}
+
 /* ── Stats ── */
 .statGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 

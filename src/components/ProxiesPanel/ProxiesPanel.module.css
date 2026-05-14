@@ -100,6 +100,30 @@
   position: relative;
 }
 
+.graphFilter {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--bone-700);
+  cursor: pointer;
+  user-select: none;
+}
+.graphFilter:hover { color: var(--bone-400); }
+
+.graphFilterCheck {
+  width: 10px;
+  height: 10px;
+  cursor: pointer;
+  accent-color: var(--crimson-400);
+  margin: 0;
+}
+
 .sectionLabel {
   font-size: 9px;
   font-weight: 700;

@@ -77,15 +77,72 @@ async function uploadTaskFile(file: File, token: string): Promise<string | null>
   }
 }
 
+// Unique sorted group names derived from params.
+function getGroups(params: CommandParam[]): string[] {
+  const seen = new Set<string>()
+  const groups: string[] = []
+  for (const p of params) {
+    if (!seen.has(p.parameter_group_name)) {
+      seen.add(p.parameter_group_name)
+      groups.push(p.parameter_group_name)
+    }
+  }
+  return groups.sort()
+}
+
+function defaultsForGroup(
+  groupName: string,
+  params: CommandParam[],
+  defaultCwd: string,
+): Record<string, string> {
+  const groupParams = params.filter(p => p.parameter_group_name === groupName)
+  const visible = groupParams
+    .filter(p => p.type !== 'None')
+    .filter(p => !isFilenameParam(p))
+    .filter((p, i, arr) => arr.findIndex(x => x.name === p.name) === i)
+  const defaults: Record<string, string> = {}
+  for (const p of visible) {
+    if (p.type === 'File' || p.type === 'FileMultiple') continue
+    if (p.type === 'Boolean') {
+      defaults[p.name] = p.default_value ?? 'false'
+    } else if (p.type === 'String' && isPathParam(p) && defaultCwd) {
+      defaults[p.name] = defaultCwd
+    } else {
+      defaults[p.name] = p.default_value ?? ''
+    }
+  }
+  return defaults
+}
+
+function labelGroup(name: string): string {
+  if (name === 'Default') return 'Default'
+  return name.replace(/_/g, ' ')
+}
+
 export function FileTaskModal({ command, params, displayId, defaultCwd, onClose }: Props) {
   const { token } = useStore()
 
-  // Pick the group containing a File or CredentialJson param — sending params from multiple
-  // groups causes Mythic to reject with "don't match any parameter group".
-  const credParam      = params.find(p => p.type === 'CredentialJson')
-  const fileParam      = params.find(p => p.type === 'File' || p.type === 'FileMultiple')
-  const activeGroup    = (credParam ?? fileParam)?.parameter_group_name ?? 'Default Parameter Group'
-  const groupParams    = params.filter(p => p.parameter_group_name === activeGroup)
+  const allGroups = getGroups(params)
+  // Prefer "Default" group; fall back to first group alphabetically.
+  const initialGroup = allGroups.includes('Default') ? 'Default' : (allGroups[0] ?? 'Default')
+
+  const [selectedGroup, setSelectedGroup] = useState(initialGroup)
+  const [values,        setValues]        = useState<Record<string, string>>(
+    () => defaultsForGroup(initialGroup, params, defaultCwd)
+  )
+  const [fileMap,  setFileMap]  = useState<Record<string, File | null>>({})
+  const [error,    setError]    = useState<string | null>(null)
+  const [loading,  setLoading]  = useState(false)
+  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
+
+  function handleGroupChange(newGroup: string) {
+    setSelectedGroup(newGroup)
+    setValues(defaultsForGroup(newGroup, params, defaultCwd))
+    setFileMap({})
+    setError(null)
+  }
+
+  const groupParams    = params.filter(p => p.parameter_group_name === selectedGroup)
 
   // Within that group: skip None (crypto), skip filename params (auto-populated from file.name), dedupe by name.
   const visibleParams = groupParams
@@ -97,27 +154,6 @@ export function FileTaskModal({ command, params, displayId, defaultCwd, onClose 
   const hiddenFilenameParams = groupParams
     .filter(p => p.type !== 'None' && isFilenameParam(p))
     .filter((p, i, arr) => arr.findIndex(x => x.name === p.name) === i)
-
-  const [values, setValues] = useState<Record<string, string>>(() => {
-    const defaults: Record<string, string> = {}
-    for (const p of visibleParams) {
-      if (p.type === 'File' || p.type === 'FileMultiple') continue
-      if (p.type === 'Boolean') {
-        defaults[p.name] = p.default_value ?? 'false'
-      } else if (p.type === 'String' && isPathParam(p) && defaultCwd) {
-        // Pre-fill path params with the callback's cwd
-        defaults[p.name] = defaultCwd
-      } else {
-        defaults[p.name] = p.default_value ?? ''
-      }
-    }
-    return defaults
-  })
-
-  const [fileMap,  setFileMap]  = useState<Record<string, File | null>>({})
-  const [error,    setError]    = useState<string | null>(null)
-  const [loading,  setLoading]  = useState(false)
-  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const [createTask] = useMutation(CREATE_TASK)
 
@@ -215,7 +251,7 @@ export function FileTaskModal({ command, params, displayId, defaultCwd, onClose 
           tasking_location:      'modal',
           original_params:       paramsJson,
           files:                 fileUUIDs.length > 0 ? fileUUIDs : undefined,
-          parameter_group_name:  activeGroup,
+          parameter_group_name:  selectedGroup,
         },
       })
 
@@ -244,6 +280,22 @@ export function FileTaskModal({ command, params, displayId, defaultCwd, onClose 
           <span className={styles.title}>{command}</span>
           <button className={styles.closeBtn} onClick={onClose} disabled={loading}>✕</button>
         </div>
+
+        {/* ── Group switcher ── */}
+        {allGroups.length > 1 && (
+          <div className={styles.groupTabs}>
+            {allGroups.map(g => (
+              <button
+                key={g}
+                className={`${styles.groupTab} ${g === selectedGroup ? styles.groupTabActive : ''}`}
+                onClick={() => handleGroupChange(g)}
+                disabled={loading}
+              >
+                {labelGroup(g)}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* ── Body ── */}
         <div className={styles.body}>

@@ -51,6 +51,8 @@ export const CALLBACK_FIELDS = gql`
     sleep_info
     description
     extra_info
+    cwd
+    impersonation_context
     active
     locked
     last_checkin
@@ -1101,6 +1103,7 @@ export const GET_JOB_KILL_COMMAND = gql`
     }
   }
 `
+
 
 // ── Credentials ───────────────────────────────────────
 

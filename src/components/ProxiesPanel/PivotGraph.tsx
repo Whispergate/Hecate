@@ -38,7 +38,7 @@ function parseSleepSeconds(cb: Callback): number {
   return iv !== undefined ? parseFloat(iv) : 0
 }
 
-function isLateCheckin(cb: Callback): boolean {
+export function isLateCheckin(cb: Callback): boolean {
   const sleepSecs = parseSleepSeconds(cb)
   const elapsed   = (Date.now() - parseTs(cb.last_checkin).getTime()) / 1000
   const threshold = sleepSecs > 0 ? sleepSecs + 300 : 300

@@ -164,6 +164,17 @@ function fmtDate(epochMs?: number): string {
   })
 }
 
+// ── Path joining ─────────────────────────────────────
+
+function buildDirPath(parent: string | undefined, name: string | undefined): string {
+  const p = parent ?? ''
+  const n = name ?? ''
+  if (!p) return n
+  const sep  = p.includes('\\') ? '\\' : '/'
+  const base = p.replace(/[/\\]$/, '')   // strip any trailing sep once
+  return n ? `${base}${sep}${n}` : base
+}
+
 // ── Component ─────────────────────────────────────────
 
 interface Props {
@@ -192,9 +203,7 @@ export function FileBrowser({ result, callbackDisplayId }: Props) {
     return a.name.localeCompare(b.name)
   })
 
-  const dirPath = result.parent_path
-    ? `${result.parent_path}${result.name ?? ''}`.replace(/\\$/, '')
-    : result.name ?? ''
+  const dirPath = buildDirPath(result.parent_path, result.name)
 
   return (
     <div className={styles.browser}>
