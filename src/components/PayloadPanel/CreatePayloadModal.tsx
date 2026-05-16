@@ -164,6 +164,14 @@ interface Command {
 
 // ── Helpers ────────────────────────────────────────────
 
+// Mythic stores file_extension without a leading dot (e.g. "exe", "bin").
+// Join cleanly so "apollo" + "exe" = "apollo.exe", and a value like ".exe"
+// also works without doubling.
+function defaultFilename(name: string, ext?: string): string {
+  if (!ext) return name
+  return ext.startsWith('.') ? `${name}${ext}` : `${name}.${ext}`
+}
+
 function coerce(value: string, type: string): unknown {
   switch (type) {
     case 'Number':
@@ -570,7 +578,7 @@ function Configure({
   const [os,          setOs]          = useState(initialConfig?.os ?? osList[0] ?? 'Windows')
   const [description, setDescription] = useState(initialConfig?.description ?? '')
   const [filename,    setFilename]    = useState(
-    initialConfig?.filename ?? `${type.name}${type.file_extension ?? ''}`
+    initialConfig?.filename ?? defaultFilename(type.name, type.file_extension)
   )
   const [buildParams, setBuildParams] = useState<Record<string, string>>(() => {
     if (initialConfig?.buildParams && Object.keys(initialConfig.buildParams).length > 0)
@@ -706,7 +714,7 @@ function Configure({
       const uploaded = fileMapRef.current.size > 0 ? await uploadAll() : { build: {}, c2: {} }
       if (!uploaded) return
       const def = buildDefinition({
-        type, os, description, filename: filename || `${type.name}${type.file_extension ?? ''}`,
+        type, os, description, filename: filename || defaultFilename(type.name, type.file_extension),
         buildParams: { ...buildParams, ...uploaded.build },
         c2Name: selectedC2, c2Profile,
         c2Params:    { ...c2Params,    ...uploaded.c2 },
