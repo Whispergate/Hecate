@@ -14,9 +14,7 @@ Crimson-black operator interface replacing Mythic's built-in React UI. Talks dir
 
 > ⚠️ **Beta software.** Tested against Mythic v3.x in lab environments. Type-check is currently the only automated correctness gate (no test suite yet). Expect rough edges; please file issues with reproduction steps.
 
-<p align="center">
-  <img src="docs/Screenshot_Dashboard.png" alt="Dashboard" width="100%" />
-</p>
+![Dashboard](docs/Screenshot_Dashboard.png)
 
 ---
 
@@ -100,59 +98,44 @@ Or bind-mount a host directory in `docker-compose.yml` instead of using the name
 ### Callback view & tasking
 Live callback list, multi-select tasking, command bar with tab-completion, snippet library (`Ctrl+P`), split-pane or terminal-console output, `ls` → file browser, `ps` → process browser with inject/kill.
 
-<p align="center">
-  <img src="docs/Screenshot_Callbackview.png" alt="Callback view" width="100%" />
-</p>
+![Callback view](docs/Screenshot_Callbackview.png)
 
 ### Pivot graph
 Animated SOCKS traffic, P2P parent→child edges (SMB / TCP / WebSocket / DNS), broken lines for dead agents, per-host badges for live tunnels.
 
-<p align="center">
-  <img src="docs/Screenshot_Pivotview.png" alt="Pivot graph" width="100%" />
-</p>
+![Pivot graph](docs/Screenshot_Pivotview.png)
 
 ### MITRE ATT&CK matrix
 Per-tactic coverage overlays (command-defined vs tasks actually run vs both). Export as ATT&CK Navigator JSON layer.
 
-<p align="center">
-  <img src="docs/Screenshot_MITRE.png" alt="MITRE ATT&CK matrix" width="100%" />
-</p>
+![MITRE ATT&CK matrix](docs/Screenshot_MITRE.png)
 
 ### Timeline
 Horizontal swimlane of every task across every callback. Zoom 1× – 8×. Click any event for the detail bar.
 
-<p align="center">
-  <img src="docs/Screenshot_Timeline.png" alt="Timeline" width="100%" />
-</p>
+![Timeline](docs/Screenshot_Timeline.png)
 
 ### Payload manager
 Full build / list / soft-delete with C2 parameter configuration, file-param uploads, wrapper payload selection.
 
-<p align="center">
-  <img src="docs/Screenshot_Payloads.png" alt="Payload manager" width="100%" />
-</p>
+![Payload manager](docs/Screenshot_Payloads.png)
 
 ### Report
 TTP-attributed task summary, sourced from `attacktask` + `attackcommand`. Per-callback include/exclude filter.
 
-<p align="center">
-  <img src="docs/Screenshot_Reporting.png" alt="Report generator" width="100%" />
-</p>
+![Report generator](docs/Screenshot_Reporting.png)
 
 ### Operation event log
 Live operator log with warning resolution + filtering.
 
-<p align="center">
-  <img src="docs/Screenshot_Logs.png" alt="Event log" width="100%" />
-</p>
+![Event log](docs/Screenshot_Logs.png)
 
 ### Operations & services
 Switch active operation, view registered C2 / payload type containers.
 
-<p align="center">
-  <img src="docs/Screenshot_Operations.png" alt="Operations" width="49%" />
-  <img src="docs/Screenshot_Services.png"   alt="Services"   width="49%" />
-</p>
+![Operations](docs/Screenshot_Operations.png)
+
+![Services](docs/Screenshot_Services.png)
 
 ---
 
