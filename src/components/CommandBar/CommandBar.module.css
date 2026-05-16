@@ -1,0 +1,197 @@
+/* src/components/CommandBar/CommandBar.module.css */
+
+.wrap {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Error banner ── */
+.errorBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 18px;
+  background: rgba(120,20,20,0.3);
+  border-top: 1px solid rgba(180,50,50,0.4);
+}
+
+.errorText {
+  font-size: 9px;
+  color: var(--status-err-text);
+  font-family: var(--font-mono);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.errorDismiss {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 9px;
+  color: var(--status-err-text);
+  opacity: 0.6;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+.errorDismiss:hover { opacity: 1; }
+
+/* ── Command input row ── */
+.cmdBar {
+  padding: 10px 18px;
+  border-top: 1px solid var(--beige-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-raised);
+}
+
+.snippetBtn {
+  background: transparent;
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-sm);
+  color: var(--bone-700);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 3px 8px;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+}
+.snippetBtn:hover {
+  color: var(--bone-200);
+  border-color: var(--bone-500);
+  background: var(--bg-elevated);
+}
+
+.prefix {
+  font-size: 11px;
+  color: var(--crimson-400);
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bone-100);
+  caret-color: var(--crimson-400);
+}
+
+.input::placeholder { color: var(--bone-800); }
+.input:disabled     { opacity: 0.4; }
+
+.sending {
+  font-size: 9px;
+  color: var(--bone-800);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+
+/* ── Context status bar ── */
+.statusBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 3px 18px;
+  border-top: 1px solid var(--beige-border);
+  background: var(--bg-elevated);
+  min-width: 0;
+}
+
+.statusCwd {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.statusSpacer { flex: 1; }
+
+.statusArrow {
+  font-size: 9px;
+  color: var(--bone-800);
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+
+.statusUser {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-500);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.statusToken {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--status-warn-text);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+/* ── Tab completion menu ── */
+.compMenu {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--beige-border);
+  border-bottom: 1px solid var(--beige-border);
+  background: var(--bg-elevated);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.compItem {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 5px 18px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background var(--t-fast);
+}
+.compItem:hover { background: var(--beige-dim); }
+
+.compItemActive {
+  background: var(--beige-dim);
+  border-left: 2px solid var(--crimson-500);
+  padding-left: 16px;
+}
+
+.compCmd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bone-100);
+  flex-shrink: 0;
+}
+
+.compItemActive .compCmd { color: var(--beige); }
+
+.compDesc {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}

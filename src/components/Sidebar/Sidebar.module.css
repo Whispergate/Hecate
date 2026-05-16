@@ -1,0 +1,281 @@
+/* hecate/src/components/Sidebar/Sidebar.module.css */
+
+.sidebar {
+  background: var(--bg-raised);
+  border-right: 1px solid var(--beige-border-md);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.section { padding: 12px 14px 8px; }
+
+.detail {
+  flex: 1;
+  border-top: 1px solid var(--beige-border);
+}
+
+.empty {
+  font-size: 9px;
+  color: var(--bone-600);
+  padding: 8px 0;
+  text-align: center;
+}
+
+/* ── Callback items ── */
+.callbackItem {
+  position: relative;
+  padding: 8px 9px 8px 20px;
+  margin-bottom: 3px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.callbackItem:hover {
+  background: var(--glow-crimson);
+  border-color: var(--border-default);
+}
+.callbackItem.active {
+  background: rgba(155,32,32,0.2);
+  border-color: var(--border-strong);
+}
+.callbackItem.multiSelected {
+  background: rgba(155,32,32,0.1);
+  border-color: rgba(155,32,32,0.45);
+  border-left-width: 3px;
+  border-left-color: var(--crimson-400);
+}
+
+.statusDot {
+  position: absolute;
+  top: 13px; left: 8px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.alive {
+  background: var(--status-alive);
+  box-shadow: 0 0 6px var(--status-alive-glow);
+  animation: pulse 2s ease-in-out infinite;
+}
+.idle  { background: var(--status-idle); }
+.dead  { background: var(--status-dead); border: 1px solid #6a2828; }
+
+.cbId {
+  color: var(--bone-800);
+  font-size: 9px;
+  font-weight: 400;
+}
+
+/* Host name — most important, needs to be bright */
+.cbHost {
+  color: var(--bone-100);
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 3px;
+  letter-spacing: 0.02em;
+}
+
+.cbMeta {
+  color: var(--bone-600);
+  font-size: 9px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ── Agent detail rows ── */
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(155,32,32,0.12);
+}
+.infoKey { color: var(--bone-600); font-size: 9px; }
+.infoVal { color: var(--bone-200); font-size: 9px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.infoVal.hiVal    { color: var(--crimson-300); font-weight: 700; }
+.infoVal.tokenVal { color: var(--status-warn-text); font-weight: 600; }
+.infoVal.mutedVal { color: var(--bone-600); }
+.infoVal.cwdVal   { color: var(--bone-500); font-size: 8px; }
+
+.lockBadge { margin-left: 5px; font-size: 9px; opacity: 0.7; }
+
+/* ── Integrity indicators ── */
+.integrityMed {
+  border-left-width: 3px !important;
+  border-left-color: var(--integrity-med) !important;
+}
+.integrityHigh {
+  border-left-width: 3px !important;
+  border-left-color: var(--integrity-high) !important;
+}
+.integrityIconMed  { margin-left: 5px; font-size: 7px; color: var(--integrity-med);  vertical-align: middle; }
+.integrityIconHigh { margin-left: 5px; font-size: 7px; color: var(--integrity-high); vertical-align: middle; }
+
+.proxyChip {
+  display: inline-block;
+  font-size: 7px;
+  font-weight: 700;
+  color: var(--accent-info);
+  background: var(--accent-info-bg);
+  border: 1px solid var(--accent-info-bd);
+  border-radius: 3px;
+  padding: 0px 3px;
+  margin-left: 5px;
+  vertical-align: middle;
+  line-height: 12px;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.annotDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  margin-left: 5px;
+  vertical-align: middle;
+  flex-shrink: 0;
+  opacity: 0.90;
+}
+
+/* ── Agent icon (top-right of tile) ── */
+.agentIconWrap {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+}
+.agentIconFallback {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+.agentIconImg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.cbUser {
+  font-size: 9px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.cbUserName  { color: var(--bone-600); }
+.cbUserArrow { color: var(--bone-800); flex-shrink: 0; }
+.cbUserToken { color: var(--status-warn-text); font-weight: 600; flex-shrink: 0; }
+
+.cbDesc {
+  color: var(--bone-600);
+  font-size: 9px;
+  margin-top: 3px;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detailHeader { cursor: context-menu; }
+
+.descRow {
+  font-size: 9px;
+  color: var(--bone-500);
+  font-style: italic;
+  padding: 4px 0 6px;
+  border-bottom: 1px solid rgba(155,32,32,0.12);
+}
+
+/* ── Multi-select header ── */
+.callbacksHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.multiBadge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 8px;
+  color: var(--crimson-300);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.multiClear {
+  background: transparent;
+  border: none;
+  color: var(--bone-700);
+  cursor: pointer;
+  font-size: 8px;
+  padding: 0 2px;
+  line-height: 1;
+}
+.multiClear:hover { color: var(--bone-300); }
+
+/* ── Filter bar ── */
+.filterBar {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.filterInput {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-sm);
+  color: var(--bone-200);
+  font: inherit;
+  font-size: 9px;
+  padding: 4px 7px;
+  outline: none;
+  box-sizing: border-box;
+}
+.filterInput::placeholder { color: var(--bone-900); }
+.filterInput:focus { border-color: var(--beige-border-md); }
+
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  font: inherit;
+  font-size: 8px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--beige-border);
+  background: transparent;
+  color: var(--bone-800);
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+  text-transform: lowercase;
+  letter-spacing: 0.03em;
+}
+.chip:hover { border-color: var(--beige-border-md); color: var(--bone-400); }
+
+/* Status chip active states */
+.chip_alive.chipActive  { background: rgba(224,96,32,0.2); border-color: var(--status-alive); color: var(--status-alive); }
+.chip_idle.chipActive   { background: rgba(154,104,32,0.2); border-color: var(--status-idle); color: var(--status-idle); }
+.chip_dead.chipActive   { background: rgba(106,32,32,0.2); border-color: var(--status-dead); color: #a05050; }
+
+/* Agent chip active state */
+.chipActiveAgent { background: rgba(155,32,32,0.2); border-color: var(--border-strong); color: var(--bone-200); }

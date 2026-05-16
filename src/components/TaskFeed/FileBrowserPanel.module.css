@@ -1,0 +1,293 @@
+/* src/components/TaskFeed/FileBrowserPanel.module.css */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Toolbar ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--beige-border);
+  flex-shrink: 0;
+}
+
+.toolbarTitle {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--beige);
+}
+
+.toolbarMeta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-800);
+}
+
+.autoLsLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-600);
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.autoLsCheck {
+  accent-color: var(--crimson-500);
+  width: 11px;
+  height: 11px;
+  cursor: pointer;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  color: var(--bone-300);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 2px 6px;
+  outline: none;
+  letter-spacing: 0.03em;
+}
+.searchInput::placeholder { color: var(--bone-900); }
+.searchInput:focus {
+  border-color: var(--border-default);
+  background: var(--bg-elevated);
+}
+
+.clearBtn {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  color: var(--bone-800);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  padding: 2px 6px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}
+.clearBtn:hover {
+  color: var(--bone-100);
+  border-color: var(--border-default);
+  background: rgba(180,50,50,0.15);
+}
+
+/* ── Tree ── */
+.tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.empty {
+  padding: 16px 14px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-800);
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.code {
+  font-family: var(--font-mono);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  padding: 0 4px;
+  color: var(--bone-400);
+  font-style: normal;
+}
+
+/* ── Tree nodes ── */
+.treeNode {
+  font-family: var(--font-mono);
+}
+
+.dirRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px 3px 6px;
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.dirRow:hover { background: var(--beige-dim); }
+
+.arrow {
+  font-size: 9px;
+  width: 10px;
+  flex-shrink: 0;
+}
+.arrowLoaded   { color: var(--bone-600); }
+.arrowUnloaded { color: var(--bone-900); }
+
+.dirIcon {
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.dirName {
+  font-size: 10px;
+  color: var(--beige);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dirNameUnloaded {
+  font-size: 10px;
+  color: var(--bone-600);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dirMeta {
+  font-size: 8px;
+  color: var(--bone-900);
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.lsBtn {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  color: var(--bone-900);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  padding: 1px 5px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.lsBtn:hover {
+  color: var(--beige);
+  border-color: var(--beige-border);
+  background: var(--beige-dim);
+}
+
+.treeChildren {
+  /* indentation done via inline paddingLeft */
+}
+
+.emptyDir {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-900);
+  font-style: italic;
+  padding: 3px 8px;
+}
+
+/* ── Flat search results ── */
+.flatRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 10px;
+  font-family: var(--font-mono);
+  transition: background var(--t-fast);
+}
+.flatRow:hover { background: var(--beige-dim); }
+
+.flatIcon { font-size: 10px; flex-shrink: 0; }
+
+.flatName {
+  font-size: 10px;
+  color: var(--beige);
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flatPath {
+  font-size: 8px;
+  color: var(--bone-800);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── File rows ── */
+.fileRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 2px 6px;
+  transition: background var(--t-fast);
+}
+.fileRow:hover { background: var(--beige-dim); }
+
+.fileIcon {
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.fileName {
+  font-size: 10px;
+  color: var(--bone-300);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileSize {
+  font-size: 8px;
+  color: var(--bone-800);
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+
+.fileActions {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.actBtn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  color: var(--bone-800);
+  padding: 1px 5px;
+  white-space: nowrap;
+  transition: color var(--t-fast), background var(--t-fast), border-color var(--t-fast);
+}
+.actBtn:hover {
+  color: var(--bone-100);
+  background: rgba(180,50,50,0.2);
+  border-color: var(--border-default);
+}
+
+.actCat {
+  color: var(--bone-600);
+}
+.actCat:hover {
+  color: var(--bone-100);
+  background: rgba(60,120,180,0.15);
+  border-color: rgba(60,120,180,0.4);
+}

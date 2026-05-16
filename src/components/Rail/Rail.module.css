@@ -1,0 +1,80 @@
+/* hecate/src/components/Rail/Rail.module.css */
+
+.rail {
+  background: var(--bg-raised);
+  border-right: 1px solid var(--beige-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+  gap: 3px;
+}
+
+.btnWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--bone-800);
+  opacity: var(--rail-icon-opacity, 0.4);
+  transition: opacity var(--t-fast), background var(--t-fast), border-color var(--t-fast);
+}
+
+.badge {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  min-width: 13px;
+  height: 13px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: var(--crimson-600, #b52828);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 13px;
+  text-align: center;
+  pointer-events: none;
+  opacity: 1;
+}
+
+.btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.btn:hover {
+  opacity: var(--rail-icon-opacity-hover, 0.8);
+  background: var(--glow-crimson);
+}
+
+.btn.active {
+  opacity: 1;
+  color: var(--crimson-400);
+  background: rgba(139,26,26,0.18);
+  border-color: var(--border-default);
+}
+
+.sep {
+  width: 20px;
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 5px 0;
+}
+
+.spacer { flex: 1; }
+
+.badgeProxy { background: var(--accent-info); }

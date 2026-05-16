@@ -1,0 +1,204 @@
+/* src/components/CommandBar/SnippetPopup.module.css */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-md);
+  width: min(540px, 94vw);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--beige-border);
+  background: var(--bg-void);
+  flex-shrink: 0;
+}
+
+.title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--crimson-300);
+  letter-spacing: 0.06em;
+}
+
+.hint {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-800);
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--bone-800);
+  padding: 2px 6px;
+  transition: color var(--t-fast);
+}
+.closeBtn:hover { color: var(--bone-200); }
+
+.search {
+  background: var(--bg-base);
+  border: none;
+  border-bottom: 1px solid var(--beige-border);
+  color: var(--bone-200);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 10px 14px;
+  outline: none;
+  flex-shrink: 0;
+}
+.search::placeholder { color: var(--bone-800); }
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--beige-border) 50%, transparent);
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.item:hover { background: var(--bg-elevated); }
+.itemActive { background: var(--bg-hover) !important; }
+
+.itemMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.itemName {
+  font-size: 11px;
+  color: var(--bone-200);
+  font-weight: 700;
+}
+
+.itemCmd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-600);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemBtns {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+.item:hover .itemBtns { opacity: 1; }
+
+.iconBtn {
+  background: transparent;
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-sm);
+  color: var(--bone-700);
+  font-size: 9px;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+.iconBtn:hover { color: var(--bone-200); border-color: var(--bone-500); }
+.iconBtnDanger:hover {
+  color: var(--crimson-300);
+  border-color: var(--crimson-500);
+  background: var(--glow-crimson);
+}
+
+.empty {
+  padding: 18px 14px;
+  font-size: 11px;
+  color: var(--bone-700);
+  text-align: center;
+  font-family: var(--font-mono);
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--beige-border);
+  background: var(--bg-void);
+  flex-shrink: 0;
+}
+
+.editRow {
+  display: flex;
+  gap: 6px;
+}
+
+.input {
+  flex: 1;
+  background: var(--bg-base);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-sm);
+  color: var(--bone-200);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 5px 8px;
+  outline: none;
+  min-width: 0;
+}
+.input:focus { border-color: var(--crimson-600); }
+.inputName { max-width: 140px; }
+
+.saveBtn {
+  background: var(--crimson-900);
+  border: 1px solid var(--crimson-600);
+  border-radius: var(--radius-sm);
+  color: var(--crimson-300);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 5px 12px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}
+.saveBtn:hover:not(:disabled) { background: var(--bg-hover); color: var(--crimson-200); }
+.saveBtn:disabled { opacity: 0.4; cursor: default; }
+
+.cancelBtn {
+  background: transparent;
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-sm);
+  color: var(--bone-700);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.cancelBtn:hover { color: var(--bone-200); }

@@ -1,0 +1,271 @@
+/* src/components/CommandBar/FileTaskModal.module.css */
+
+/* ── Overlay ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* ── Modal frame ── */
+.modal {
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-md);
+  width: min(460px, 94vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--beige-border);
+  background: var(--bg-void);
+  flex-shrink: 0;
+}
+
+.title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--crimson-300);
+  letter-spacing: 0.06em;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--bone-800);
+  padding: 2px 6px;
+  transition: color var(--t-fast);
+}
+.closeBtn:hover:not(:disabled) { color: var(--bone-200); }
+
+/* ── Group tab switcher ── */
+.groupTabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--beige-border);
+  flex-shrink: 0;
+}
+
+.groupTab {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--bg-void);
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--bone-600);
+  cursor: pointer;
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+  text-transform: lowercase;
+}
+.groupTab:hover:not(:disabled) {
+  color: var(--bone-200);
+  background: var(--bg-elevated);
+}
+.groupTabActive {
+  color: var(--crimson-300);
+  border-bottom-color: var(--crimson-500);
+  background: var(--bg-raised);
+}
+.groupTab:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Body ── */
+.body {
+  overflow-y: auto;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: calc(80vh - 96px); /* cap scrollable region; header+footer ≈96px */
+}
+
+.errorBanner {
+  padding: 8px 10px;
+  background: rgba(160,30,30,0.15);
+  border: 1px solid rgba(160,30,30,0.4);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--status-err-text);
+}
+
+/* ── Empty state ── */
+.emptyNote {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-800);
+  padding: 8px 0;
+  line-height: 1.6;
+}
+.emptyNote em {
+  color: var(--crimson-300);
+  font-style: normal;
+}
+
+/* ── Field ── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bone-600);
+}
+
+.required {
+  color: var(--crimson-400);
+}
+
+/* ── Text / number input ── */
+.textInput {
+  background: var(--bg-void);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bone-100);
+  outline: none;
+  transition: border-color var(--t-fast);
+  width: 100%;
+  box-sizing: border-box;
+}
+.textInput:focus      { border-color: var(--crimson-500); }
+.textInput::placeholder { color: var(--bone-900); }
+.textInput:disabled   { opacity: 0.4; }
+
+/* ── Select ── */
+.select {
+  background: var(--bg-void);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bone-100);
+  outline: none;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+}
+.select:focus    { border-color: var(--crimson-500); }
+.select:disabled { opacity: 0.4; }
+
+/* ── Checkbox ── */
+.checkRow {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox {
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+  accent-color: var(--crimson-400);
+}
+
+/* ── File picker ── */
+.filePicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fileBtn {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--crimson-700);
+  border-radius: var(--radius-sm);
+  padding: 5px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--crimson-300);
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.fileBtn:hover:not(:disabled) {
+  background: rgba(155,32,32,0.2);
+  border-color: var(--crimson-500);
+}
+.fileBtn:disabled { opacity: 0.4; cursor: default; }
+
+.fileName {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-600);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* ── Footer ── */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--beige-border);
+  background: var(--bg-void);
+  flex-shrink: 0;
+}
+
+.cancelBtn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-600);
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: border-color var(--t-fast), color var(--t-fast);
+}
+.cancelBtn:hover:not(:disabled) {
+  border-color: var(--bone-600);
+  color: var(--bone-200);
+}
+.cancelBtn:disabled { opacity: 0.4; cursor: default; }
+
+.submitBtn {
+  background: var(--crimson-900);
+  border: 1px solid var(--crimson-600);
+  border-radius: var(--radius-sm);
+  padding: 6px 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--crimson-200);
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.submitBtn:hover:not(:disabled) {
+  background: var(--crimson-700);
+  border-color: var(--crimson-400);
+}
+.submitBtn:disabled { opacity: 0.5; cursor: default; }

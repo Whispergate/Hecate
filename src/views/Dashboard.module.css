@@ -1,0 +1,63 @@
+/* src/views/Dashboard.module.css */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Beige top stripe — matches logo border colour, frames the UI */
+.stripe {
+  height: 2px;
+  background: linear-gradient(90deg, var(--beige-border-strong), var(--beige), var(--beige-border-strong));
+  flex-shrink: 0;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: var(--rail-w) var(--sidebar-w) 1fr var(--right-w);
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Full-panel views (e.g. Payloads) span sidebar + main + right columns */
+.fullPanel {
+  grid-column: 2 / -1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-base);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.mainHeader {
+  padding: 9px 18px;
+  border-bottom: 1px solid var(--beige-border);
+  background: var(--bg-raised);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.headerLeft { display: flex; flex-direction: column; gap: 2px; }
+
+.headerTitle {
+  font-size: 11px;
+  color: var(--bone-200);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.headerSub {
+  font-size: 9px;
+  color: var(--bone-800);
+}

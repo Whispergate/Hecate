@@ -1,0 +1,192 @@
+/* src/components/TaskFeed/FileBrowser.module.css */
+
+.browser {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  min-height: 0;
+}
+
+/* ── Path bar ── */
+.pathBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px 8px;
+  border-bottom: 1px solid var(--beige-border);
+}
+
+.pathIcon { font-size: 11px; }
+
+.pathText {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--beige);
+  letter-spacing: 0.03em;
+  flex: 1;
+}
+
+.pathHost {
+  font-size: 9px;
+  color: var(--bone-800);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  padding: 1px 5px;
+  letter-spacing: 0.04em;
+}
+
+/* ── Table ── */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.table thead tr {
+  border-bottom: 1px solid var(--beige-border);
+}
+
+.table th {
+  text-align: left;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--bone-800);
+  padding: 4px 10px;
+  font-weight: 400;
+}
+
+.thIcon  { width: 24px; padding-left: 14px; }
+.thName  { /* flex */ }
+.thSize  { width: 72px; text-align: right; }
+.thOwner { width: 90px; }
+.thDate  { width: 110px; }
+.thAct   { width: 88px; }
+
+/* ── Rows ── */
+.row {
+  border-bottom: 1px solid var(--beige-border);
+  transition: background var(--t-fast);
+}
+.row:hover { background: var(--beige-dim); }
+
+.row.hidden { opacity: 0.5; }
+
+.tdIcon {
+  padding: 5px 4px 5px 14px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.tdName {
+  padding: 5px 10px;
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileName { color: var(--bone-300); }
+.dirName  { color: var(--beige);    }
+
+.hiddenBadge {
+  margin-left: 5px;
+  font-size: 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--bone-800);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  padding: 0 3px;
+  vertical-align: middle;
+}
+
+.tdSize {
+  padding: 5px 10px;
+  color: var(--bone-600);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tdOwner {
+  padding: 5px 10px;
+  color: var(--bone-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
+
+.tdDate {
+  padding: 5px 10px;
+  color: var(--bone-800);
+  white-space: nowrap;
+}
+
+.tdAct {
+  padding: 4px 8px 4px 4px;
+  white-space: nowrap;
+}
+
+.actGroup {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* ── Action buttons ── */
+.actBtn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  color: var(--bone-800);
+  padding: 2px 5px;
+  white-space: nowrap;
+  transition: color var(--t-fast), background var(--t-fast), border-color var(--t-fast);
+}
+
+.actBtn:hover {
+  color: var(--bone-100);
+  background: rgba(180,50,50,0.2);
+  border-color: var(--border-default);
+}
+
+.actNav:hover {
+  color: var(--beige);
+  background: var(--beige-dim);
+  border-color: var(--beige-border-md);
+}
+
+.actCat {
+  color: var(--bone-600);
+  border-color: var(--border-subtle);
+}
+.actCat:hover {
+  color: var(--bone-100);
+  background: rgba(60,120,180,0.15);
+  border-color: rgba(60,120,180,0.4);
+}
+
+/* ── Footer ── */
+.empty {
+  padding: 12px 14px;
+  font-size: 9px;
+  color: var(--bone-900);
+  font-style: italic;
+}
+
+.footer {
+  padding: 6px 14px;
+  font-size: 8px;
+  color: var(--bone-900);
+  border-top: 1px solid var(--beige-border);
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}

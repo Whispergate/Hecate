@@ -1,0 +1,196 @@
+/* hecate/src/components/Toast/ProxyToast.module.css */
+
+.container {
+  position: fixed;
+  top: calc(var(--topbar-h) + 12px);
+  right: 16px;
+  z-index: 9998;           /* just below CallbackToast */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+/* ── Toast card ── */
+.toast {
+  display: flex;
+  width: 296px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent-info-bd);
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.55),
+    0 0 0 1px var(--accent-info-bg),
+    0 2px 12px var(--accent-info-bg);
+  overflow: hidden;
+  cursor: pointer;
+  pointer-events: all;
+  transition: box-shadow var(--t-fast), transform var(--t-fast);
+}
+.toast:hover {
+  box-shadow:
+    0 6px 28px rgba(0,0,0,0.6),
+    0 0 0 1px color-mix(in srgb, var(--accent-info) 50%, transparent),
+    0 2px 16px var(--accent-info-bd);
+  transform: translateX(-2px);
+}
+
+/* ── Animations ── */
+.enter { animation: slideIn 0.28s cubic-bezier(0.22,1,0.36,1) both; }
+.exit  { animation: slideOut 0.28s ease-in both; }
+
+@keyframes slideIn {
+  from { transform: translateX(calc(100% + 24px)); opacity: 0; }
+  to   { transform: translateX(0);                opacity: 1; }
+}
+@keyframes slideOut {
+  from { transform: translateX(0);                opacity: 1; max-height: 160px; margin-bottom: 0; }
+  to   { transform: translateX(calc(100% + 24px)); opacity: 0; max-height: 0;    margin-bottom: -8px; }
+}
+
+/* ── Teal accent bar ── */
+.accentBar {
+  width: 3px;
+  flex-shrink: 0;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--accent-info) 65%, var(--bg-base)), var(--accent-info));
+}
+
+/* ── Body ── */
+.body {
+  flex: 1;
+  padding: 10px 10px 0;
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-info);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent-info) 70%, transparent);
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 4px color-mix(in srgb, var(--accent-info) 60%, transparent); }
+  50%       { box-shadow: 0 0 10px color-mix(in srgb, var(--accent-info) 90%, transparent), 0 0 20px var(--accent-info-bd); }
+}
+
+.label {
+  font-family: var(--font-serif);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--accent-info);
+  flex: 1;
+}
+
+.close {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--bone-800);
+  font-size: 9px;
+  cursor: pointer;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity var(--t-fast), color var(--t-fast);
+}
+.close:hover { opacity: 1; color: var(--bone-200); }
+
+/* ── Port number ── */
+.port {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent-info);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 5px;
+  font-family: var(--font-mono);
+}
+
+/* ── Callback meta ── */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  margin-bottom: 8px;
+}
+.host      { color: var(--bone-200); font-weight: 700; }
+.sep       { color: var(--bone-900); }
+.displayId { color: var(--bone-800); }
+.agent     { color: var(--bone-600); }
+
+/* ── Config line ── */
+.configRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-raised);
+  border: 1px solid var(--accent-info-bd);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  margin-bottom: 4px;
+}
+
+.configLine {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-300);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.04em;
+  user-select: text;
+}
+
+.copyBtn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--accent-info-bd);
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--accent-info);
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+  min-width: 34px;
+  text-align: center;
+}
+.copyBtn:hover     { background: var(--accent-info-bg); border-color: var(--accent-info); }
+.copyDone          { color: var(--status-ok-text) !important; border-color: var(--status-ok-text) !important; }
+
+/* ── Hint text ── */
+.hint {
+  font-size: 8px;
+  color: var(--bone-900);
+  margin-bottom: 8px;
+  letter-spacing: 0.03em;
+}
+
+/* ── Progress bar ── */
+.progress {
+  height: 2px;
+  background: var(--border-subtle);
+  margin: 0 -10px;
+}
+.progressBar {
+  height: 100%;
+  background: linear-gradient(to right, color-mix(in srgb, var(--accent-info) 65%, var(--bg-base)), var(--accent-info));
+  animation: drain linear both;
+  transform-origin: left;
+}
+@keyframes drain {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}

@@ -1,0 +1,82 @@
+/* src/components/TaskFeed/TaskFeed.module.css */
+
+/* ── Root wrapper ── */
+.feedRoot {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ── Status + toggle bar ── */
+.feedBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  border-bottom: 1px solid var(--beige-border);
+  background: var(--bg-raised);
+  flex-shrink: 0;
+}
+
+.feedCount { font-size: 9px; color: var(--bone-600); letter-spacing: 0.05em; }
+.feedSep   { font-size: 9px; color: var(--bone-900); }
+.feedDone  { font-size: 9px; color: var(--status-ok-text); }
+.feedRun   { font-size: 9px; color: var(--crimson-400); }
+.feedErr   { font-size: 9px; color: var(--status-err-text); }
+.feedSpacer{ flex: 1; }
+
+/* ── View toggle ── */
+.viewToggle {
+  display: flex;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.viewBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--bone-800);
+  padding: 3px 8px;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+.viewBtn:hover    { color: var(--bone-400); background: var(--glow-crimson); }
+.viewBtnActive    { color: var(--crimson-400) !important; background: var(--glow-crimson) !important; }
+
+/* ── Split pane ── */
+.splitPane {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+/* Task list column — fixed width, scrollable */
+.listPane {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--beige-border);
+  min-height: 0;
+  background: var(--bg-base);
+}
+
+/* ── Empty / loading ── */
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--bone-600);
+  font-size: 11px;
+  gap: 12px;
+}
+.emptyIcon { font-size: 28px; opacity: 0.3; color: var(--crimson-500); }
+.loading   { color: var(--bone-600); font-size: 10px; padding: 12px; text-align: center; }
+.noTasks   { color: var(--bone-600); font-size: 10px; padding: 12px; text-align: center; flex: 1; display: flex; align-items: center; justify-content: center; }

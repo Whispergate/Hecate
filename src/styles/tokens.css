@@ -1,0 +1,260 @@
+/* ═══════════════════════════════════════════════════
+   hecate/src/styles/tokens.css
+   WhisperGate palette — boosted contrast
+   ═══════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@400;600&display=swap');
+
+:root {
+  /* ── Backgrounds ── */
+  --bg-void:    #080604;
+  --bg-base:    #0d0806;
+  --bg-raised:  #120a07;
+  --bg-elevated:#1c0f0a;
+  --bg-hover:   #241208;
+
+  /* ── Crimson ramp — pushed brighter for visibility ── */
+  --crimson-900:#4a0a0a;
+  --crimson-800:#601010;
+  --crimson-700:#7a1818;
+  --crimson-600:#9b2020;
+  --crimson-500:#b52828;
+  --crimson-400:#d03838;   /* primary accent — brighter */
+  --crimson-300:#e05050;   /* bright accent */
+  --crimson-200:#f07070;   /* highlight */
+
+  /* ── Bone / parchment — much higher contrast ── */
+  --bone-100:   #f5ecd8;   /* primary bright text — near white */
+  --bone-200:   #ede0c4;   /* headings */
+  --bone-300:   #e4d4b4;   /* filenames, mild emphasis */
+  --bone-400:   #d8c8a4;   /* body text — was too dark */
+  --bone-500:   #c8b890;   /* mid emphasis */
+  --bone-600:   #b8a880;   /* secondary labels */
+  --bone-700:   #a09068;   /* tertiary labels */
+  --bone-800:   #887860;   /* dimmed — was near-invisible */
+  --bone-900:   #584838;   /* placeholders */
+
+  /* ── Accent (cyan, used for ports / live counters) ── */
+  --accent-info:      #3ab8d8;
+  --accent-info-bg:   rgba(42,122,154,0.20);
+  --accent-info-bd:   rgba(42,122,154,0.40);
+
+  /* ── Agent colors (Mythic payload types) — bright for dark bg ── */
+  --agent-apollo:     #90d880;   /* green */
+  --agent-poseidon:   #80c8d0;   /* teal */
+  --agent-medusa:     #c090e0;   /* purple */
+  --agent-hermes:     #d0a848;   /* amber */
+  --agent-thanatos:   #d08080;   /* red */
+  --agent-athena:     #80a8d0;   /* blue */
+  --agent-merlin:     #e0a070;   /* orange */
+  --agent-freyja:     #a890e0;   /* violet */
+  --agent-arachne:    #c0c878;   /* olive */
+  --agent-atlas:      #70d0c0;   /* cyan */
+  --agent-nimplant:   #b0d870;   /* lime */
+  --agent-xenon:      #e090c0;   /* pink */
+  --agent-forgemaster:#d0a890;   /* tan */
+  --agent-service-wrapper: #c8b890; /* parchment-amber */
+
+  /* ── Timeline track palette — distinct hues for callback swimlanes ── */
+  --track-1: #d4916b;   /* orange */
+  --track-2: #6b8fd4;   /* blue */
+  --track-3: #6aaa64;   /* green */
+  --track-4: #b06bd4;   /* purple */
+  --track-5: #4ec9b0;   /* teal */
+  --track-6: #d4c46b;   /* yellow */
+  --track-7: #d46b8f;   /* pink */
+  --track-8: #8fd46b;   /* lime */
+
+  /* ── Beige / parchment accent (matches logo hex border) ── */
+  --beige:             #EFEFDA;              /* pure accent — logo border colour   */
+  --beige-dim:         rgba(239,239,218,0.06);/* subtle panel tint                */
+  --beige-border:      rgba(239,239,218,0.18);/* structural frame borders         */
+  --beige-border-md:   rgba(239,239,218,0.30);/* topbar / panel-divider borders   */
+  --beige-border-strong:rgba(239,239,218,0.50);/* emphasis lines, active frames   */
+
+  /* ── Semantic ── */
+  --status-alive:      #e06020;
+  --status-alive-glow: rgba(224,96,32,0.7);
+  --status-idle:       #9a6820;
+  --status-dead:       #6a2020;
+  --status-ok:         #508850;
+  --status-ok-text:    #90d880;
+  --status-warn:       #907030;
+  --status-warn-text:  #d0a848;
+  --status-err:        #a03030;
+  --status-err-text:   #f07070;
+
+  /* ── Integrity indicators ── */
+  --integrity-med:     #c8a030;   /* amber — Medium / UAC elevated */
+  --integrity-high:    #e05050;   /* crimson — High / SYSTEM */
+
+  /* ── Typography ── */
+  --font-mono:  'Space Mono', 'Courier New', monospace;
+  --font-serif: 'Cinzel', Georgia, serif;
+
+  /* ── Borders — more visible ── */
+  --border-subtle:  rgba(160,40,40,0.25);
+  --border-default: rgba(160,40,40,0.45);
+  --border-strong:  rgba(160,40,40,0.70);
+
+  /* ── Glows ── */
+  --glow-crimson:   rgba(155,32,32,0.15);
+  --glow-crimson-md:rgba(155,32,32,0.28);
+
+  /* ── Layout ── */
+  --topbar-h:  48px;
+  --rail-w:    44px;
+  --sidebar-w: 220px;
+  --right-w:   280px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+
+  /* ── Topology SVG (dark mode) ── */
+  --topo-svg-bg:       transparent;
+  --topo-c2-bg:        #2a0808;
+  --topo-node-bg:      #160808;
+  --topo-node-sel:     #3a0c0c;
+  --topo-label-bg:     rgba(13,8,6,0.88);
+  --topo-dead-line:    rgba(80,30,30,0.40);
+  --topo-text-accent:  #e05050;
+  --topo-text-node:    #b8a880;
+  --topo-text-node-sel:#EFEFDA;
+  --topo-text-info:    #887860;
+  /* protocol line colors — bright for dark bg */
+  --proto-http:    #72b860;
+  --proto-smb:     #c8b880;
+  --proto-tcp:     #c8983a;
+  --proto-ws:      #a880d8;
+  --proto-dns:     #68b8c8;
+  --proto-default: #d03838;
+
+  /* ── Rail ── */
+  --rail-icon-opacity:       0.40;
+  --rail-icon-opacity-hover: 0.80;
+
+  /* ── Transitions ── */
+  --t-fast: 0.12s ease;
+  --t-mid:  0.22s ease;
+}
+
+/* ═══════════════════════════════════════════════════
+   Light theme overrides
+   Warm parchment backgrounds, dark ink text.
+   Applied via data-theme="light" on <html>.
+   ═══════════════════════════════════════════════════ */
+
+[data-theme="light"] {
+  /* ── Topology SVG (light mode) — dark nodes on light bg ── */
+  --topo-svg-bg:       transparent;
+  --topo-c2-bg:        #383028;
+  --topo-node-bg:      #403830;
+  --topo-node-sel:     #504840;
+  --topo-label-bg:     rgba(222,214,204,0.95);
+  --topo-dead-line:    rgba(80,60,40,0.45);
+  --topo-text-accent:  #e05050;          /* inside dark node — always bright */
+  --topo-text-node:    #241608;          /* hostname on light SVG bg — dark */
+  --topo-text-node-sel:#0e0806;
+  --topo-text-info:    #381e0c;
+  /* protocol line colors — darker/saturated for light bg (min 3:1 on #d2c9bf) */
+  --proto-http:    #1e6810;
+  --proto-smb:     #4a3810;
+  --proto-tcp:     #6a4a00;
+  --proto-ws:      #4a1880;
+  --proto-dns:     #085870;
+  --proto-default: #a02020;
+
+  /* ── Rail ── */
+  --rail-icon-opacity:       0.65;
+  --rail-icon-opacity-hover: 0.95;
+
+  /* ── Backgrounds — warm grey-taupe, not stark white ── */
+  --bg-void:    #e4ddd4;
+  --bg-base:    #dcd4cb;
+  --bg-raised:  #d2c9bf;
+  --bg-elevated:#c8bfb3;
+  --bg-hover:   #bcb3a6;
+
+  /* ── Crimson — slightly deeper for contrast on light ── */
+  --crimson-900:#fde8e8;
+  --crimson-800:#f8d4d4;
+  --crimson-700:#f5c0c0;
+  --crimson-600:#e89090;
+  --crimson-500:#c83030;
+  --crimson-400:#b02828;   /* primary accent */
+  --crimson-300:#902020;   /* bright accent */
+  --crimson-200:#701818;   /* highlight */
+
+  /* ── Bone — dark ink, all levels contrast-checked on taupe bg ── */
+  --bone-100:   #0e0806;   /* primary text */
+  --bone-200:   #181008;
+  --bone-300:   #241408;   /* filenames, mild emphasis */
+  --bone-400:   #241608;   /* body text */
+  --bone-500:   #301a0c;   /* mid emphasis */
+  --bone-600:   #381e0c;   /* secondary labels */
+  --bone-700:   #422510;   /* tertiary labels */
+  --bone-800:   #4c2c18;   /* dimmed — was too light */
+  --bone-900:   #603c24;   /* placeholders */
+
+  /* ── Accent (cyan, used for ports / live counters) ── */
+  --accent-info:      #0a5a78;          /* deep teal for contrast on taupe */
+  --accent-info-bg:   rgba(10,90,120,0.10);
+  --accent-info-bd:   rgba(10,90,120,0.40);
+
+  /* ── Agent colors — darker/saturated for contrast on taupe ── */
+  --agent-apollo:     #1e6810;   /* green */
+  --agent-poseidon:   #185868;   /* teal */
+  --agent-medusa:     #5a2890;   /* purple */
+  --agent-hermes:     #785010;   /* amber */
+  --agent-thanatos:   #802020;   /* red */
+  --agent-athena:     #204870;   /* blue */
+  --agent-merlin:     #804010;   /* orange */
+  --agent-freyja:     #4828a0;   /* violet */
+  --agent-arachne:    #5a5810;   /* olive */
+  --agent-atlas:      #105868;   /* cyan */
+  --agent-nimplant:   #487010;   /* lime */
+  --agent-xenon:      #803060;   /* pink */
+  --agent-forgemaster:#704830;   /* tan */
+  --agent-service-wrapper: #5a4818; /* parchment-amber */
+
+  /* ── Timeline track palette — darker hues for light bg ── */
+  --track-1: #a04810;   /* orange */
+  --track-2: #1e4080;   /* blue */
+  --track-3: #1e6810;   /* green */
+  --track-4: #5a2890;   /* purple */
+  --track-5: #105868;   /* teal */
+  --track-6: #785010;   /* yellow */
+  --track-7: #80305a;   /* pink */
+  --track-8: #487010;   /* lime */
+
+  /* ── Beige — warm amber/brown on light backgrounds ── */
+  --beige:             #5a3810;
+  --beige-dim:         rgba(90,56,16,0.07);
+  --beige-border:      rgba(90,56,16,0.18);
+  --beige-border-md:   rgba(90,56,16,0.30);
+  --beige-border-strong:rgba(90,56,16,0.50);
+
+  /* ── Semantic ── */
+  --status-alive:      #c05010;
+  --status-alive-glow: rgba(192,80,16,0.5);
+  --status-idle:       #885010;
+  --status-dead:       #601818;
+  --status-ok:         #2a6830;
+  --status-ok-text:    #1a5020;
+  --status-warn:       #705010;
+  --status-warn-text:  #905818;
+  --status-err:        #881818;
+  --status-err-text:   #6a1010;
+
+  /* ── Integrity indicators ── */
+  --integrity-med:     #8a5c10;   /* dark amber on light bg */
+  --integrity-high:    #a02020;   /* deep crimson on light bg */
+
+  /* ── Borders ── */
+  --border-subtle:  rgba(130,30,30,0.16);
+  --border-default: rgba(130,30,30,0.32);
+  --border-strong:  rgba(130,30,30,0.52);
+
+  /* ── Glows ── */
+  --glow-crimson:   rgba(160,40,40,0.08);
+  --glow-crimson-md:rgba(160,40,40,0.15);
+}
