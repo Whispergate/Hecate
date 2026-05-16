@@ -82,7 +82,7 @@ const splitLink = new ApolloLink((operation, forward) => {
     def.kind === 'OperationDefinition' && def.operation === 'subscription'
 
   if (isSubscription) {
-    return getWsLink().request(operation, forward)
+    return getWsLink().request(operation)
   }
   return from([authLink, httpLink]).request(operation, forward)
 })

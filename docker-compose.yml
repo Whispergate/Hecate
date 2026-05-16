@@ -21,12 +21,9 @@ services:
     ports:
       - "3100:80"
     networks:
-      - hecate-own
       - mythic-net  # join Mythic's network to reach mythic_nginx directly
 
 networks:
-  hecate-own:
-    driver: bridge
   mythic-net:
     external: true
     name: mythic_default  # Mythic's network — created by Mythic's docker-compose

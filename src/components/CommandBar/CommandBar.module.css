@@ -49,6 +49,25 @@
   background: var(--bg-raised);
 }
 
+.snippetBtn {
+  background: transparent;
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-sm);
+  color: var(--bone-700);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 3px 8px;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+}
+.snippetBtn:hover {
+  color: var(--bone-200);
+  border-color: var(--bone-500);
+  background: var(--bg-elevated);
+}
+
 .prefix {
   font-size: 11px;
   color: var(--crimson-400);

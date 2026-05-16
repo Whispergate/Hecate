@@ -11,6 +11,7 @@ import { SocksModal }                               from './SocksModal'
 import { RpfwdModal }                               from './RpfwdModal'
 import { LinkModal }                                from './LinkModal'
 import { UnlinkModal }                              from './UnlinkModal'
+import { SnippetPopup }                             from './SnippetPopup'
 import styles                                       from './CommandBar.module.css'
 
 // ── Tab completion ────────────────────────────────────
@@ -79,6 +80,7 @@ export function CommandBar() {
   const [rpfwdModal,   setRpfwdModal]   = useState(false)
   const [linkModal,    setLinkModal]    = useState(false)
   const [unlinkModal,  setUnlinkModal]  = useState(false)
+  const [snippetOpen,  setSnippetOpen]  = useState(false)
 
   const inputRef   = useRef<HTMLInputElement>(null)
   const menuRef    = useRef<HTMLDivElement>(null)
@@ -158,6 +160,24 @@ export function CommandBar() {
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [comp.options.length])
+
+  // ── Ctrl+P opens snippet popup from anywhere ──────────
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+        e.preventDefault()
+        setSnippetOpen(true)
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [])
+
+  function applySnippet(cmd: string) {
+    setInput(cmd)
+    setSnippetOpen(false)
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
 
   // ── Per-callback history helpers ──────────────────────
   function pushHistory(cbDisplayId: number | undefined, cmd: string) {
@@ -403,6 +423,12 @@ export function CommandBar() {
         onClose={() => { setUnlinkModal(false); inputRef.current?.focus() }}
       />
     )}
+    {snippetOpen && (
+      <SnippetPopup
+        onPick={applySnippet}
+        onClose={() => { setSnippetOpen(false); inputRef.current?.focus() }}
+      />
+    )}
     <div className={styles.wrap}>
       {/* ── Error banner ── */}
       {error && (
@@ -475,6 +501,14 @@ export function CommandBar() {
           autoComplete="off"
           spellCheck={false}
         />
+        <button
+          className={styles.snippetBtn}
+          onClick={() => setSnippetOpen(true)}
+          title="Snippets (Ctrl+P)"
+          type="button"
+        >
+          ≡
+        </button>
         {loading && <span className={styles.sending}>sending…</span>}
       </div>
     </div>
