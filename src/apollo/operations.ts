@@ -1262,3 +1262,107 @@ export const SUB_OPERATION_ALERT_COUNT = gql`
     }
   }
 `
+
+// ── link / unlink modals ──────────────────────────────
+
+export const GET_CALLBACK_GRAPH_EDGES = gql`
+  query GetCallbackGraphEdges($callback_id: Int!) {
+    callbackgraphedge(
+      where: {
+        _or: [
+          { source_id:      { _eq: $callback_id } }
+          { destination_id: { _eq: $callback_id } }
+        ]
+      }
+    ) {
+      id
+      end_timestamp
+      c2profile { id name }
+      source {
+        id display_id host agent_callback_id
+        payload { uuid }
+        c2profileparametersinstances {
+          c2_profile_id value enc_key_base64 dec_key_base64
+          c2profileparameter { crypto_type name }
+        }
+      }
+      destination {
+        id display_id host agent_callback_id
+        payload { uuid }
+        c2profileparametersinstances {
+          c2_profile_id value enc_key_base64 dec_key_base64
+          c2profileparameter { crypto_type name }
+        }
+      }
+    }
+  }
+`
+
+export const GET_P2P_PAYLOADS = gql`
+  query GetP2PPayloads {
+    payload(
+      where: {
+        deleted:       { _eq: false }
+        build_phase:   { _eq: "success" }
+        payloadc2profiles: { c2profile: { is_p2p: { _eq: true } } }
+      }
+      order_by: { id: desc }
+    ) {
+      id
+      description
+      payloadtype { name }
+      filemetum   { filename_text }
+    }
+  }
+`
+
+export const ADD_PAYLOAD_ON_HOST = gql`
+  mutation AddPayloadOnHost($host: String!, $payload_id: Int!) {
+    insert_payloadonhost_one(object: { host: $host, payload_id: $payload_id }) {
+      id
+    }
+  }
+`
+
+export const GET_LINK_TARGETS = gql`
+  query GetLinkTargets($operation_id: Int!) {
+    payloadonhost(
+      where: {
+        deleted:      { _eq: false }
+        operation_id: { _eq: $operation_id }
+        payload: { c2profileparametersinstances: { c2profile: { is_p2p: { _eq: true } } } }
+      }
+      order_by: { id: desc }
+    ) {
+      host
+      payload {
+        uuid description
+        filemetum { filename_text }
+        c2profileparametersinstances(
+          where: { c2profile: { is_p2p: { _eq: true } } }
+        ) {
+          c2_profile_id value enc_key_base64 dec_key_base64
+          c2profile { id name }
+          c2profileparameter { crypto_type name }
+        }
+      }
+    }
+    callback(
+      where: {
+        active:        { _eq: true }
+        operation_id:  { _eq: $operation_id }
+        c2profileparametersinstances: { c2profile: { is_p2p: { _eq: true } } }
+      }
+    ) {
+      agent_callback_id host display_id
+      payload { uuid }
+      c2profileparametersinstances(
+        where: { c2profile: { is_p2p: { _eq: true } } }
+      ) {
+        c2_profile_id value enc_key_base64 dec_key_base64
+        c2profile { id name }
+        c2profileparameter { crypto_type name }
+      }
+    }
+  }
+`

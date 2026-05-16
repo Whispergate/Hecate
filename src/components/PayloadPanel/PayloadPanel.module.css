@@ -99,7 +99,7 @@
   padding: 10px 14px;
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(239,239,218,0.05);
+  border-bottom: 1px solid var(--beige-dim);
   border-left: 3px solid transparent;
   cursor: pointer;
   text-align: left;

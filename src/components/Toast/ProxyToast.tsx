@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '@/store'
 import type { ProxyToast } from '@/store'
+import { agentColor } from '@/agentColor'
 import styles from './ProxyToast.module.css'
 
 const DURATION = 12000
@@ -87,7 +88,7 @@ function Toast({ toast }: { toast: ProxyToast }) {
           <span className={styles.sep}>·</span>
           <span className={styles.displayId}>#{toast.callbackDisplayId}</span>
           <span className={styles.sep}>·</span>
-          <span className={styles.agent}>{toast.agent}</span>
+          <span className={styles.agent} style={{ color: agentColor(toast.agent) }}>{toast.agent}</span>
         </div>
 
         {/* Config line + copy */}

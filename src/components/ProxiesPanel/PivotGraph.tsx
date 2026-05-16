@@ -69,12 +69,13 @@ function hexPoints(cx: number, cy: number, r: number): string {
 type ProtoInfo = { color: string; dash?: string; short: string }
 function protoInfo(name: string): ProtoInfo {
   const n = name.toLowerCase()
-  if (n.includes('http'))  return { color: '#72b860', short: 'HTTP' }
-  if (n.includes('smb'))   return { color: '#c8b880', short: 'SMB',  dash: '5 3' }
-  if (n.includes('tcp'))   return { color: '#c8983a', short: 'TCP',  dash: '3 3' }
-  if (n.includes('ws') || n.includes('socket')) return { color: '#a880d8', short: 'WS', dash: '7 3' }
-  if (n.includes('dns'))   return { color: '#68b8c8', short: 'DNS',  dash: '2 4' }
-  return                          { color: '#d03838', short: name.toUpperCase().slice(0, 4) }
+  if (n.includes('http'))  return { color: 'var(--proto-http)',    short: 'HTTP' }
+  if (n.includes('smb'))   return { color: 'var(--proto-smb)',     short: 'SMB',  dash: '5 3' }
+  if (n.includes('tcp'))   return { color: 'var(--proto-tcp)',     short: 'TCP',  dash: '3 3' }
+  if (n.includes('ws') || n.includes('socket'))
+                           return { color: 'var(--proto-ws)',      short: 'WS',   dash: '7 3' }
+  if (n.includes('dns'))   return { color: 'var(--proto-dns)',     short: 'DNS',  dash: '2 4' }
+  return                          { color: 'var(--proto-default)', short: name.toUpperCase().slice(0, 4) }
 }
 
 // ── Component ─────────────────────────────────────────
@@ -183,7 +184,7 @@ export function PivotGraph({ callbacks, ports, onNavigate, annotations, selected
         <defs>
           {/* Dot grid */}
           <pattern id="pg-dot" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
-            <circle cx="14" cy="14" r="0.7" fill="rgba(239,239,218,0.045)"/>
+            <circle cx="14" cy="14" r="0.7" fill="var(--beige)" fillOpacity="0.08"/>
           </pattern>
 
           {/* Teal glow */}
@@ -271,7 +272,7 @@ export function PivotGraph({ callbacks, ports, onNavigate, annotations, selected
                 {hasSocks && alive && (
                   <line
                     x1={x1} y1={y1} x2={x2} y2={y2}
-                    stroke="#3ab8d8"
+                    stroke="var(--accent-info)"
                     strokeWidth="2.5"
                     strokeDasharray="9 9"
                     opacity="0.5"
@@ -373,7 +374,7 @@ export function PivotGraph({ callbacks, ports, onNavigate, annotations, selected
               >
                 {/* SOCKS pulse ring — outermost */}
                 {hasSocks && alive && (
-                  <circle cx={nx} cy={ny} r={NODE_R + 5} fill="none" stroke="#3ab8d8" strokeWidth="1.2">
+                  <circle cx={nx} cy={ny} r={NODE_R + 5} fill="none" stroke="var(--accent-info)" strokeWidth="1.2">
                     <animate attributeName="r"
                       values={`${NODE_R + 4};${NODE_R + 16};${NODE_R + 4}`}
                       dur="2.6s" repeatCount="indefinite"/>
@@ -435,9 +436,9 @@ export function PivotGraph({ callbacks, ports, onNavigate, annotations, selected
                   return (
                     <g key={port} filter="url(#pg-gt)">
                       <rect x={bpx - bw / 2} y={bpy - 6} width={bw} height={12} rx="3"
-                        fill="rgba(8,28,38,0.95)" stroke="#3ab8d8" strokeWidth="0.9"/>
+                        fill="var(--topo-label-bg)" stroke="var(--accent-info)" strokeWidth="0.9"/>
                       <text x={bpx} y={bpy + 3} textAnchor="middle"
-                        fontFamily="monospace" fontSize="7" fontWeight="700" fill="#3ab8d8">
+                        fontFamily="monospace" fontSize="7" fontWeight="700" fill="var(--accent-info)">
                         {txt}
                       </text>
                     </g>
@@ -446,9 +447,9 @@ export function PivotGraph({ callbacks, ports, onNavigate, annotations, selected
                 {hasSocks && socksPorts.length > 3 && (
                   <g>
                     <rect x={badgeX - 14} y={badgeY - 6 - 3 * 15} width={28} height={12} rx="3"
-                      fill="rgba(8,28,38,0.95)" stroke="#3ab8d8" strokeWidth="0.9"/>
+                      fill="var(--topo-label-bg)" stroke="var(--accent-info)" strokeWidth="0.9"/>
                     <text x={badgeX} y={badgeY + 3 - 3 * 15} textAnchor="middle"
-                      fontFamily="monospace" fontSize="6.5" fontWeight="700" fill="#3ab8d8">
+                      fontFamily="monospace" fontSize="6.5" fontWeight="700" fill="var(--accent-info)">
                       +{socksPorts.length - 3}
                     </text>
                   </g>
@@ -459,8 +460,8 @@ export function PivotGraph({ callbacks, ports, onNavigate, annotations, selected
                   <rect
                     x={labelX - hpw / 2} y={labelY - 8}
                     width={hpw} height={14} rx="3"
-                    fill="rgba(8,4,4,0.92)"
-                    stroke={isSel ? nodeStroke : 'rgba(180,160,130,0.12)'}
+                    fill="var(--topo-label-bg)"
+                    stroke={isSel ? nodeStroke : 'var(--beige-border)'}
                     strokeWidth={isSel ? 0.8 : 0.5}
                   />
                   <text x={labelX} y={labelY + 2.5} textAnchor="middle"
@@ -469,7 +470,7 @@ export function PivotGraph({ callbacks, ports, onNavigate, annotations, selected
                     fill={
                       annotColor ? annotColor
                       : isSel ? 'var(--topo-text-node-sel)'
-                      : hasSocks && alive ? '#3ab8d8'
+                      : hasSocks && alive ? 'var(--accent-info)'
                       : 'var(--topo-text-node)'
                     }
                   >
@@ -478,7 +479,7 @@ export function PivotGraph({ callbacks, ports, onNavigate, annotations, selected
                 </g>
                 {/* Display ID */}
                 <text x={labelX} y={labelY + 14} textAnchor="middle"
-                  fontFamily="monospace" fontSize="6" fill="rgba(180,160,130,0.35)">
+                  fontFamily="monospace" fontSize="6" fill="var(--topo-text-info)">
                   #{cb.display_id}
                 </text>
               </g>
@@ -488,7 +489,7 @@ export function PivotGraph({ callbacks, ports, onNavigate, annotations, selected
           {/* ── Empty state ── */}
           {n === 0 && (
             <text x={CX} y={CY + 50} textAnchor="middle"
-              fontFamily="monospace" fontSize="12" fill="rgba(180,160,130,0.18)">
+              fontFamily="monospace" fontSize="12" fill="var(--topo-text-info)" opacity="0.5">
               no agents
             </text>
           )}
@@ -511,9 +512,9 @@ export function PivotGraph({ callbacks, ports, onNavigate, annotations, selected
             {ports.some(p => p.port_type === 'socks') && (
               <g transform={`translate(${legendProtos.length * 58}, 0)`}>
                 <line x1="0" y1="5" x2="14" y2="5"
-                  stroke="#3ab8d8" strokeWidth="2" strokeDasharray="5 4"/>
+                  stroke="var(--accent-info)" strokeWidth="2" strokeDasharray="5 4"/>
                 <text x="18" y="8.5" fontFamily="monospace" fontSize="7.5"
-                  fontWeight="700" fill="#3ab8d8" opacity="0.8">
+                  fontWeight="700" fill="var(--accent-info)" opacity="0.8">
                   SOCKS
                 </text>
               </g>

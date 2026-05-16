@@ -42,8 +42,8 @@ const TRACK_H  = 44
 const AXIS_H   = 34
 
 const TRACK_PALETTE = [
-  '#d4916b', '#6b8fd4', '#6aaa64', '#b06bd4',
-  '#4ec9b0', '#d4c46b', '#d46b8f', '#8fd46b',
+  'var(--track-1)', 'var(--track-2)', 'var(--track-3)', 'var(--track-4)',
+  'var(--track-5)', 'var(--track-6)', 'var(--track-7)', 'var(--track-8)',
 ]
 
 const NICE_INTERVALS_MS = [

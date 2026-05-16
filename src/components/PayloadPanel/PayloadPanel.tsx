@@ -9,6 +9,7 @@ import { useQuery, useMutation } from '@apollo/client'
 import { GET_PAYLOADS, DELETE_PAYLOAD } from '@/apollo/operations'
 import { useStore }              from '@/store'
 import { parseTs }               from '@/components/Sidebar/utils'
+import { agentColor }            from '@/agentColor'
 import { CreatePayloadModal }    from './CreatePayloadModal'
 import { PayloadContextMenu }    from './PayloadContextMenu'
 import styles                    from './PayloadPanel.module.css'
@@ -90,14 +91,7 @@ function buildPhaseLabel(phase: string): string {
 }
 
 function agentStyle(name: string): { color: string } {
-  const n = name.toLowerCase()
-  if (n.includes('apollo'))   return { color: '#90d880' }
-  if (n.includes('poseidon')) return { color: '#80c8d0' }
-  if (n.includes('medusa'))   return { color: '#c090e0' }
-  if (n.includes('hermes'))   return { color: '#d0a848' }
-  if (n.includes('thanatos')) return { color: '#d08080' }
-  if (n.includes('athena'))   return { color: '#80a8d0' }
-  return { color: 'var(--bone-600)' }
+  return { color: agentColor(name) }
 }
 
 function AgentIcon({ name, color }: { name: string; color: string }) {

@@ -48,8 +48,8 @@
   cursor: pointer;
   transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
 }
-.pill:hover { background: rgba(239,239,218,0.06); color: var(--bone-400); }
-.pillActive { background: rgba(239,239,218,0.1); color: var(--beige); border-color: rgba(239,239,218,0.4); }
+.pill:hover { background: var(--beige-dim); color: var(--bone-400); }
+.pillActive { background: var(--beige-border); color: var(--beige); border-color: var(--beige-border-strong); }
 
 .warningCount {
   background: rgba(181,40,40,0.2);
@@ -76,7 +76,7 @@
   transition: border-color var(--t-fast);
 }
 .searchInput::placeholder { color: var(--bone-800); }
-.searchInput:focus { border-color: rgba(239,239,218,0.4); color: var(--bone-200); }
+.searchInput:focus { border-color: var(--beige-border-strong); color: var(--bone-200); }
 
 .resolveBtn {
   background: transparent;
@@ -117,10 +117,10 @@
   align-items: baseline;
   gap: 0 10px;
   padding: 4px 16px;
-  border-bottom: 1px solid rgba(239,239,218,0.04);
+  border-bottom: 1px solid var(--beige-dim);
   transition: background var(--t-fast);
 }
-.row:hover { background: rgba(239,239,218,0.03); }
+.row:hover { background: var(--beige-dim); }
 
 .rowWarning     { background: rgba(181,40,40,0.05); }
 .rowWarning:hover { background: rgba(181,40,40,0.09); }
@@ -176,8 +176,8 @@
   font-family: var(--font-mono);
   font-size: 8px;
   color: var(--bone-800);
-  background: rgba(239,239,218,0.07);
-  border: 1px solid rgba(239,239,218,0.1);
+  background: var(--beige-border);
+  border: 1px solid var(--beige-border);
   border-radius: 10px;
   padding: 0 5px;
   white-space: nowrap;
@@ -185,7 +185,7 @@
 
 .resolveToggle {
   background: transparent;
-  border: 1px solid rgba(239,239,218,0.15);
+  border: 1px solid var(--beige-border);
   color: var(--bone-700);
   font-family: var(--font-mono);
   font-size: 9px;
@@ -195,7 +195,7 @@
   transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
 }
 .resolveToggle:hover {
-  background: rgba(239,239,218,0.08);
+  background: var(--beige-border);
   border-color: var(--beige-border);
   color: var(--bone-200);
 }
@@ -236,7 +236,7 @@
   transition: border-color var(--t-fast);
 }
 .composeInput::placeholder { color: var(--bone-900); }
-.composeInput:focus { border-color: rgba(239,239,218,0.4); }
+.composeInput:focus { border-color: var(--beige-border-strong); }
 
 .sendBtn {
   background: rgba(181,40,40,0.15);

@@ -209,8 +209,8 @@
   background: color-mix(in srgb, var(--crimson-600) 35%, var(--bg-raised));
   border-color: var(--crimson-400);
 }
-.cellBoth .cellTNum  { color: #f0a0a0; }
-.cellBoth .cellName  { color: var(--bone-100, #f5f5f0); }
+.cellBoth .cellTNum  { color: var(--crimson-200); }
+.cellBoth .cellName  { color: var(--bone-100); }
 
 .cellTNum {
   font-family: var(--font-mono);

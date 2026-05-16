@@ -5,6 +5,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useQuery, useLazyQuery }         from '@apollo/client'
 import { GET_ATTACK, GET_ATTACK_COMMANDS, GET_ATTACK_TASKS } from '@/apollo/operations'
+import { agentColor } from '@/agentColor'
 import styles from './AttackPanel.module.css'
 
 // ── Types ─────────────────────────────────────────────
@@ -162,7 +163,7 @@ function DetailPanel({
               {cmds.map((c, i) => (
                 <span key={i} className={styles.detailCmd}>
                   <span className={styles.detailCmdName}>{c.cmd}</span>
-                  <span className={styles.detailAgent}>{c.payloadtype.name}</span>
+                  <span className={styles.detailAgent} style={{ color: agentColor(c.payloadtype.name) }}>{c.payloadtype.name}</span>
                 </span>
               ))}
             </div>

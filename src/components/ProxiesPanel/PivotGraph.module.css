@@ -24,7 +24,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(16,8,8,0.85);
+  background: color-mix(in srgb, var(--bg-raised) 85%, transparent);
   border: 1px solid var(--beige-border);
   border-radius: var(--radius-sm);
   color: var(--bone-600);
@@ -36,7 +36,7 @@
 .resetBtn:hover {
   color: var(--bone-200);
   border-color: var(--bone-600);
-  background: rgba(24,12,12,0.92);
+  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
 }
 .resetBtn svg {
   width: 14px;

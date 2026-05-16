@@ -94,7 +94,7 @@
 .infoKey { color: var(--bone-600); font-size: 9px; }
 .infoVal { color: var(--bone-200); font-size: 9px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .infoVal.hiVal    { color: var(--crimson-300); font-weight: 700; }
-.infoVal.tokenVal { color: #d4a017; font-weight: 600; }
+.infoVal.tokenVal { color: var(--status-warn-text); font-weight: 600; }
 .infoVal.mutedVal { color: var(--bone-600); }
 .infoVal.cwdVal   { color: var(--bone-500); font-size: 8px; }
 
@@ -116,9 +116,9 @@
   display: inline-block;
   font-size: 7px;
   font-weight: 700;
-  color: #3ab8d8;
-  background: rgba(42, 122, 154, 0.18);
-  border: 1px solid rgba(42, 122, 154, 0.35);
+  color: var(--accent-info);
+  background: var(--accent-info-bg);
+  border: 1px solid var(--accent-info-bd);
   border-radius: 3px;
   padding: 0px 3px;
   margin-left: 5px;
@@ -178,7 +178,7 @@
 }
 .cbUserName  { color: var(--bone-600); }
 .cbUserArrow { color: var(--bone-800); flex-shrink: 0; }
-.cbUserToken { color: #d4a017; font-weight: 600; flex-shrink: 0; }
+.cbUserToken { color: var(--status-warn-text); font-weight: 600; flex-shrink: 0; }
 
 .cbDesc {
   color: var(--bone-600);

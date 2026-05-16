@@ -16,12 +16,12 @@
   display: flex;
   width: 296px;
   background: var(--bg-elevated);
-  border: 1px solid rgba(42, 122, 154, 0.35);
+  border: 1px solid var(--accent-info-bd);
   border-radius: var(--radius-md);
   box-shadow:
     0 4px 24px rgba(0,0,0,0.55),
-    0 0 0 1px rgba(42,122,154,0.12),
-    0 2px 12px rgba(42,122,154,0.15);
+    0 0 0 1px var(--accent-info-bg),
+    0 2px 12px var(--accent-info-bg);
   overflow: hidden;
   cursor: pointer;
   pointer-events: all;
@@ -30,8 +30,8 @@
 .toast:hover {
   box-shadow:
     0 6px 28px rgba(0,0,0,0.6),
-    0 0 0 1px rgba(42,122,154,0.5),
-    0 2px 16px rgba(42,122,154,0.25);
+    0 0 0 1px color-mix(in srgb, var(--accent-info) 50%, transparent),
+    0 2px 16px var(--accent-info-bd);
   transform: translateX(-2px);
 }
 
@@ -52,7 +52,7 @@
 .accentBar {
   width: 3px;
   flex-shrink: 0;
-  background: linear-gradient(to bottom, #3dd8f0, #2a7a9a);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--accent-info) 65%, var(--bg-base)), var(--accent-info));
 }
 
 /* ── Body ── */
@@ -73,14 +73,14 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #3ab8d8;
-  box-shadow: 0 0 6px rgba(58,184,216,0.7);
+  background: var(--accent-info);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent-info) 70%, transparent);
   flex-shrink: 0;
   animation: pulse 2s ease-in-out infinite;
 }
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 4px rgba(58,184,216,0.6); }
-  50%       { box-shadow: 0 0 10px rgba(58,184,216,0.9), 0 0 20px rgba(58,184,216,0.3); }
+  0%, 100% { box-shadow: 0 0 4px color-mix(in srgb, var(--accent-info) 60%, transparent); }
+  50%       { box-shadow: 0 0 10px color-mix(in srgb, var(--accent-info) 90%, transparent), 0 0 20px var(--accent-info-bd); }
 }
 
 .label {
@@ -88,7 +88,7 @@
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.12em;
-  color: #3ab8d8;
+  color: var(--accent-info);
   flex: 1;
 }
 
@@ -109,7 +109,7 @@
 .port {
   font-size: 22px;
   font-weight: 700;
-  color: #3ab8d8;
+  color: var(--accent-info);
   letter-spacing: -0.02em;
   line-height: 1;
   margin-bottom: 5px;
@@ -135,7 +135,7 @@
   align-items: center;
   gap: 6px;
   background: var(--bg-raised);
-  border: 1px solid rgba(42,122,154,0.25);
+  border: 1px solid var(--accent-info-bd);
   border-radius: var(--radius-sm);
   padding: 5px 8px;
   margin-bottom: 4px;
@@ -156,18 +156,18 @@
 .copyBtn {
   flex-shrink: 0;
   background: none;
-  border: 1px solid rgba(42,122,154,0.35);
+  border: 1px solid var(--accent-info-bd);
   border-radius: 2px;
   font-family: var(--font-mono);
   font-size: 8px;
-  color: #3ab8d8;
+  color: var(--accent-info);
   padding: 2px 6px;
   cursor: pointer;
   transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
   min-width: 34px;
   text-align: center;
 }
-.copyBtn:hover     { background: rgba(42,122,154,0.2); border-color: #3ab8d8; }
+.copyBtn:hover     { background: var(--accent-info-bg); border-color: var(--accent-info); }
 .copyDone          { color: var(--status-ok-text) !important; border-color: var(--status-ok-text) !important; }
 
 /* ── Hint text ── */
@@ -186,7 +186,7 @@
 }
 .progressBar {
   height: 100%;
-  background: linear-gradient(to right, #2a7a9a, #3ab8d8);
+  background: linear-gradient(to right, color-mix(in srgb, var(--accent-info) 65%, var(--bg-base)), var(--accent-info));
   animation: drain linear both;
   transform-origin: left;
 }

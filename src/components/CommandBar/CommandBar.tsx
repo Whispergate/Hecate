@@ -9,6 +9,8 @@ import { useStore }                                 from '@/store'
 import { FileTaskModal, type CommandParam }         from './FileTaskModal'
 import { SocksModal }                               from './SocksModal'
 import { RpfwdModal }                               from './RpfwdModal'
+import { LinkModal }                                from './LinkModal'
+import { UnlinkModal }                              from './UnlinkModal'
 import styles                                       from './CommandBar.module.css'
 
 // ── Tab completion ────────────────────────────────────
@@ -74,7 +76,9 @@ export function CommandBar() {
   const [comp,       setComp]       = useState<CompletionState>(EMPTY_COMP)
   const [modal,      setModal]      = useState<ModalState | null>(null)
   const [socksModal, setSocksModal] = useState(false)
-  const [rpfwdModal, setRpfwdModal] = useState(false)
+  const [rpfwdModal,   setRpfwdModal]   = useState(false)
+  const [linkModal,    setLinkModal]    = useState(false)
+  const [unlinkModal,  setUnlinkModal]  = useState(false)
 
   const inputRef   = useRef<HTMLInputElement>(null)
   const menuRef    = useRef<HTMLDivElement>(null)
@@ -190,6 +194,22 @@ export function CommandBar() {
       pushHistory(displayId, raw)
       setInput('')
       setRpfwdModal(true)
+      return
+    }
+
+    // link modal — requires P2P payload/callback selection
+    if (command === 'link' && !params && displayId) {
+      pushHistory(displayId, raw)
+      setInput('')
+      setLinkModal(true)
+      return
+    }
+
+    // unlink modal — requires existing graph edge selection
+    if (command === 'unlink' && !params && displayId) {
+      pushHistory(displayId, raw)
+      setInput('')
+      setUnlinkModal(true)
       return
     }
 
@@ -368,6 +388,19 @@ export function CommandBar() {
             .map(p => ({ local_port: p.local_port, remote_ip: p.remote_ip, remote_port: p.remote_port }))
         }
         onClose={() => { setRpfwdModal(false); inputRef.current?.focus() }}
+      />
+    )}
+    {linkModal && displayId && (
+      <LinkModal
+        displayId={displayId}
+        onClose={() => { setLinkModal(false); inputRef.current?.focus() }}
+      />
+    )}
+    {unlinkModal && selectedCallbackId && displayId && (
+      <UnlinkModal
+        callbackId={selectedCallbackId}
+        displayId={displayId}
+        onClose={() => { setUnlinkModal(false); inputRef.current?.focus() }}
       />
     )}
     <div className={styles.wrap}>

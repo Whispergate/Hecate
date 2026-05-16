@@ -7,14 +7,8 @@ import { useStore, useSelectedCallback } from '@/store'
 import type { Callback } from '@/store'
 import { integrityLabel, timeSince, parseTs, formatSleepInterval, formatSleepJitter } from './utils'
 import { CallbackContextMenu } from '@/components/CallbackContextMenu/CallbackContextMenu'
+import { agentColor } from '@/agentColor'
 import styles from './Sidebar.module.css'
-
-// Deterministic hue from agent name — consistent across renders, works for any agent.
-function agentColor(name: string): string {
-  let h = 0
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0
-  return `hsl(${h % 360}, 65%, 62%)`
-}
 
 interface CtxMenu { cb: Callback; x: number; y: number }
 type StatusFilter = 'alive' | 'idle' | 'dead'

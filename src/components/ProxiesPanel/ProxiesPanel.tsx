@@ -8,6 +8,7 @@ import { CREATE_TASK, SUB_ALL_CALLBACKS } from '@/apollo/operations'
 import { useStore, useAliveCallbacks }   from '@/store'
 import type { Callback, CallbackPort }   from '@/store'
 import { PivotGraph, isLateCheckin }      from './PivotGraph'
+import { agentColor }                     from '@/agentColor'
 import styles                            from './ProxiesPanel.module.css'
 
 function fmtBytes(n: number): string {
@@ -135,7 +136,7 @@ export function ProxiesPanel() {
                           {p.callback.host}
                           <span className={styles.displayId}>#{p.callback.display_id}</span>
                         </span>
-                        <span className={styles.agent}>{p.callback.payload.payloadtype.name}</span>
+                        <span className={styles.agent} style={{ color: agentColor(p.callback.payload.payloadtype.name) }}>{p.callback.payload.payloadtype.name}</span>
                         <span className={styles.port}>:{p.local_port}</span>
                         <span className={styles.bytes}>{fmtBytes(p.bytes_sent)}</span>
                         <span className={styles.bytes}>{fmtBytes(p.bytes_received)}</span>
@@ -173,7 +174,7 @@ export function ProxiesPanel() {
                           {p.callback.host}
                           <span className={styles.displayId}>#{p.callback.display_id}</span>
                         </span>
-                        <span className={styles.agent}>{p.callback.payload.payloadtype.name}</span>
+                        <span className={styles.agent} style={{ color: agentColor(p.callback.payload.payloadtype.name) }}>{p.callback.payload.payloadtype.name}</span>
                         <span className={styles.port}>:{p.local_port}</span>
                         <span className={styles.target}>{p.remote_ip}:{p.remote_port}</span>
                         <span className={styles.bytes}>{fmtBytes(p.bytes_sent)}</span>

@@ -4,6 +4,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useStore, CallbackToast } from '@/store'
+import { agentColor } from '@/agentColor'
 import styles from './CallbackToast.module.css'
 
 function Toast({ toast }: { toast: CallbackToast }) {
@@ -52,7 +53,7 @@ function Toast({ toast }: { toast: CallbackToast }) {
         <div className={styles.meta}>
           <span className={styles.user}>{toast.user || 'unknown'}</span>
           <span className={styles.sep}>·</span>
-          <span className={styles.agent}>{toast.agent}</span>
+          <span className={styles.agent} style={{ color: agentColor(toast.agent) }}>{toast.agent}</span>
         </div>
         <div className={styles.progress}>
           <div className={styles.progressBar} style={{ animationDuration: `${DURATION}ms` }} />

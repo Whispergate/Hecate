@@ -29,9 +29,9 @@
 .activeBadge {
   font-size: 9px;
   font-weight: 700;
-  color: #3ab8d8;
-  background: rgba(42, 122, 154, 0.2);
-  border: 1px solid rgba(42, 122, 154, 0.4);
+  color: var(--accent-info);
+  background: var(--accent-info-bg);
+  border: 1px solid var(--accent-info-bd);
   border-radius: 8px;
   padding: 2px 8px;
   letter-spacing: 0.05em;
@@ -198,7 +198,7 @@
 }
 
 .port {
-  color: #3ab8d8;
+  color: var(--accent-info);
   font-weight: 700;
   font-family: var(--font-mono);
 }
@@ -241,9 +241,9 @@
   white-space: nowrap;
 }
 .stopBtn:hover:not(:disabled) {
-  background: rgba(180,40,40,0.15);
-  border-color: #b44040;
-  color: #e08080;
+  background: var(--glow-crimson-md);
+  border-color: var(--crimson-500);
+  color: var(--crimson-300);
 }
 .stopBtn:disabled {
   opacity: 0.4;
@@ -256,10 +256,10 @@
   align-items: center;
   justify-content: space-between;
   padding: 6px 24px;
-  background: rgba(180,40,40,0.1);
-  border-bottom: 1px solid rgba(180,40,40,0.3);
+  background: var(--glow-crimson);
+  border-bottom: 1px solid var(--border-default);
   font-size: 9px;
-  color: #e08080;
+  color: var(--status-err-text);
   font-family: var(--font-mono);
   flex-shrink: 0;
 }
@@ -268,6 +268,6 @@
   border: none;
   cursor: pointer;
   font-size: 9px;
-  color: #e08080;
+  color: var(--status-err-text);
   padding: 0 2px;
 }

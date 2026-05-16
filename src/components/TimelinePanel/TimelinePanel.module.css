@@ -217,7 +217,7 @@
   left: 0;
   right: 0;
   height: 1px;
-  opacity: 0.2;
+  opacity: 0.45;
   pointer-events: none;
 }
 
@@ -241,7 +241,7 @@
 }
 
 .ev_done    { background: var(--crimson-400); }
-.ev_error   { background: #7a1515; opacity: 0.85; }
+.ev_error   { background: var(--crimson-700); opacity: 0.85; }
 .ev_running { background: var(--bone-700); }
 
 .evSelected {
@@ -309,5 +309,5 @@
 }
 
 .diSt_done    { color: var(--crimson-400); }
-.diSt_error   { color: #c04040; }
+.diSt_error   { color: var(--status-err-text); }
 .diSt_running { color: var(--bone-600); }

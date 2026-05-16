@@ -121,7 +121,7 @@
 .statusToken {
   font-family: var(--font-mono);
   font-size: 9px;
-  color: #d4a017;
+  color: var(--status-warn-text);
   white-space: nowrap;
   flex-shrink: 0;
   letter-spacing: 0.02em;

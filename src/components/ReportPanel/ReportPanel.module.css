@@ -377,7 +377,7 @@
 .thOp    { width: 90px; }
 .thTtps  { width: 120px; }
 
-.taskRow { border-bottom: 1px solid rgba(239,239,218,0.04); transition: background var(--t-fast); }
+.taskRow { border-bottom: 1px solid var(--beige-dim); transition: background var(--t-fast); }
 .taskRow:hover { background: var(--beige-dim); }
 
 .taskRow td { padding: 5px 8px; }
@@ -412,7 +412,7 @@
 .reportFooter {
   margin-top: 40px;
   padding-top: 10px;
-  border-top: 1px solid rgba(239,239,218,.10);
+  border-top: 1px solid var(--beige-border);
   font-size: 8px;
   color: var(--bone-900);
   letter-spacing: .04em;

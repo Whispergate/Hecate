@@ -170,7 +170,7 @@
 
 .diffRow {
   padding: 3px 12px;
-  border-bottom: 1px solid rgba(239,239,218,0.04);
+  border-bottom: 1px solid var(--beige-dim);
 }
 
 .diffKey {
