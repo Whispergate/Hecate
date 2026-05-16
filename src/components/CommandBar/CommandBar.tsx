@@ -8,6 +8,7 @@ import { CREATE_TASK, GET_COMMANDS, GET_CALLBACK_TASK_HISTORY } from '@/apollo/o
 import { useStore }                                 from '@/store'
 import { FileTaskModal, type CommandParam }         from './FileTaskModal'
 import { SocksModal }                               from './SocksModal'
+import { RpfwdModal }                               from './RpfwdModal'
 import styles                                       from './CommandBar.module.css'
 
 // ── Tab completion ────────────────────────────────────
@@ -73,6 +74,7 @@ export function CommandBar() {
   const [comp,       setComp]       = useState<CompletionState>(EMPTY_COMP)
   const [modal,      setModal]      = useState<ModalState | null>(null)
   const [socksModal, setSocksModal] = useState(false)
+  const [rpfwdModal, setRpfwdModal] = useState(false)
 
   const inputRef   = useRef<HTMLInputElement>(null)
   const menuRef    = useRef<HTMLDivElement>(null)
@@ -183,19 +185,27 @@ export function CommandBar() {
       return
     }
 
+    // rpfwd modal — dedicated modal for reverse port forward
+    if (command === 'rpfwd' && !params && displayId) {
+      pushHistory(displayId, raw)
+      setInput('')
+      setRpfwdModal(true)
+      return
+    }
+
     // Param modal — primary callback only (not multi-tasked)
     if (!params && displayId) {
-      const cmdParams       = cmdParamsMap[command] ?? []
-      const hasRequiredFile = cmdParams.some(
-        p => (p.type === 'File' || p.type === 'FileMultiple') && p.required
-      )
-      const hasRequiredCred = cmdParams.some(
-        p => p.type === 'CredentialJson' && p.required
-      )
-      // script_only commands (like socks, rpfwd) require modal — raw CLI args are not valid
-      const isScriptOnly = cmdScriptOnlyMap[command] ?? false
+      const cmdParams = cmdParamsMap[command] ?? []
+      // Any File param (even non-required) — always needs picker (e.g. upload)
+      const hasAnyFileParam   = cmdParams.some(p => p.type === 'File' || p.type === 'FileMultiple')
+      const hasRequiredCred   = cmdParams.some(p => p.type === 'CredentialJson' && p.required)
+      const isScriptOnly      = cmdScriptOnlyMap[command] ?? false
+      // Any required param not provided on CLI
+      const hasRequiredParam  = cmdParams.some(p => p.required && p.type !== 'None')
+      // Multiple groups → ambiguous, always modal
+      const hasMultipleGroups = new Set(cmdParams.map(p => p.parameter_group_name)).size > 1
 
-      if (hasRequiredFile || hasRequiredCred || isScriptOnly) {
+      if (hasAnyFileParam || hasRequiredCred || isScriptOnly || hasRequiredParam || hasMultipleGroups) {
         pushHistory(displayId, raw)
         setInput('')
         setModal({ command, params: cmdParams, displayId, defaultCwd: extractCwd(cb?.extra_info ?? '', cb?.description ?? '') })
@@ -347,6 +357,17 @@ export function CommandBar() {
             .map(p => p.local_port)
         }
         onClose={() => { setSocksModal(false); inputRef.current?.focus() }}
+      />
+    )}
+    {rpfwdModal && displayId && (
+      <RpfwdModal
+        displayId={displayId}
+        activeRpfwds={
+          activeCallbackPorts
+            .filter(p => p.port_type === 'rpfwd' && p.callback.display_id === displayId)
+            .map(p => ({ local_port: p.local_port, remote_ip: p.remote_ip, remote_port: p.remote_port }))
+        }
+        onClose={() => { setRpfwdModal(false); inputRef.current?.focus() }}
       />
     )}
     <div className={styles.wrap}>
