@@ -162,7 +162,7 @@ interface RowProps {
 }
 
 function CredentialRow({ cred, selected, onClick }: RowProps) {
-  const preview = (cred.credential_text ?? '').slice(0, 30)
+  const preview  = (cred.comment ?? '').trim()
   const identity = cred.account + (cred.realm ? `@${cred.realm}` : '')
 
   return (

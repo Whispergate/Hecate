@@ -2,8 +2,9 @@
    src/components/PayloadPanel/CreatePayloadModal.tsx
    ═══════════════════════════════════════════════════ */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useQuery, useMutation, useSubscription } from '@apollo/client'
+import { uploadTaskFile } from '@/uploadTaskFile'
 import {
   GET_PAYLOAD_TYPES,
   GET_COMMANDS_FOR_TYPE,
@@ -169,7 +170,8 @@ function coerce(value: string, type: string): unknown {
     case 'Integer':        return isNaN(Number(value)) ? value : Number(value)
     case 'Boolean':        return value === 'true'
     case 'Array':
-    case 'TypedArray':     return value.split(',').map(s => s.trim()).filter(Boolean)
+    case 'TypedArray':
+    case 'FileMultiple':   return value.split(',').map(s => s.trim()).filter(Boolean)
     case 'ChooseMultiple': return value.split(',').filter(Boolean)
     case 'Dictionary': {
       try { return JSON.parse(value) } catch { return value }
@@ -239,9 +241,13 @@ function buildDefinition(opts: {
 // ── Dynamic parameter input ────────────────────────────
 
 function ParamInput({
-  param, value, onChange, allValues,
+  param, value, onChange, onPickFiles, allValues,
 }: {
-  param: Param; value: string; onChange: (v: string) => void; allValues: Record<string, string>
+  param: Param
+  value: string
+  onChange: (v: string) => void
+  onPickFiles?: (files: File[]) => void
+  allValues: Record<string, string>
 }) {
   if (evalHideConditions(param, allValues)) return null
 
@@ -354,10 +360,25 @@ function ParamInput({
   }
 
   if (type === 'File' || type === 'FileMultiple') {
+    const multiple = type === 'FileMultiple'
     return (
       <div className={styles.field}>
-        <label className={styles.fieldLabel}>{label}</label>
-        <span className={styles.fieldNote}>File parameters must be configured in Mythic after building.</span>
+        <label className={styles.fieldLabel}>
+          {label}
+          {param.required && <span className={styles.required}>*</span>}
+        </label>
+        {description && <span className={styles.fieldHint}>{description}</span>}
+        <input
+          type="file"
+          multiple={multiple}
+          className={styles.fieldInput}
+          onChange={e => {
+            const files = Array.from(e.target.files ?? [])
+            onPickFiles?.(files)
+            onChange(files.map(f => f.name).join(', '))
+          }}
+        />
+        {value && <span className={styles.fieldHint}>selected: {value}</span>}
       </div>
     )
   }
@@ -648,14 +669,54 @@ function Configure({
 
   const visibleBuildParams = [...type.buildparameters].sort((a, b) => a.name.localeCompare(b.name))
 
-  const handleBuild = () => {
-    const def = buildDefinition({
-      type, os, description, filename: filename || `${type.name}${type.file_extension ?? ''}`,
-      buildParams, c2Name: selectedC2, c2Profile, c2Params,
-      commands: Array.from(selectedCmds),
-      wrappedUuid,
-    })
-    onBuild(def)
+  // Picked files waiting to be uploaded. Key format: "build:<name>" or "c2:<name>"
+  // For File:        files[0] is uploaded, value becomes the UUID
+  // For FileMultiple files are all uploaded, value becomes "uuid1,uuid2,..."
+  const fileMapRef = useRef<Map<string, File[]>>(new Map())
+  const [uploading, setUploading] = useState(false)
+  const [uploadErr, setUploadErr] = useState<string | null>(null)
+
+  function setFiles(key: string, files: File[]) {
+    fileMapRef.current.set(key, files)
+  }
+
+  async function uploadAll(): Promise<{ build: Record<string, string>; c2: Record<string, string> } | null> {
+    const token = sessionStorage.getItem('hecate_token') ?? ''
+    const build: Record<string, string> = {}
+    const c2:    Record<string, string> = {}
+
+    for (const [key, files] of fileMapRef.current.entries()) {
+      const uuids: string[] = []
+      for (const f of files) {
+        const id = await uploadTaskFile(f, token, `Build param ${key} for ${filename}`)
+        if (!id) { setUploadErr(`Failed to upload ${f.name}`); return null }
+        uuids.push(id)
+      }
+      const value = uuids.join(',')
+      if (key.startsWith('build:'))   build[key.slice(6)] = value
+      else if (key.startsWith('c2:')) c2[key.slice(3)]    = value
+    }
+    return { build, c2 }
+  }
+
+  const handleBuild = async () => {
+    setUploadErr(null)
+    setUploading(true)
+    try {
+      const uploaded = fileMapRef.current.size > 0 ? await uploadAll() : { build: {}, c2: {} }
+      if (!uploaded) return
+      const def = buildDefinition({
+        type, os, description, filename: filename || `${type.name}${type.file_extension ?? ''}`,
+        buildParams: { ...buildParams, ...uploaded.build },
+        c2Name: selectedC2, c2Profile,
+        c2Params:    { ...c2Params,    ...uploaded.c2 },
+        commands: Array.from(selectedCmds),
+        wrappedUuid,
+      })
+      onBuild(def)
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
@@ -714,6 +775,7 @@ function Configure({
               param={p}
               value={buildParams[p.name] ?? ''}
               onChange={v => setBuildParam(p.name, v)}
+              onPickFiles={files => setFiles(`build:${p.name}`, files)}
               allValues={buildParams}
             />
           ))}
@@ -766,6 +828,7 @@ function Configure({
                     param={p}
                     value={c2Params[p.name] ?? ''}
                     onChange={v => setC2Param(p.name, v)}
+                    onPickFiles={files => setFiles(`c2:${p.name}`, files)}
                     allValues={c2Params}
                   />
                 ))}
@@ -826,8 +889,9 @@ function Configure({
 
       {/* Actions */}
       <div className={styles.actions}>
-        <button className={styles.buildBtn} onClick={handleBuild}>
-          Build Payload
+        {uploadErr && <span className={styles.fieldHint} style={{ color: 'var(--status-err-text)' }}>{uploadErr}</span>}
+        <button className={styles.buildBtn} onClick={handleBuild} disabled={uploading}>
+          {uploading ? 'Uploading files…' : 'Build Payload'}
         </button>
       </div>
     </div>

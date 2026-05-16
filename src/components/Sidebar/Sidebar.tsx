@@ -78,7 +78,7 @@ export function Sidebar() {
     .sort((a, b) => {
       const rank = (e: number) => e < callbackAliveMs ? 0 : e < callbackIdleMs ? 1 : 2
       const dr = rank(a.elapsed) - rank(b.elapsed)
-      return dr !== 0 ? dr : a.cb.id - b.cb.id
+      return dr !== 0 ? dr : b.cb.id - a.cb.id
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [callbacks, callbackAliveMs, callbackIdleMs]

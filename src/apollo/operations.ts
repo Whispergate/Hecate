@@ -116,13 +116,14 @@ export const SUB_CALLBACKS = gql`
   }
 `
 
-// All callbacks (including inactive) for topology
+// All callbacks (including inactive) for topology.
+// Order by id (stable insertion order) so check-ins don't reshuffle node positions.
 export const SUB_ALL_CALLBACKS = gql`
   ${CALLBACK_FIELDS}
   subscription SubAllCallbacks($operation_id: Int!) {
     callback(
       where: { operation_id: { _eq: $operation_id } }
-      order_by: { last_checkin: desc }
+      order_by: { id: asc }
     ) { ...CallbackFields }
   }
 `

@@ -8,6 +8,7 @@ import { useState, useRef } from 'react'
 import { useMutation, useQuery } from '@apollo/client'
 import { CREATE_TASK, GET_CREDENTIALS } from '@/apollo/operations'
 import { useStore }          from '@/store'
+import { uploadTaskFile }    from '@/uploadTaskFile'
 import styles                from './FileTaskModal.module.css'
 
 interface CredentialOption {
@@ -53,28 +54,6 @@ function isPathParam(p: CommandParam): boolean {
   const d = (p.display_name || '').toLowerCase()
   return n.includes('path') || n.includes('destination') ||
          d.includes('path') || d.includes('destination')
-}
-
-async function uploadTaskFile(file: File, token: string): Promise<string | null> {
-  const form = new FormData()
-  form.append('file', file)
-  form.append('comment', 'Uploaded as part of tasking')
-
-  try {
-    const res = await fetch('/api/v1.4/task_upload_file_webhook', {
-      method: 'POST',
-      body:   form,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        MythicSource:  'web',
-      },
-    })
-    if (!res.ok) return null
-    const data = await res.json()
-    return (data?.agent_file_id as string | undefined) ?? null
-  } catch {
-    return null
-  }
 }
 
 // Unique sorted group names derived from params.

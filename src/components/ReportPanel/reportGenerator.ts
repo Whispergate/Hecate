@@ -77,8 +77,8 @@ function displayArgs(task: ReportTask): string {
 
 export function filterTasks(tasks: ReportTask[], opts: ReportOptions): ReportTask[] {
   return tasks.filter(t => {
-    // Callback filter
-    if (opts.selectedCallbacks.size > 0 && !opts.selectedCallbacks.has(t.callback.id)) return false
+    // Callback filter — set contains EXCLUDED callback ids (empty = include all)
+    if (opts.selectedCallbacks.has(t.callback.id)) return false
 
     // Status filter
     if (opts.statusFilter === 'completed' && !t.completed) return false
