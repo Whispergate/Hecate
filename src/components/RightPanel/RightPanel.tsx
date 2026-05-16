@@ -82,12 +82,21 @@ const NODE_MIN_SPACING = 26
 
 interface CtxMenu { cb: Callback; x: number; y: number }
 
-function NetworkTopology({ callbacks, selectedId, onSelect, annotations }: {
+function NetworkTopology({ callbacks, edges, selectedId, onSelect, annotations }: {
   callbacks: Callback[]
+  edges: HecateStore['activeCallbackEdges']
   selectedId: number | null
   onSelect: (id: number) => void
   annotations: HecateStore['callbackAnnotations']
 }) {
+  // Map child cb.id -> { parentId, c2name } for active P2P links.
+  // Self-loops (source == destination) are a callback's own egress, skipped here.
+  const parentMap = new Map<number, { parentId: number; c2name: string }>()
+  for (const e of edges) {
+    if (e.source_id === e.destination_id) continue
+    if (!e.c2profile.is_p2p) continue
+    parentMap.set(e.destination_id, { parentId: e.source_id, c2name: e.c2profile.name })
+  }
   const [ctxMenu, setCtxMenu] = useState<CtxMenu | null>(null)
   const n = callbacks.length
 
@@ -183,14 +192,27 @@ function NetworkTopology({ callbacks, selectedId, onSelect, annotations }: {
           <circle cx={cx} cy={cy} r={C2_R} fill="var(--topo-c2-bg)" stroke="var(--crimson-500)" strokeWidth="1.5" />
           <text x={cx} y={cy + 3} textAnchor="middle" fontFamily="monospace" fontSize="6.5" fill="var(--topo-text-accent)">C2</text>
 
-          {/* ── Agent nodes — evenly spaced around full circle ── */}
           {callbacks.map((cb, i) => {
             const angle = (i / Math.max(n, 1)) * Math.PI * 2 - Math.PI / 2
             const nx = cx + Math.cos(angle) * orbitR
             const ny = cy + Math.sin(angle) * orbitR
 
-            const c2name      = cb.callbackc2profiles[0]?.c2profile.name ?? 'unknown'
-            const proto       = protocolInfo(c2name)
+            // P2P parent route: use the linking c2 profile, anchor line to parent node
+            const parent = parentMap.get(cb.id)
+            let originX = cx, originY = cy, originR = C2_R
+            let routeC2name = cb.callbackc2profiles[0]?.c2profile.name ?? 'unknown'
+            if (parent) {
+              const parentIdx = callbacks.findIndex(c => c.id === parent.parentId)
+              if (parentIdx >= 0) {
+                const pAngle = (parentIdx / Math.max(n, 1)) * Math.PI * 2 - Math.PI / 2
+                originX = cx + Math.cos(pAngle) * orbitR
+                originY = cy + Math.sin(pAngle) * orbitR
+                originR = 9   // parent node radius
+                routeC2name = parent.c2name
+              }
+            }
+
+            const proto       = protocolInfo(routeC2name)
             const alive       = cb.active
             const isSel       = cb.id === selectedId
             const late        = alive && isLateCheckin(cb)
@@ -203,11 +225,11 @@ function NetworkTopology({ callbacks, selectedId, onSelect, annotations }: {
               ? (isSel ? `${annotColor}40` : `${annotColor}22`)
               : (isSel ? 'var(--topo-node-sel)' : 'var(--topo-node-bg)')
 
-            // Line endpoints: C2 edge → node edge (along the connecting vector)
-            const dx  = nx - cx, dy = ny - cy
+            // Line endpoints: origin edge → node edge (along the connecting vector)
+            const dx  = nx - originX, dy = ny - originY
             const len = Math.sqrt(dx * dx + dy * dy) || 1
-            const x1  = cx + (dx / len) * C2_R
-            const y1  = cy + (dy / len) * C2_R
+            const x1  = originX + (dx / len) * originR
+            const y1  = originY + (dy / len) * originR
             const x2  = nx - (dx / len) * 9
             const y2  = ny - (dy / len) * 9
 
@@ -311,6 +333,7 @@ export function RightPanel() {
   const selected              = useSelectedCallback()
   const activeOp              = useStore((s) => s.activeOperation)
   const callbackAnnotations   = useStore((s) => s.callbackAnnotations)
+  const activeCallbackEdges   = useStore((s) => s.activeCallbackEdges)
 
   // All callbacks (including inactive) for topology — shows dead nodes too
   const { data: allCbData } = useSubscription(SUB_ALL_CALLBACKS, {
@@ -367,7 +390,7 @@ export function RightPanel() {
             alive only
           </label>
         </div>
-        <NetworkTopology callbacks={topoCallbacks} selectedId={selectedCallbackId} onSelect={setSelectedCallbackId} annotations={callbackAnnotations} />
+        <NetworkTopology callbacks={topoCallbacks} edges={activeCallbackEdges} selectedId={selectedCallbackId} onSelect={setSelectedCallbackId} annotations={callbackAnnotations} />
       </div>
 
       {/* ── Selected agent detail ── */}

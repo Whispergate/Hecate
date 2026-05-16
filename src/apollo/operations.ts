@@ -1054,6 +1054,30 @@ export const SUB_CALLBACK_PORTS = gql`
 `
 
 // ─────────────────────────────────────────────────────
+// CALLBACK GRAPH EDGES (P2P parent / child topology)
+// ─────────────────────────────────────────────────────
+
+// Live edges in the current operation. Active edges have end_timestamp = null.
+// Self-loops (source == destination) represent a callback's own egress and are
+// filtered client-side.
+export const SUB_CALLBACK_GRAPH_EDGES = gql`
+  subscription SubCallbackGraphEdges($operation_id: Int!) {
+    callbackgraphedge(
+      where: {
+        operation_id:  { _eq: $operation_id }
+        end_timestamp: { _is_null: true }
+      }
+      order_by: { id: asc }
+    ) {
+      id
+      source_id
+      destination_id
+      c2profile { id name is_p2p }
+    }
+  }
+`
+
+// ─────────────────────────────────────────────────────
 // CALLBACK MUTATIONS
 // ─────────────────────────────────────────────────────
 

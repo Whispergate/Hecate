@@ -1,6 +1,6 @@
 # ═══════════════════════════════════════════════════
 # Hecate — Dockerfile
-# Multi-stage: Node.js build → nginx static serve
+# Multi-stage: Node.js build → nginx static serve (HTTPS)
 # ═══════════════════════════════════════════════════
 
 # ── Stage 1: Build ──────────────────────────────────
@@ -25,15 +25,22 @@ RUN npm run build
 # ── Stage 2: Serve ──────────────────────────────────
 FROM nginx:alpine AS runtime
 
+# openssl needed for self-signed cert generation at startup
+RUN apk add --no-cache openssl
+
 # Remove default nginx page
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy built assets
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Nginx config — SPA fallback + proxy to Mythic backend
+# Nginx config — HTTPS, SPA fallback + proxy to Mythic backend
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+# Entrypoint generates self-signed cert if /etc/nginx/ssl is empty
+COPY nginx/docker-entrypoint.sh /docker-entrypoint.d/40-hecate-ssl.sh
+RUN chmod +x /docker-entrypoint.d/40-hecate-ssl.sh
+
+EXPOSE 443
 
 CMD ["nginx", "-g", "daemon off;"]

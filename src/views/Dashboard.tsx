@@ -24,7 +24,7 @@ import { AttackPanel }            from '@/components/AttackPanel/AttackPanel'
 import { CallbackToastContainer }  from '@/components/Toast/CallbackToast'
 import { ProxyToastContainer }     from '@/components/Toast/ProxyToast'
 import { SettingsPanel }         from '@/components/SettingsPanel/SettingsPanel'
-import { SUB_CALLBACKS, SUB_OPERATION_ALERT_COUNT, SUB_CALLBACK_PORTS } from '@/apollo/operations'
+import { SUB_CALLBACKS, SUB_OPERATION_ALERT_COUNT, SUB_CALLBACK_PORTS, SUB_CALLBACK_GRAPH_EDGES } from '@/apollo/operations'
 import { parseTs }       from '@/components/Sidebar/utils'
 import { useStore, useSelectedCallback } from '@/store'
 import styles from './Dashboard.module.css'
@@ -142,6 +142,19 @@ function useCallbackPortsSubscription() {
   })
 }
 
+function useCallbackEdgesSubscription() {
+  const activeOperation        = useStore((s) => s.activeOperation)
+  const setActiveCallbackEdges = useStore((s) => s.setActiveCallbackEdges)
+
+  useSubscription(SUB_CALLBACK_GRAPH_EDGES, {
+    variables: { operation_id: activeOperation?.id ?? 0 },
+    skip:      !activeOperation,
+    onData: ({ data }) => {
+      if (data.data?.callbackgraphedge) setActiveCallbackEdges(data.data.callbackgraphedge)
+    },
+  })
+}
+
 function useWarningBadge() {
   const setUnresolvedWarnings = useStore((s) => s.setUnresolvedWarnings)
   const activeOperation       = useStore((s) => s.activeOperation)
@@ -159,6 +172,7 @@ function useWarningBadge() {
 export function Dashboard() {
   useCallbackSubscription()
   useCallbackPortsSubscription()
+  useCallbackEdgesSubscription()
   useWarningBadge()
 
   const activeRailView = useStore((s) => s.activeRailView)

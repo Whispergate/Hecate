@@ -20,6 +20,7 @@ function fmtBytes(n: number): string {
 
 export function ProxiesPanel() {
   const ports               = useStore((s) => s.activeCallbackPorts)
+  const edges               = useStore((s) => s.activeCallbackEdges)
   const activeOp            = useStore((s) => s.activeOperation)
   const aliveCallbacks      = useAliveCallbacks()
   const selectedCallbackId  = useStore((s) => s.selectedCallbackId)
@@ -210,6 +211,7 @@ export function ProxiesPanel() {
           <PivotGraph
             callbacks={graphCallbacks}
             ports={ports}
+            edges={edges}
             onNavigate={onNavigate}
             annotations={callbackAnnotations}
             selectedId={selectedCallbackId}

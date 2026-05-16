@@ -68,6 +68,13 @@ export interface CallbackPort {
   task: { display_id: number }
 }
 
+export interface CallbackEdge {
+  id:             number
+  source_id:      number
+  destination_id: number
+  c2profile:      { id: number; name: string; is_p2p: boolean }
+}
+
 export interface CallbackToast {
   id: number
   callbackId: number
@@ -104,6 +111,9 @@ export interface HecateStore {
   setCallbackAnnotation: (displayId: number, color: string) => void
   activeCallbackPorts: CallbackPort[]
   setActiveCallbackPorts: (ports: CallbackPort[]) => void
+
+  activeCallbackEdges: CallbackEdge[]
+  setActiveCallbackEdges: (edges: CallbackEdge[]) => void
   callbacks: Callback[]
   setCallbacks: (cbs: Callback[]) => void
   currentTasks: Task[]
@@ -148,7 +158,7 @@ export const useStore = create<HecateStore>((set) => ({
         if (raw) callbackAnnotations = JSON.parse(raw) as Record<number, string>
       } catch { /* ignore */ }
     }
-    set({ activeOperation: op, selectedCallbackId: null, multiSelectedIds: [], currentTasks: [], callbacks: [], callbackAnnotations, activeCallbackPorts: [], proxyToasts: [] })
+    set({ activeOperation: op, selectedCallbackId: null, multiSelectedIds: [], currentTasks: [], callbacks: [], callbackAnnotations, activeCallbackPorts: [], activeCallbackEdges: [], proxyToasts: [] })
   },
   selectedCallbackId: null,
   setSelectedCallbackId: (id) => set({ selectedCallbackId: id, currentTasks: [] }),
@@ -156,6 +166,8 @@ export const useStore = create<HecateStore>((set) => ({
   setMultiSelectedIds: (multiSelectedIds) => set({ multiSelectedIds }),
   activeCallbackPorts: [],
   setActiveCallbackPorts: (activeCallbackPorts) => set({ activeCallbackPorts }),
+  activeCallbackEdges: [],
+  setActiveCallbackEdges: (activeCallbackEdges) => set({ activeCallbackEdges }),
   callbackAnnotations: {},
   setCallbackAnnotation: (displayId, color) => set((s) => {
     const next = { ...s.callbackAnnotations }

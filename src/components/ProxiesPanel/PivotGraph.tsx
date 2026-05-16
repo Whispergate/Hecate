@@ -83,12 +83,13 @@ function protoInfo(name: string): ProtoInfo {
 interface Props {
   callbacks:   Callback[]
   ports:       CallbackPort[]
+  edges:       HecateStore['activeCallbackEdges']
   onNavigate:  (id: number) => void
   annotations: HecateStore['callbackAnnotations']
   selectedId:  number | null
 }
 
-export function PivotGraph({ callbacks, ports, onNavigate, annotations, selectedId }: Props) {
+export function PivotGraph({ callbacks, ports, edges, onNavigate, annotations, selectedId }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [tx, setTx]       = useState(0)
   const [ty, setTy]       = useState(0)
@@ -112,6 +113,17 @@ export function PivotGraph({ callbacks, ports, onNavigate, annotations, selected
     }
     return m
   }, [ports])
+
+  // P2P parent map: child cb.id → { parentId, c2name }
+  const parentMap = useMemo(() => {
+    const m = new Map<number, { parentId: number; c2name: string }>()
+    for (const e of edges) {
+      if (e.source_id === e.destination_id) continue
+      if (!e.c2profile.is_p2p) continue
+      m.set(e.destination_id, { parentId: e.source_id, c2name: e.c2profile.name })
+    }
+    return m
+  }, [edges])
 
   // Protocol legend entries
   const legendProtos = useMemo(() => {
@@ -232,24 +244,38 @@ export function PivotGraph({ callbacks, ports, onNavigate, annotations, selected
             const angle      = (i / Math.max(n, 1)) * Math.PI * 2 - Math.PI / 2
             const nx         = CX + Math.cos(angle) * orbitR
             const ny         = CY + Math.sin(angle) * orbitR
-            const c2name     = cb.callbackc2profiles[0]?.c2profile.name ?? ''
-            const proto      = protoInfo(c2name)
             const alive      = cb.active
             const isSel      = cb.id === selectedId
             const isHov      = cb.id === hoverId
             const late       = alive && isLateCheckin(cb)
             const hasSocks   = (socksMap.get(cb.id) ?? []).length > 0
 
+            // P2P parent route: anchor line to parent node, use linking c2 profile
+            const parent = parentMap.get(cb.id)
+            let originX = CX, originY = CY, originR = C2_HEX_R + 3
+            let c2name = cb.callbackc2profiles[0]?.c2profile.name ?? ''
+            if (parent) {
+              const parentIdx = callbacks.findIndex(c => c.id === parent.parentId)
+              if (parentIdx >= 0) {
+                const pAngle = (parentIdx / Math.max(n, 1)) * Math.PI * 2 - Math.PI / 2
+                originX = CX + Math.cos(pAngle) * orbitR
+                originY = CY + Math.sin(pAngle) * orbitR
+                originR = NODE_R + 2
+                c2name = parent.c2name
+              }
+            }
+            const proto      = protoInfo(c2name)
+
             // Exact same variables as small NetworkTopology
             const lineColor   = !alive ? 'var(--topo-dead-line)' : proto.color
             const lineDash    = !alive ? '3 3' : late ? '2 8' : proto.dash
             const lineOpacity = alive ? (late ? 0.35 : 0.75) : 0.4
 
-            // Clipped endpoints: hex edge → node edge
-            const dx = nx - CX, dy = ny - CY
+            // Clipped endpoints: origin edge → node edge
+            const dx = nx - originX, dy = ny - originY
             const len = Math.sqrt(dx * dx + dy * dy) || 1
-            const x1 = CX + (dx / len) * (C2_HEX_R + 3)
-            const y1 = CY + (dy / len) * (C2_HEX_R + 3)
+            const x1 = originX + (dx / len) * originR
+            const y1 = originY + (dy / len) * originR
             const x2 = nx - (dx / len) * (NODE_R + 2)
             const y2 = ny - (dy / len) * (NODE_R + 2)
             const lineLen = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
@@ -339,8 +365,10 @@ export function PivotGraph({ callbacks, ports, onNavigate, annotations, selected
             const hasSocks   = socksPorts.length > 0
             const annotColor = annotations[cb.display_id] ?? null
 
-            // Exact same variables as small NetworkTopology
-            const lineColor2  = !alive ? 'var(--topo-dead-line)' : protoInfo(cb.callbackc2profiles[0]?.c2profile.name ?? '').color
+            // Use P2P link c2 profile if this callback is a child of another callback
+            const p2pParent = parentMap.get(cb.id)
+            const nodeC2name = p2pParent ? p2pParent.c2name : (cb.callbackc2profiles[0]?.c2profile.name ?? '')
+            const lineColor2  = !alive ? 'var(--topo-dead-line)' : protoInfo(nodeC2name).color
             const nodeStroke  = hasSocks && alive ? '#3ab8d8'
               : annotColor || (alive ? lineColor2 : 'var(--topo-dead-line)')
             const nodeFill    = annotColor

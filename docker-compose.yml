@@ -5,8 +5,11 @@
 # no host bridging, no socat.
 #
 # Usage:
-#   docker compose up -d
-#   → http://localhost:3100
+#   docker compose up -d --build
+#   → https://localhost:3100   (self-signed cert — browser warning expected once)
+#
+# Override the host port via env or .env file:
+#   HECATE_PORT=8443 docker compose up -d
 #
 # Requires Mythic to be running first (creates mythic_default network).
 # Verify the network name with: docker network ls | grep mythic
@@ -19,9 +22,14 @@ services:
     container_name: hecate
     restart: unless-stopped
     ports:
-      - "3100:80"
+      - "${HECATE_PORT:-3100}:443"
+    volumes:
+      - hecate-ssl:/etc/nginx/ssl   # persist self-signed cert across rebuilds
     networks:
       - mythic-net  # join Mythic's network to reach mythic_nginx directly
+
+volumes:
+  hecate-ssl:
 
 networks:
   mythic-net:
