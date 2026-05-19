@@ -119,6 +119,20 @@ const ITEMS: { id: RailView; title: string; icon: React.ReactNode }[] = [
     ),
   },
   {
+    id: 'eventing',
+    title: 'Eventing Workflows',
+    icon: (
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="3.5" cy="3.5" r="1.5" />
+        <circle cx="3.5" cy="12.5" r="1.5" />
+        <circle cx="12.5" cy="8" r="1.5" />
+        <path d="M5 3.5h3M5 12.5h3" />
+        <path d="M8 3.5 Q10.5 5 11.2 7.2" />
+        <path d="M8 12.5 Q10.5 11 11.2 8.8" />
+      </svg>
+    ),
+  },
+  {
     id: 'attack',
     title: 'ATT&CK Matrix',
     icon: (

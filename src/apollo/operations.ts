@@ -1391,3 +1391,204 @@ export const GET_LINK_TARGETS = gql`
     }
   }
 `
+
+// ─────────────────────────────────────────────────────
+// EVENTING / WORKFLOWS
+// ─────────────────────────────────────────────────────
+
+export const GET_EVENT_GROUPS = gql`
+  query GetEventGroups {
+    eventgroup(where: { deleted: { _eq: false } }, order_by: { id: desc }) {
+      id
+      name
+      description
+      trigger
+      trigger_data
+      keywords
+      environment
+      active
+      approved_to_run
+      run_as
+      total_steps
+      total_order_steps
+      next_scheduled_run
+      created_at
+      updated_at
+      operator { username }
+    }
+  }
+`
+
+export const GET_EVENT_GROUP_DETAIL = gql`
+  query GetEventGroupDetail($id: Int!) {
+    eventgroup_by_pk(id: $id) {
+      id
+      name
+      description
+      trigger
+      trigger_data
+      keywords
+      environment
+      active
+      approved_to_run
+      run_as
+      total_steps
+      total_order_steps
+      next_scheduled_run
+      created_at
+      updated_at
+      operator { username }
+      eventsteps(order_by: { order: asc, id: asc }) {
+        id
+        name
+        description
+        action
+        action_data
+        inputs
+        outputs
+        environment
+        depends_on
+        order
+        continue_on_error
+      }
+    }
+  }
+`
+
+export const GET_EVENT_GROUP_INSTANCES = gql`
+  query GetEventGroupInstances($eventgroup_id: Int!) {
+    eventgroupinstance(
+      where: { eventgroup_id: { _eq: $eventgroup_id } }
+      order_by: { id: desc }
+      limit: 50
+    ) {
+      id
+      status
+      trigger
+      current_order_step
+      total_order_steps
+      created_at
+      updated_at
+      end_timestamp
+      operator { username }
+    }
+  }
+`
+
+export const SUB_EVENT_GROUP_INSTANCES = gql`
+  subscription SubEventGroupInstances($eventgroup_id: Int!, $now: timestamp!) {
+    eventgroupinstance_stream(
+      cursor: { initial_value: { updated_at: $now }, ordering: ASC }
+      batch_size: 50
+      where: { eventgroup_id: { _eq: $eventgroup_id } }
+    ) {
+      id
+      status
+      trigger
+      current_order_step
+      total_order_steps
+      created_at
+      updated_at
+      end_timestamp
+      operator { username }
+    }
+  }
+`
+
+export const SUB_EVENT_STEP_INSTANCES = gql`
+  subscription SubEventStepInstances($eventgroupinstance_id: Int!) {
+    eventstepinstance_stream(
+      cursor: { initial_value: { updated_at: "1970-01-01" }, ordering: ASC }
+      batch_size: 100
+      where: { eventgroupinstance_id: { _eq: $eventgroupinstance_id } }
+    ) {
+      id
+      status
+      order
+      stdout
+      stderr
+      inputs
+      outputs
+      action_data
+      created_at
+      updated_at
+      end_timestamp
+      eventstep { id name action order depends_on }
+    }
+  }
+`
+
+export const GET_EVENT_GROUP_FULL_INSTANCE = gql`
+  query GetEventGroupFullInstance($eventgroupinstance_id: Int!) {
+    eventgroupinstance_by_pk(id: $eventgroupinstance_id) {
+      id
+      status
+      trigger
+      trigger_metadata
+      environment
+      current_order_step
+      total_order_steps
+      created_at
+      updated_at
+      end_timestamp
+      eventgroup { id name trigger }
+      operator { username }
+    }
+  }
+`
+
+export const EVENTING_TRIGGER_MANUAL = gql`
+  mutation EventingTriggerManual($eventgroup_id: Int!, $env_data: jsonb) {
+    eventingTriggerManual(eventgroup_id: $eventgroup_id, env_data: $env_data) {
+      status
+      error
+    }
+  }
+`
+
+export const EVENTING_TRIGGER_CANCEL = gql`
+  mutation EventingTriggerCancel($eventgroupinstance_id: Int!) {
+    eventingTriggerCancel(eventgroupinstance_id: $eventgroupinstance_id) {
+      status
+      error
+    }
+  }
+`
+
+export const EVENTING_TRIGGER_UPDATE = gql`
+  mutation EventingTriggerUpdate($eventgroup_id: Int!, $active: Boolean, $deleted: Boolean, $updated_config: String) {
+    eventingTriggerUpdate(
+      eventgroup_id: $eventgroup_id
+      active: $active
+      deleted: $deleted
+      updated_config: $updated_config
+    ) {
+      status
+      error
+      active
+      deleted
+      name
+    }
+  }
+`
+
+export const EVENTING_TEST_FILE = gql`
+  query EventingTestFile($file_contents: String!) {
+    eventingTestFile(file_contents: $file_contents) {
+      status
+      error
+      parsed_workflow
+      formatted_output
+    }
+  }
+`
+
+export const EVENTING_EXPORT_WORKFLOW = gql`
+  query EventingExportWorkflow($eventgroup_id: Int!, $output_format: String!) {
+    eventingExportWorkflow(eventgroup_id: $eventgroup_id, include_steps: true, output_format: $output_format) {
+      status
+      error
+      workflow
+    }
+  }
+`

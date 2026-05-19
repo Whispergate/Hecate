@@ -1,0 +1,604 @@
+/* ═══════════════════════════════════════════════════
+   src/components/EventingPanel/EventingPanel.module.css
+   ═══════════════════════════════════════════════════ */
+
+.panel {
+  display: flex;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+/* ── Left list ──────────────────────────────────── */
+
+.list {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--beige-border);
+  background: var(--bg-base);
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--beige-border);
+}
+
+.listTitle {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--beige);
+  letter-spacing: 0.04em;
+}
+
+.newBtn {
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border);
+  color: var(--bone-300);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}
+.newBtn:hover {
+  border-color: var(--crimson-400);
+  color: var(--bone-100);
+}
+
+.listScroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.listItem {
+  padding: 8px 12px;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(239,239,218,0.04);
+}
+.listItem:hover { background: var(--bg-hover); }
+.listItemActive {
+  background: var(--bg-elevated);
+  border-left-color: var(--crimson-400);
+}
+
+.itemName {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--bone-200);
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.itemMeta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-700);
+  display: flex;
+  gap: 8px;
+}
+.itemTrigger {
+  color: var(--bone-500);
+}
+.itemDot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--bone-800);
+}
+.itemDotActive { background: var(--status-ok); box-shadow: 0 0 4px var(--status-ok); }
+.itemDotPending { background: var(--status-warn-text); }
+
+/* ── Right pane ─────────────────────────────────── */
+
+.right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bone-800);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--beige-border);
+  gap: 12px;
+}
+
+.toolbarLeft, .toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wfTitle {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--bone-100);
+  letter-spacing: 0.03em;
+}
+.wfTitleInput {
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border);
+  color: var(--bone-100);
+  font-family: var(--font-serif);
+  font-size: 14px;
+  padding: 3px 8px;
+  border-radius: 2px;
+  letter-spacing: 0.03em;
+  min-width: 240px;
+}
+
+.wfSub {
+  color: var(--bone-700);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--beige-border);
+  padding: 0 12px;
+  background: var(--bg-base);
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--bone-600);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 8px 12px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.tab:hover { color: var(--bone-200); }
+.tabActive {
+  color: var(--crimson-300);
+  border-bottom-color: var(--crimson-400);
+}
+
+.tabContent {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Header form (trigger + run_as) ───────────────── */
+
+.metaForm {
+  display: flex;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--beige-border);
+  background: var(--bg-base);
+  flex-wrap: wrap;
+}
+
+.metaField {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.metaLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-700);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.metaInput, .metaSelect {
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border);
+  color: var(--bone-200);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 2px;
+  min-width: 160px;
+}
+
+/* ── DAG view ───────────────────────────────────── */
+
+.dagWrap {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+.dag {
+  flex: 1;
+  background: var(--bg-void);
+}
+
+/* React Flow node theming */
+.node {
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--beige-border);
+  border-radius: 3px;
+  padding: 8px 10px;
+  min-width: 180px;
+  max-width: 220px;
+  font-family: var(--font-mono);
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.12s ease;
+}
+.nodeSelected {
+  border-color: var(--crimson-400);
+  box-shadow: 0 0 0 1px var(--crimson-400), 0 0 14px rgba(208,56,56,0.25);
+}
+.nodeStatusBar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 2px 2px 0 0;
+}
+.nodeName {
+  font-size: 12px;
+  color: var(--bone-100);
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-top: 4px;
+}
+.nodeAction {
+  font-size: 10px;
+  color: var(--bone-600);
+  margin-top: 3px;
+}
+.nodeDesc {
+  font-size: 10px;
+  color: var(--bone-700);
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nodeFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(239,239,218,0.07);
+}
+.nodeStatus {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.nodeLayer {
+  font-size: 9px;
+  color: var(--bone-800);
+}
+
+/* React Flow handle styling */
+:global(.react-flow__handle) {
+  background: var(--crimson-400) !important;
+  border: 1px solid var(--bg-base) !important;
+  width: 8px !important;
+  height: 8px !important;
+}
+:global(.react-flow__edge-path) {
+  stroke: var(--bone-700) !important;
+  stroke-width: 1.5 !important;
+}
+:global(.react-flow__edge.selected .react-flow__edge-path) {
+  stroke: var(--crimson-400) !important;
+}
+:global(.react-flow__background) {
+  background: var(--bg-void) !important;
+}
+:global(.react-flow__controls) {
+  background: var(--bg-raised) !important;
+  border: 1px solid var(--beige-border) !important;
+}
+:global(.react-flow__controls-button) {
+  background: var(--bg-raised) !important;
+  border-bottom: 1px solid var(--beige-border) !important;
+  color: var(--bone-200) !important;
+  fill: var(--bone-200) !important;
+}
+:global(.react-flow__controls-button:hover) {
+  background: var(--bg-hover) !important;
+}
+:global(.react-flow__minimap) {
+  background: var(--bg-raised) !important;
+  border: 1px solid var(--beige-border) !important;
+}
+
+/* ── Step detail (right inspector) ───────────────── */
+
+.stepInspector {
+  width: 340px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--beige-border);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-base);
+}
+.inspectorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--beige-border);
+}
+.inspectorTitle {
+  font-family: var(--font-serif);
+  font-size: 12px;
+  color: var(--bone-100);
+  letter-spacing: 0.04em;
+}
+.inspectorBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+}
+.inspField {
+  margin-bottom: 10px;
+}
+.inspLabel {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-700);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.inspInput, .inspTextarea, .inspSelect {
+  width: 100%;
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border);
+  color: var(--bone-200);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+.inspTextarea {
+  resize: vertical;
+  min-height: 60px;
+  white-space: pre;
+}
+.kvRow {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.kvKey, .kvValue {
+  flex: 1;
+  min-width: 0;
+}
+.kvRemove {
+  background: transparent;
+  border: 1px solid var(--beige-border);
+  color: var(--bone-600);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  padding: 0 6px;
+  border-radius: 2px;
+}
+.kvRemove:hover { color: var(--crimson-400); border-color: var(--crimson-400); }
+.kvAdd {
+  background: transparent;
+  border: 1px dashed var(--beige-border);
+  color: var(--bone-700);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  cursor: pointer;
+  border-radius: 2px;
+  width: 100%;
+}
+.kvAdd:hover { color: var(--bone-200); border-color: var(--bone-500); }
+
+.dangerBtn {
+  background: transparent;
+  border: 1px solid var(--crimson-700);
+  color: var(--crimson-300);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}
+.dangerBtn:hover { background: var(--crimson-900); }
+
+/* ── Action toolbar buttons ─────────────────────── */
+
+.btn {
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border);
+  color: var(--bone-300);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}
+.btn:hover { border-color: var(--crimson-400); color: var(--bone-100); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btnPrimary {
+  background: var(--crimson-800);
+  border-color: var(--crimson-600);
+  color: var(--bone-100);
+}
+.btnPrimary:hover { background: var(--crimson-700); }
+.btnSuccess {
+  background: rgba(80,136,80,0.15);
+  border-color: var(--status-ok);
+  color: var(--status-ok-text);
+}
+.btnSuccess:hover { background: rgba(80,136,80,0.30); }
+
+.error {
+  background: var(--crimson-900);
+  border: 1px solid var(--crimson-700);
+  color: var(--crimson-200);
+  padding: 6px 10px;
+  margin: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  border-radius: 2px;
+}
+
+/* ── Step palette ───────────────────────────────── */
+
+.palette {
+  width: 200px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--beige-border);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-base);
+}
+.paletteTitle {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--beige-border);
+  font-family: var(--font-serif);
+  font-size: 11px;
+  color: var(--beige);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.paletteBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 8px;
+}
+.paletteItem {
+  display: block;
+  width: 100%;
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border);
+  color: var(--bone-300);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 5px 8px;
+  margin-bottom: 4px;
+  cursor: grab;
+  border-radius: 2px;
+  text-align: left;
+}
+.paletteItem:hover {
+  border-color: var(--crimson-400);
+  color: var(--bone-100);
+}
+
+/* ── YAML editor ────────────────────────────────── */
+
+.yamlWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.yamlTextarea {
+  flex: 1;
+  resize: none;
+  background: var(--bg-void);
+  border: none;
+  color: var(--bone-200);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 12px;
+  outline: none;
+  white-space: pre;
+  tab-size: 2;
+  -moz-tab-size: 2;
+}
+
+/* ── Instance list ──────────────────────────────── */
+
+.instList {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.instTable {
+  flex: 1;
+  overflow-y: auto;
+}
+.instRow {
+  display: grid;
+  grid-template-columns: 70px 100px 100px 140px 1fr;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(239,239,218,0.05);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  align-items: center;
+}
+.instRow:hover { background: var(--bg-hover); }
+.instRowActive { background: var(--bg-elevated); }
+.instHeader {
+  font-size: 9px;
+  color: var(--bone-700);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--bg-base);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid currentColor;
+  background: rgba(255,255,255,0.04);
+}
+
+/* ── Validation list ────────────────────────────── */
+
+.validList {
+  padding: 6px 12px;
+  background: var(--crimson-900);
+  border-bottom: 1px solid var(--crimson-700);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--crimson-200);
+  max-height: 80px;
+  overflow-y: auto;
+}
+.validItem {
+  padding: 1px 0;
+}
