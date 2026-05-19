@@ -258,3 +258,119 @@
   --glow-crimson:   rgba(160,40,40,0.08);
   --glow-crimson-md:rgba(160,40,40,0.15);
 }
+
+/* ═══════════════════════════════════════════════════
+   Ember theme — amber/copper accent on warm dark bg
+   ═══════════════════════════════════════════════════ */
+
+[data-theme="ember"] {
+  --bg-void:    #0a0604;
+  --bg-base:    #110906;
+  --bg-raised:  #1a0e08;
+  --bg-elevated:#251509;
+  --bg-hover:   #2c1a0c;
+
+  /* "crimson" ramp = amber/copper */
+  --crimson-900:#3a2008;
+  --crimson-800:#4a2a0c;
+  --crimson-700:#5e3812;
+  --crimson-600:#80501c;
+  --crimson-500:#a06824;
+  --crimson-400:#c88830;
+  --crimson-300:#e0a040;
+  --crimson-200:#f0b860;
+
+  --beige:             #f0e4c4;
+  --beige-dim:         rgba(240,228,196,0.06);
+  --beige-border:      rgba(240,228,196,0.18);
+  --beige-border-md:   rgba(240,228,196,0.30);
+  --beige-border-strong:rgba(240,228,196,0.50);
+
+  --border-subtle:  rgba(200,136,48,0.22);
+  --border-default: rgba(200,136,48,0.42);
+  --border-strong:  rgba(200,136,48,0.66);
+
+  --glow-crimson:   rgba(200,136,48,0.14);
+  --glow-crimson-md:rgba(200,136,48,0.26);
+}
+
+/* ═══════════════════════════════════════════════════
+   Abyss theme — violet/indigo accent on near-black bg
+   ═══════════════════════════════════════════════════ */
+
+[data-theme="abyss"] {
+  --bg-void:    #050410;
+  --bg-base:    #080814;
+  --bg-raised:  #0c0c1e;
+  --bg-elevated:#161628;
+  --bg-hover:   #1f1a38;
+
+  /* "crimson" ramp = violet */
+  --crimson-900:#1a1040;
+  --crimson-800:#281858;
+  --crimson-700:#382070;
+  --crimson-600:#503088;
+  --crimson-500:#6840a8;
+  --crimson-400:#8050c8;
+  --crimson-300:#a070e0;
+  --crimson-200:#c090f0;
+
+  --beige:             #e4dcf2;
+  --beige-dim:         rgba(228,220,242,0.06);
+  --beige-border:      rgba(228,220,242,0.18);
+  --beige-border-md:   rgba(228,220,242,0.30);
+  --beige-border-strong:rgba(228,220,242,0.50);
+
+  /* slightly cool-shifted bone text */
+  --bone-100:   #ecdcf5;
+  --bone-200:   #d8c8e8;
+  --bone-300:   #cabad8;
+  --bone-400:   #b8a8c8;
+  --bone-500:   #a098b4;
+  --bone-600:   #9088a4;
+  --bone-700:   #786c8c;
+  --bone-800:   #5a5070;
+  --bone-900:   #3a324e;
+
+  --border-subtle:  rgba(128,80,200,0.22);
+  --border-default: rgba(128,80,200,0.42);
+  --border-strong:  rgba(128,80,200,0.66);
+
+  --glow-crimson:   rgba(128,80,200,0.16);
+  --glow-crimson-md:rgba(128,80,200,0.28);
+}
+
+/* ═══════════════════════════════════════════════════
+   Sage theme — green-teal accent on slate-stone bg
+   ═══════════════════════════════════════════════════ */
+
+[data-theme="sage"] {
+  --bg-void:    #060a08;
+  --bg-base:    #0a100c;
+  --bg-raised:  #0e1812;
+  --bg-elevated:#16241c;
+  --bg-hover:   #1f3326;
+
+  /* "crimson" ramp = sage/teal-green */
+  --crimson-900:#0a2010;
+  --crimson-800:#102e18;
+  --crimson-700:#194026;
+  --crimson-600:#23583a;
+  --crimson-500:#2e7050;
+  --crimson-400:#3e8868;
+  --crimson-300:#56a880;
+  --crimson-200:#78c098;
+
+  --beige:             #e4ecd6;
+  --beige-dim:         rgba(228,236,214,0.06);
+  --beige-border:      rgba(228,236,214,0.18);
+  --beige-border-md:   rgba(228,236,214,0.30);
+  --beige-border-strong:rgba(228,236,214,0.50);
+
+  --border-subtle:  rgba(80,160,112,0.22);
+  --border-default: rgba(80,160,112,0.42);
+  --border-strong:  rgba(80,160,112,0.66);
+
+  --glow-crimson:   rgba(80,160,112,0.14);
+  --glow-crimson-md:rgba(80,160,112,0.26);
+}

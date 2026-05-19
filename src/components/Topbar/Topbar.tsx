@@ -45,10 +45,18 @@ export function Topbar() {
 
         <button
           className={styles.themeToggle}
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          onClick={() => {
+            const order = ['dark', 'light', 'ember', 'abyss', 'sage'] as const
+            const next = order[(order.indexOf(theme) + 1) % order.length]
+            setTheme(next)
+          }}
+          title={`Theme: ${theme} (click to cycle)`}
         >
-          {theme === 'dark' ? '☀' : '☾'}
+          {theme === 'dark'  ? '☾'
+          : theme === 'light' ? '☀'
+          : theme === 'ember' ? '✦'
+          : theme === 'abyss' ? '✶'
+          : '❋'}
         </button>
 
         {token && (

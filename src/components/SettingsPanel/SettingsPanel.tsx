@@ -76,7 +76,13 @@ function AppearanceSection() {
     <Section title="Appearance">
       <Row label="Theme">
         <Seg
-          options={[{ label: 'Dark', value: 'dark' }, { label: 'Light', value: 'light' }]}
+          options={[
+            { label: 'Dark',  value: 'dark'  },
+            { label: 'Light', value: 'light' },
+            { label: 'Ember', value: 'ember' },
+            { label: 'Abyss', value: 'abyss' },
+            { label: 'Sage',  value: 'sage'  },
+          ]}
           value={theme}
           onChange={setTheme}
         />

@@ -120,8 +120,8 @@ export interface HecateStore {
   setCurrentTasks: (tasks: Task[]) => void
   activeRailView: 'overview' | 'callbacks' | 'payloads' | 'services' | 'proxies' | 'credentials' | 'files' | 'attack' | 'logs' | 'report' | 'operations' | 'timeline' | 'eventing'
   setActiveRailView: (v: HecateStore['activeRailView']) => void
-  theme: 'dark' | 'light'
-  setTheme: (t: 'dark' | 'light') => void
+  theme: 'dark' | 'light' | 'ember' | 'abyss' | 'sage'
+  setTheme: (t: HecateStore['theme']) => void
   settings: HecateSettings
   updateSettings: (patch: Partial<HecateSettings>) => void
   isSettingsOpen: boolean
@@ -184,7 +184,7 @@ export const useStore = create<HecateStore>((set) => ({
   setCurrentTasks: (tasks) => set({ currentTasks: tasks }),
   activeRailView: 'callbacks',
   setActiveRailView: (v) => set({ activeRailView: v }),
-  theme: (localStorage.getItem('hecate_theme') as 'dark' | 'light') ?? 'dark',
+  theme: (localStorage.getItem('hecate_theme') as HecateStore['theme']) ?? 'dark',
   setTheme: (theme) => {
     localStorage.setItem('hecate_theme', theme)
     set({ theme })
