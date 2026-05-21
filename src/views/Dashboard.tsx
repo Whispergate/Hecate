@@ -20,6 +20,7 @@ import { CredentialsPanel }   from '@/components/CredentialsPanel/CredentialsPan
 import { EventLogPanel }      from '@/components/EventLogPanel/EventLogPanel'
 import { ProxiesPanel }            from '@/components/ProxiesPanel/ProxiesPanel'
 import { TimelinePanel }          from '@/components/TimelinePanel/TimelinePanel'
+import { ReplayPanel }            from '@/components/ReplayPanel/ReplayPanel'
 import { AttackPanel }            from '@/components/AttackPanel/AttackPanel'
 import { EventingPanel }          from '@/components/EventingPanel/EventingPanel'
 import { CallbackToastContainer }  from '@/components/Toast/CallbackToast'
@@ -177,7 +178,7 @@ export function Dashboard() {
   useWarningBadge()
 
   const activeRailView = useStore((s) => s.activeRailView)
-  const isFullPanel    = activeRailView === 'overview' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'proxies' || activeRailView === 'report' || activeRailView === 'files' || activeRailView === 'operations' || activeRailView === 'credentials' || activeRailView === 'logs' || activeRailView === 'timeline' || activeRailView === 'attack' || activeRailView === 'eventing'
+  const isFullPanel    = activeRailView === 'overview' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'proxies' || activeRailView === 'report' || activeRailView === 'files' || activeRailView === 'operations' || activeRailView === 'credentials' || activeRailView === 'logs' || activeRailView === 'timeline' || activeRailView === 'replay' || activeRailView === 'attack' || activeRailView === 'eventing'
 
   return (
     <div className={styles.root}>
@@ -202,6 +203,7 @@ export function Dashboard() {
             {activeRailView === 'credentials'  && <CredentialsPanel />}
             {activeRailView === 'logs'         && <EventLogPanel />}
             {activeRailView === 'timeline'     && <TimelinePanel />}
+            {activeRailView === 'replay'       && <ReplayPanel />}
             {activeRailView === 'attack'       && <AttackPanel />}
             {activeRailView === 'eventing'     && <EventingPanel />}
           </div>

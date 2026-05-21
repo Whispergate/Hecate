@@ -119,6 +119,16 @@ const ITEMS: { id: RailView; title: string; icon: React.ReactNode }[] = [
     ),
   },
   {
+    id: 'replay',
+    title: 'Session Replay',
+    icon: (
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="8" cy="8" r="6.2" />
+        <path d="M6.5 5.4l4.2 2.6-4.2 2.6z" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+  },
+  {
     id: 'eventing',
     title: 'Eventing Workflows',
     icon: (

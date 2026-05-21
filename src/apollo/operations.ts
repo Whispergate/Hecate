@@ -973,6 +973,49 @@ export const GET_TIMELINE_TASKS = gql`
   }
 `
 
+// ─────────────────────────────────────────────────────
+// SESSION REPLAY  (historical reconstruction of an operation)
+// ─────────────────────────────────────────────────────
+
+// Every callback in the operation with the moment it first checked in.
+// init_callback drives when a node "appears" on the replay graph.
+export const GET_REPLAY_CALLBACKS = gql`
+  query GetReplayCallbacks($operation_id: Int!) {
+    callback(
+      where:    { operation_id: { _eq: $operation_id } }
+      order_by: { init_callback: asc }
+    ) {
+      id
+      display_id
+      host
+      user
+      ip
+      init_callback
+      payload { payloadtype { name } }
+    }
+  }
+`
+
+// Every P2P / egress edge ever recorded for the operation, including closed
+// ones. start_timestamp / end_timestamp bound when each link existed so the
+// graph can be reconstructed for any point in time (unlike SUB_CALLBACK_GRAPH_EDGES
+// which filters to currently-open edges only).
+export const GET_REPLAY_EDGES = gql`
+  query GetReplayEdges($operation_id: Int!) {
+    callbackgraphedge(
+      where:    { operation_id: { _eq: $operation_id } }
+      order_by: { start_timestamp: asc }
+    ) {
+      id
+      source_id
+      destination_id
+      start_timestamp
+      end_timestamp
+      c2profile { id name is_p2p }
+    }
+  }
+`
+
 // Historical commands for a callback — seeds CommandBar history on first visit.
 // Uses display_params (always human-readable) rather than raw params.
 export const GET_CALLBACK_TASK_HISTORY = gql`
