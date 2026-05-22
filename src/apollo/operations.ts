@@ -951,13 +951,16 @@ export const GET_REPORT_ATTACK_TASKS = gql`
   }
 `
 
-// All tasks for the operation — used by TimelinePanel swimlane view.
-// Lean shape: no tags, no response_count. Limit 2000.
+// Tasks for the operation — used by TimelinePanel + ReplayPanel.
+// Lean shape: no tags, no response_count.
+// order_by DESC + limit returns the MOST RECENT $limit tasks. With asc + limit
+// Hasura returns the OLDEST $limit instead — silently hiding all recent activity
+// once an operation exceeds $limit tasks. Both callers re-sort, so desc is fine.
 export const GET_TIMELINE_TASKS = gql`
   query GetTimelineTasks($operation_id: Int!, $limit: Int = 2000) {
     task(
       where:    { callback: { operation_id: { _eq: $operation_id } } }
-      order_by: { timestamp: asc }
+      order_by: { timestamp: desc }
       limit:    $limit
     ) {
       id

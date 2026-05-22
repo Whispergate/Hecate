@@ -2,13 +2,19 @@
    hecate/src/components/Sidebar/Sidebar.tsx
    ═══════════════════════════════════════════════════ */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useStore, useSelectedCallback } from '@/store'
 import type { Callback } from '@/store'
 import { integrityLabel, timeSince, parseTs, formatSleepInterval, formatSleepJitter } from './utils'
 import { CallbackContextMenu } from '@/components/CallbackContextMenu/CallbackContextMenu'
 import { agentColor } from '@/agentColor'
 import styles from './Sidebar.module.css'
+
+// Fixed-height virtualization: every callback row is exactly ROW_H tall.
+// `.callbackItem` in the CSS must stay within this height (it has overflow:hidden
+// as a safety clip). Bumping row content means bumping ROW_H to match.
+const ROW_H    = 84
+const OVERSCAN = 6
 
 interface CtxMenu { cb: Callback; x: number; y: number }
 type StatusFilter = 'alive' | 'idle' | 'dead'
@@ -68,9 +74,6 @@ export function Sidebar() {
     return next
   })
 
-  const getStatus = (elapsed: number): StatusFilter =>
-    elapsed < callbackAliveMs ? 'alive' : elapsed < callbackIdleMs ? 'idle' : 'dead'
-
   const needle = filterText.toLowerCase()
 
   const sorted = useMemo(() => [...callbacks]
@@ -93,20 +96,52 @@ export function Sidebar() {
     return map
   }, [activeCallbackPorts])
 
-  const visible = sorted.filter(({ cb, elapsed }) => {
-    if (filterStatus.size > 0 && !filterStatus.has(getStatus(elapsed))) return false
+  const visible = useMemo(() => sorted.filter(({ cb, elapsed }) => {
+    if (filterStatus.size > 0) {
+      const st: StatusFilter = elapsed < callbackAliveMs ? 'alive'
+                             : elapsed < callbackIdleMs ? 'idle' : 'dead'
+      if (!filterStatus.has(st)) return false
+    }
     if (filterAgents.size > 0 && !filterAgents.has(cb.payload.payloadtype.name)) return false
     if (needle) {
       const haystack = [cb.host, cb.user, cb.ip, cb.os, cb.description ?? '', cb.domain ?? ''].join(' ').toLowerCase()
       if (!haystack.includes(needle)) return false
     }
     return true
-  })
+  }), [sorted, filterStatus, filterAgents, needle, callbackAliveMs, callbackIdleMs])
+
+  // ── List virtualization ──
+  // Only the rows in (and just around) the viewport are rendered, so the list
+  // stays cheap at thousands of callbacks even though it re-renders on every
+  // SUB_CALLBACKS push.
+  const listRef = useRef<HTMLDivElement>(null)
+  const [scrollTop, setScrollTop] = useState(0)
+  const [viewportH, setViewportH] = useState(600)
+
+  useEffect(() => {
+    const el = listRef.current
+    if (!el) return
+    const measure = () => setViewportH(el.clientHeight)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  // A changed filter result set should start back at the top.
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: 0 })
+    setScrollTop(0)
+  }, [needle, filterStatus, filterAgents])
+
+  const firstIdx = Math.max(0, Math.floor(scrollTop / ROW_H) - OVERSCAN)
+  const lastIdx  = Math.min(visible.length, Math.ceil((scrollTop + viewportH) / ROW_H) + OVERSCAN)
+  const windowed = visible.slice(firstIdx, lastIdx)
 
   return (
     <aside className={styles.sidebar}>
       {/* ── Callback list ── */}
-      <div className={styles.section}>
+      <div className={styles.listSection}>
         <div className={`sec-label ${styles.callbacksHeader}`}>
           <span>Callbacks ({visible.length}{visible.length !== callbacks.length ? `/${callbacks.length}` : ''})</span>
           {multiSelectedIds.length > 1 && (
@@ -156,95 +191,108 @@ export function Sidebar() {
           )}
         </div>
 
-        {callbacks.length === 0 && (
-          <div className={styles.empty}>No callbacks yet</div>
-        )}
-        {callbacks.length > 0 && visible.length === 0 && (
-          <div className={styles.empty}>No matches</div>
-        )}
+        {/* ── Virtualized callback rows ── */}
+        <div
+          ref={listRef}
+          className={styles.listScroll}
+          onScroll={e => setScrollTop(e.currentTarget.scrollTop)}
+        >
+          {callbacks.length === 0 && (
+            <div className={styles.empty}>No callbacks yet</div>
+          )}
+          {callbacks.length > 0 && visible.length === 0 && (
+            <div className={styles.empty}>No matches</div>
+          )}
 
-        {visible.map(({ cb, elapsed }) => {
-          const alive = elapsed < callbackAliveMs
-          const idle  = !alive && elapsed < callbackIdleMs
-          const statusClass = alive ? styles.alive : idle ? styles.idle : styles.dead
-          const integrityBorder = cb.integrity_level >= 3 ? styles.integrityHigh
-                                : cb.integrity_level === 2 ? styles.integrityMed : ''
-          const integrityIcon   = cb.integrity_level >= 3 ? styles.integrityIconHigh
-                                : cb.integrity_level === 2 ? styles.integrityIconMed : ''
+          {visible.length > 0 && (
+            <div className={styles.listSpacer} style={{ height: visible.length * ROW_H }}>
+              {windowed.map(({ cb, elapsed }, i) => {
+                const idx   = firstIdx + i
+                const alive = elapsed < callbackAliveMs
+                const idle  = !alive && elapsed < callbackIdleMs
+                const statusClass = alive ? styles.alive : idle ? styles.idle : styles.dead
+                const integrityBorder = cb.integrity_level >= 3 ? styles.integrityHigh
+                                      : cb.integrity_level === 2 ? styles.integrityMed : ''
+                const integrityIcon   = cb.integrity_level >= 3 ? styles.integrityIconHigh
+                                      : cb.integrity_level === 2 ? styles.integrityIconMed : ''
 
-          const isMultiSelected = multiSelectedIds.includes(cb.id)
-          const annotColor  = callbackAnnotations[cb.display_id] ?? ''
-          const annotTitle  = cb.description || annotColor
-          const activePorts = portsByCallbackId.get(cb.id) ?? []
-          return (
-            <div
-              key={cb.id}
-              className={`${styles.callbackItem} ${cb.id === selectedCallbackId ? styles.active : ''} ${isMultiSelected && cb.id !== selectedCallbackId ? styles.multiSelected : ''} ${integrityBorder}`}
-              onClick={(e) => handleCallbackClick(e, cb.id)}
-              onContextMenu={(e) => openMenu(e, cb)}
-            >
-              <span className={`${styles.statusDot} ${statusClass}`} />
-              <div className={styles.cbHost}>
-                {showCallbackDisplayId && <span className={styles.cbId}>#{cb.display_id} </span>}
-                {cb.host}
-                {cb.locked && <span className={styles.lockBadge}>🔒</span>}
-                {cb.integrity_level >= 2 && <span className={integrityIcon}>▲</span>}
-                {activePorts.length > 0 && (
-                  <span
-                    className={styles.proxyChip}
-                    title={activePorts.map(p => `:${p}`).join(', ')}
-                  >
-                    {activePorts.length === 1 ? `:${activePorts[0]}` : `${activePorts.length}⇄`}
-                  </span>
-                )}
-                {annotColor && (
-                  <span
-                    className={styles.annotDot}
-                    style={{ background: annotColor }}
-                    title={annotTitle || annotColor}
-                  />
-                )}
-              </div>
-              <div className={styles.agentIconWrap} title={cb.payload.payloadtype.name}>
-                <span
-                  className={styles.agentIconFallback}
-                  style={{ color: agentColor(cb.payload.payloadtype.name) }}
-                >
-                  {cb.payload.payloadtype.name.slice(0, 2).toUpperCase()}
-                </span>
-                <img
-                  src={`/static/${cb.payload.payloadtype.name}_dark.svg`}
-                  className={styles.agentIconImg}
-                  onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-                  alt=""
-                />
-              </div>
-              <div className={styles.cbMeta}>
-                <span>{cb.payload.payloadtype.name} · {cb.os}</span>
-                <span>{timeSince(cb.last_checkin)}</span>
-              </div>
-              {cb.user && (
-                <div className={styles.cbUser}>
-                  <span
-                    className={styles.cbUserName}
-                    style={cb.impersonation_context?.trim() ? { opacity: 0.45 } : undefined}
-                  >
-                    {cb.user}
-                  </span>
-                  {cb.impersonation_context?.trim() && (
-                    <>
-                      <span className={styles.cbUserArrow}> → </span>
-                      <span className={styles.cbUserToken}>⚡ {cb.impersonation_context.trim()}</span>
-                    </>
-                  )}
-                </div>
-              )}
-              {cb.description && (
-                <div className={styles.cbDesc}>{cb.description}</div>
-              )}
+                const isMultiSelected = multiSelectedIds.includes(cb.id)
+                const annotColor  = callbackAnnotations[cb.display_id] ?? ''
+                const annotTitle  = cb.description || annotColor
+                const activePorts = portsByCallbackId.get(cb.id) ?? []
+                return (
+                  <div key={cb.id} className={styles.vrow} style={{ top: idx * ROW_H, height: ROW_H }}>
+                    <div
+                      className={`${styles.callbackItem} ${cb.id === selectedCallbackId ? styles.active : ''} ${isMultiSelected && cb.id !== selectedCallbackId ? styles.multiSelected : ''} ${integrityBorder}`}
+                      onClick={(e) => handleCallbackClick(e, cb.id)}
+                      onContextMenu={(e) => openMenu(e, cb)}
+                    >
+                      <span className={`${styles.statusDot} ${statusClass}`} />
+                      <div className={styles.cbHost}>
+                        {showCallbackDisplayId && <span className={styles.cbId}>#{cb.display_id} </span>}
+                        {cb.host}
+                        {cb.locked && <span className={styles.lockBadge}>🔒</span>}
+                        {cb.integrity_level >= 2 && <span className={integrityIcon}>▲</span>}
+                        {activePorts.length > 0 && (
+                          <span
+                            className={styles.proxyChip}
+                            title={activePorts.map(p => `:${p}`).join(', ')}
+                          >
+                            {activePorts.length === 1 ? `:${activePorts[0]}` : `${activePorts.length}⇄`}
+                          </span>
+                        )}
+                        {annotColor && (
+                          <span
+                            className={styles.annotDot}
+                            style={{ background: annotColor }}
+                            title={annotTitle || annotColor}
+                          />
+                        )}
+                      </div>
+                      <div className={styles.agentIconWrap} title={cb.payload.payloadtype.name}>
+                        <span
+                          className={styles.agentIconFallback}
+                          style={{ color: agentColor(cb.payload.payloadtype.name) }}
+                        >
+                          {cb.payload.payloadtype.name.slice(0, 2).toUpperCase()}
+                        </span>
+                        <img
+                          src={`/static/${cb.payload.payloadtype.name}_dark.svg`}
+                          className={styles.agentIconImg}
+                          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                          alt=""
+                        />
+                      </div>
+                      <div className={styles.cbMeta}>
+                        <span>{cb.payload.payloadtype.name} · {cb.os}</span>
+                        <span>{timeSince(cb.last_checkin)}</span>
+                      </div>
+                      {cb.user && (
+                        <div className={styles.cbUser}>
+                          <span
+                            className={styles.cbUserName}
+                            style={cb.impersonation_context?.trim() ? { opacity: 0.45 } : undefined}
+                          >
+                            {cb.user}
+                          </span>
+                          {cb.impersonation_context?.trim() && (
+                            <>
+                              <span className={styles.cbUserArrow}> → </span>
+                              <span className={styles.cbUserToken}>⚡ {cb.impersonation_context.trim()}</span>
+                            </>
+                          )}
+                        </div>
+                      )}
+                      {cb.description && (
+                        <div className={styles.cbDesc}>{cb.description}</div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-          )
-        })}
+          )}
+        </div>
       </div>
 
       {/* ── Selected callback detail ── */}

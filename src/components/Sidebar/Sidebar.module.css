@@ -3,15 +3,47 @@
 .sidebar {
   background: var(--bg-raised);
   border-right: 1px solid var(--beige-border-md);
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .section { padding: 12px 14px 8px; }
 
-.detail {
+/* Callback-list section — header + filters are fixed, the list scrolls. */
+.listSection {
+  display: flex;
+  flex-direction: column;
   flex: 1;
+  min-height: 0;
+  padding: 12px 14px 0;
+}
+
+.listScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Full-height spacer that gives the scrollbar its true range; rows are
+   absolutely positioned inside it by the virtualizer. */
+.listSpacer {
+  position: relative;
+  width: 100%;
+}
+
+.vrow {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+.detail {
+  flex-shrink: 0;
+  max-height: 48%;
+  overflow-y: auto;
   border-top: 1px solid var(--beige-border);
 }
 
@@ -25,8 +57,10 @@
 /* ── Callback items ── */
 .callbackItem {
   position: relative;
+  box-sizing: border-box;
+  height: calc(100% - 4px);
+  overflow: hidden;
   padding: 8px 9px 8px 20px;
-  margin-bottom: 3px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   border: 1px solid transparent;
@@ -74,6 +108,9 @@
   font-weight: 700;
   margin-bottom: 3px;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cbMeta {
