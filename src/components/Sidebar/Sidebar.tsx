@@ -10,20 +10,56 @@ import { CallbackContextMenu } from '@/components/CallbackContextMenu/CallbackCo
 import { agentColor } from '@/agentColor'
 import styles from './Sidebar.module.css'
 
-// Fixed-height virtualization: every callback row is exactly ROW_H tall.
-// `.callbackItem` in the CSS must stay within this height (it has overflow:hidden
-// as a safety clip). Bumping row content means bumping ROW_H to match.
-const ROW_H    = 84
-const OVERSCAN = 6
+// Fixed-height virtualization: every callback row is exactly one of these
+// heights, chosen by the `callbackDensity` setting. `.callbackItem` content must
+// stay within the height — it has overflow:hidden as a safety clip.
+const ROW_H_COMFORTABLE = 84
+const ROW_H_COMPACT     = 50
+const OVERSCAN          = 6
 
 interface CtxMenu { cb: Callback; x: number; y: number }
 type StatusFilter = 'alive' | 'idle' | 'dead'
+
+// One label/value row in the selected-callback detail panel. When `copy` is
+// provided the value renders as a click-to-copy button.
+function InfoRow({ label, value, copy, valueClass, title }: {
+  label: string; value: string; copy?: string; valueClass?: string; title?: string
+}) {
+  const [copied, setCopied] = useState(false)
+  const doCopy = () => {
+    if (!copy || !navigator.clipboard) return
+    navigator.clipboard.writeText(copy)
+      .then(() => { setCopied(true); setTimeout(() => setCopied(false), 1200) })
+      .catch(() => { /* clipboard unavailable */ })
+  }
+  return (
+    <div className={styles.infoRow}>
+      <span className={styles.infoKey}>{label}</span>
+      {copy ? (
+        <button
+          className={`${styles.infoVal} ${styles.copyVal} ${valueClass ?? ''}`}
+          onClick={doCopy}
+          title={title ?? `Copy ${label.toLowerCase()}`}
+        >
+          <span className={styles.copyText}>{value}</span>
+          <span className={styles.copyIcon}>{copied ? '✓' : '⧉'}</span>
+        </button>
+      ) : (
+        <span className={`${styles.infoVal} ${valueClass ?? ''}`} title={title}>{value}</span>
+      )}
+    </div>
+  )
+}
 
 export function Sidebar() {
   const { selectedCallbackId, setSelectedCallbackId, multiSelectedIds, setMultiSelectedIds, callbacks, callbackAnnotations, activeCallbackPorts } = useStore()
   const callbackAliveMs       = useStore((s) => s.settings.callbackAliveMs)
   const callbackIdleMs        = useStore((s) => s.settings.callbackIdleMs)
   const showCallbackDisplayId = useStore((s) => s.settings.showCallbackDisplayId)
+  const callbackDensity       = useStore((s) => s.settings.callbackDensity)
+  const updateSettings        = useStore((s) => s.updateSettings)
+  const compact               = callbackDensity === 'compact'
+  const ROW_H                 = compact ? ROW_H_COMPACT : ROW_H_COMFORTABLE
 
   const selected = useSelectedCallback()
   const [ctxMenu, setCtxMenu] = useState<CtxMenu | null>(null)
@@ -128,11 +164,12 @@ export function Sidebar() {
     return () => ro.disconnect()
   }, [])
 
-  // A changed filter result set should start back at the top.
+  // A changed filter result set — or a density change (rows resize) — should
+  // start back at the top so the pixel offset stays meaningful.
   useEffect(() => {
     listRef.current?.scrollTo({ top: 0 })
     setScrollTop(0)
-  }, [needle, filterStatus, filterAgents])
+  }, [needle, filterStatus, filterAgents, callbackDensity])
 
   const firstIdx = Math.max(0, Math.floor(scrollTop / ROW_H) - OVERSCAN)
   const lastIdx  = Math.min(visible.length, Math.ceil((scrollTop + viewportH) / ROW_H) + OVERSCAN)
@@ -144,16 +181,29 @@ export function Sidebar() {
       <div className={styles.listSection}>
         <div className={`sec-label ${styles.callbacksHeader}`}>
           <span>Callbacks ({visible.length}{visible.length !== callbacks.length ? `/${callbacks.length}` : ''})</span>
-          {multiSelectedIds.length > 1 && (
-            <span className={styles.multiBadge}>
-              {multiSelectedIds.length} selected
-              <button
-                className={styles.multiClear}
-                onClick={() => setMultiSelectedIds([])}
-                title="Clear multi-selection"
-              >✕</button>
-            </span>
-          )}
+          <div className={styles.headerRight}>
+            {multiSelectedIds.length > 1 && (
+              <span className={styles.multiBadge}>
+                {multiSelectedIds.length} selected
+                <button
+                  className={styles.multiClear}
+                  onClick={() => setMultiSelectedIds([])}
+                  title="Clear multi-selection"
+                >✕</button>
+              </span>
+            )}
+            <button
+              className={styles.densityBtn}
+              onClick={() => updateSettings({ callbackDensity: compact ? 'comfortable' : 'compact' })}
+              title={`Row density: ${callbackDensity} — click to switch`}
+            >
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                {compact
+                  ? <path d="M3 3.5h10M3 6.5h10M3 9.5h10M3 12.5h10" />
+                  : <path d="M3 4h10M3 8h10M3 12h10" />}
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* ── Filters ── */}
@@ -223,7 +273,7 @@ export function Sidebar() {
                 return (
                   <div key={cb.id} className={styles.vrow} style={{ top: idx * ROW_H, height: ROW_H }}>
                     <div
-                      className={`${styles.callbackItem} ${cb.id === selectedCallbackId ? styles.active : ''} ${isMultiSelected && cb.id !== selectedCallbackId ? styles.multiSelected : ''} ${integrityBorder}`}
+                      className={`${styles.callbackItem} ${compact ? styles.compact : ''} ${cb.id === selectedCallbackId ? styles.active : ''} ${isMultiSelected && cb.id !== selectedCallbackId ? styles.multiSelected : ''} ${integrityBorder}`}
                       onClick={(e) => handleCallbackClick(e, cb.id)}
                       onContextMenu={(e) => openMenu(e, cb)}
                     >
@@ -263,28 +313,37 @@ export function Sidebar() {
                           alt=""
                         />
                       </div>
-                      <div className={styles.cbMeta}>
-                        <span>{cb.payload.payloadtype.name} · {cb.os}</span>
-                        <span>{timeSince(cb.last_checkin)}</span>
-                      </div>
-                      {cb.user && (
-                        <div className={styles.cbUser}>
-                          <span
-                            className={styles.cbUserName}
-                            style={cb.impersonation_context?.trim() ? { opacity: 0.45 } : undefined}
-                          >
-                            {cb.user}
-                          </span>
-                          {cb.impersonation_context?.trim() && (
-                            <>
-                              <span className={styles.cbUserArrow}> → </span>
-                              <span className={styles.cbUserToken}>⚡ {cb.impersonation_context.trim()}</span>
-                            </>
-                          )}
+                      {compact ? (
+                        <div className={styles.cbMeta}>
+                          <span>{cb.user || cb.payload.payloadtype.name}</span>
+                          <span>{timeSince(cb.last_checkin)}</span>
                         </div>
-                      )}
-                      {cb.description && (
-                        <div className={styles.cbDesc}>{cb.description}</div>
+                      ) : (
+                        <>
+                          <div className={styles.cbMeta}>
+                            <span>{cb.payload.payloadtype.name} · {cb.os}</span>
+                            <span>{timeSince(cb.last_checkin)}</span>
+                          </div>
+                          {cb.user && (
+                            <div className={styles.cbUser}>
+                              <span
+                                className={styles.cbUserName}
+                                style={cb.impersonation_context?.trim() ? { opacity: 0.45 } : undefined}
+                              >
+                                {cb.user}
+                              </span>
+                              {cb.impersonation_context?.trim() && (
+                                <>
+                                  <span className={styles.cbUserArrow}> → </span>
+                                  <span className={styles.cbUserToken}>⚡ {cb.impersonation_context.trim()}</span>
+                                </>
+                              )}
+                            </div>
+                          )}
+                          {cb.description && (
+                            <div className={styles.cbDesc}>{cb.description}</div>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -297,7 +356,7 @@ export function Sidebar() {
 
       {/* ── Selected callback detail ── */}
       {selected && (
-        <div className={`${styles.section} ${styles.detail}`}>
+        <div key={selected.id} className={styles.detail}>
           <div
             className={`sec-label ${styles.detailHeader}`}
             onContextMenu={(e) => openMenu(e, selected)}
@@ -307,49 +366,60 @@ export function Sidebar() {
             {selected.locked && <span className={styles.lockBadge}>🔒</span>}
           </div>
 
-          {selected.description && (
-            <div className={styles.descRow}>{selected.description}</div>
-          )}
+          <div className={styles.detailScroll}>
+            {selected.description && (
+              <div className={styles.descRow}>{selected.description}</div>
+            )}
 
-          {impersonatedUser && (
-            <div className={styles.infoRow}>
-              <span className={styles.infoKey}>Token</span>
-              <span className={`${styles.infoVal} ${styles.tokenVal}`} title={`Impersonating: ${impersonatedUser}`}>
-                ⚡ {impersonatedUser}
-              </span>
-            </div>
-          )}
+            <div className={styles.detailGroup}>Identity</div>
+            {impersonatedUser && (
+              <InfoRow
+                label="Token"
+                value={`⚡ ${impersonatedUser}`}
+                copy={impersonatedUser}
+                valueClass={styles.tokenVal}
+                title={`Impersonating: ${impersonatedUser}`}
+              />
+            )}
+            <InfoRow
+              label="User"
+              value={selected.user || '—'}
+              copy={selected.user || undefined}
+              valueClass={impersonatedUser ? styles.mutedVal : undefined}
+            />
+            <InfoRow label="Domain" value={selected.domain || '—'} />
+            <InfoRow
+              label="Integrity"
+              value={integrityLabel(selected.integrity_level)}
+              valueClass={selected.integrity_level >= 3 ? styles.hiVal : undefined}
+            />
 
-          {[
-            ['Integrity', integrityLabel(selected.integrity_level)],
-            ['User',      selected.user || '—'],
-            ['Domain',    selected.domain || '—'],
-            ['PID',       String(selected.pid)],
-            ['Sleep',     formatSleepInterval(selected.sleep_info, selected.tasks[0], selected.payload.c2profileparametersinstances)],
-            ['Jitter',    formatSleepJitter(selected.sleep_info, selected.tasks[0], selected.payload.c2profileparametersinstances)],
-            ['IP',        selected.ip],
-            ['OS',        selected.os],
-            ['Agent',     selected.payload.payloadtype.name],
-            ['C2',        selected.callbackc2profiles[0]?.c2profile.name ?? '—'],
-          ].map(([k, v]) => (
-            <div key={k} className={styles.infoRow}>
-              <span className={styles.infoKey}>{k}</span>
-              <span
-                className={`${styles.infoVal} ${k === 'Integrity' && selected.integrity_level >= 3 ? styles.hiVal : ''} ${k === 'User' && impersonatedUser ? styles.mutedVal : ''}`}
-              >
-                {v}
-              </span>
-            </div>
-          ))}
+            <div className={styles.detailGroup}>Process</div>
+            <InfoRow label="PID" value={String(selected.pid)} copy={String(selected.pid)} />
+            <InfoRow label="OS" value={selected.os || '—'} />
+            {selected.cwd?.trim() && (
+              <InfoRow
+                label="Dir"
+                value={selected.cwd}
+                copy={selected.cwd}
+                valueClass={styles.cwdVal}
+                title={selected.cwd}
+              />
+            )}
 
-          {selected.cwd?.trim() && (
-            <div className={styles.infoRow}>
-              <span className={styles.infoKey}>Dir</span>
-              <span className={`${styles.infoVal} ${styles.cwdVal}`} title={selected.cwd}>
-                {selected.cwd}
-              </span>
-            </div>
-          )}
+            <div className={styles.detailGroup}>Comms</div>
+            <InfoRow label="IP" value={selected.ip || '—'} copy={selected.ip || undefined} />
+            <InfoRow label="Agent" value={selected.payload.payloadtype.name} />
+            <InfoRow label="C2" value={selected.callbackc2profiles[0]?.c2profile.name ?? '—'} />
+            <InfoRow
+              label="Sleep"
+              value={formatSleepInterval(selected.sleep_info, selected.tasks[0], selected.payload.c2profileparametersinstances)}
+            />
+            <InfoRow
+              label="Jitter"
+              value={formatSleepJitter(selected.sleep_info, selected.tasks[0], selected.payload.c2profileparametersinstances)}
+            />
+          </div>
         </div>
       )}
 

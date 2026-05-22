@@ -14,14 +14,14 @@ import type { Callback } from '@/store'
 import { ANNOT_SWATCHES } from '@/annotationColors'
 import styles from './CallbackContextMenu.module.css'
 
+type View = 'menu' | 'annotate' | 'confirmExit'
+
 interface Props {
   cb: Callback
   x: number
   y: number
   onClose: () => void
 }
-
-type View = 'menu' | 'annotate' | 'confirmExit'
 
 export function CallbackContextMenu({ cb, x, y, onClose }: Props) {
   const menuRef = useRef<HTMLDivElement>(null)

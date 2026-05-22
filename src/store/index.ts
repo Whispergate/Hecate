@@ -7,6 +7,7 @@ export interface HecateSettings {
   callbackAliveMs:      number
   callbackIdleMs:       number
   showCallbackDisplayId: boolean
+  callbackDensity:      'comfortable' | 'compact'
 }
 
 const SETTINGS_KEY = 'hecate_settings'
@@ -17,6 +18,7 @@ export const DEFAULT_SETTINGS: HecateSettings = {
   callbackAliveMs:      60_000,
   callbackIdleMs:       600_000,
   showCallbackDisplayId: false,
+  callbackDensity:      'comfortable',
 }
 function loadSettings(): HecateSettings {
   try {
