@@ -1,6 +1,6 @@
 /* hecate/src/components/CallbackContextMenu/CallbackContextMenu.tsx */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation } from '@apollo/client'
 import {
   UPDATE_CALLBACK_DESCRIPTION,
@@ -28,6 +28,19 @@ export function CallbackContextMenu({ cb, x, y, onClose }: Props) {
 
   const storedColor           = useStore((s) => s.callbackAnnotations[cb.display_id] ?? '')
   const setCallbackAnnotation = useStore((s) => s.setCallbackAnnotation)
+  const callbacks             = useStore((s) => s.callbacks)
+  const multiSelectedIds      = useStore((s) => s.multiSelectedIds)
+
+  // Bulk actions (Exit / Hide) apply to the whole multi-selection when the
+  // right-clicked callback is part of it — otherwise just to this one.
+  const targets = useMemo<Callback[]>(() => {
+    if (multiSelectedIds.length > 1 && multiSelectedIds.includes(cb.id)) {
+      const set = new Set(multiSelectedIds)
+      return callbacks.filter((c) => set.has(c.id))
+    }
+    return [cb]
+  }, [callbacks, multiSelectedIds, cb])
+  const isBulk = targets.length > 1
 
   const [view,  setView]  = useState<View>('menu')
   const [desc,  setDesc]  = useState(cb.description ?? '')
@@ -52,7 +65,7 @@ export function CallbackContextMenu({ cb, x, y, onClose }: Props) {
     }
   }, [onClose])
 
-  const menuHeight = view === 'annotate' ? 200 : view === 'confirmExit' ? 100 : 175
+  const menuHeight = view === 'annotate' ? 200 : view === 'confirmExit' ? 100 : (isBulk ? 193 : 175)
   const menuWidth  = view === 'annotate' ? 230 : 180
   const style: React.CSSProperties = {
     position: 'fixed',
@@ -69,12 +82,12 @@ export function CallbackContextMenu({ cb, x, y, onClose }: Props) {
   }
 
   const submitExit = () => {
-    createTask({ variables: {
-      callback_id:       cb.display_id,
+    Promise.allSettled(targets.map((t) => createTask({ variables: {
+      callback_id:       t.display_id,
       command:           'exit',
       params:            '',
       tasking_location:  'command_line',
-    }})
+    }})))
     onClose()
   }
 
@@ -136,8 +149,14 @@ export function CallbackContextMenu({ cb, x, y, onClose }: Props) {
   if (view === 'confirmExit') {
     return (
       <div ref={menuRef} className={styles.menu} style={style} onContextMenu={e => e.preventDefault()}>
-        <div className={styles.editLabel}>Exit #{cb.display_id} {cb.host}?</div>
-        <div className={styles.confirmText}>This will task the agent to terminate.</div>
+        <div className={styles.editLabel}>
+          {isBulk ? `Exit ${targets.length} callbacks?` : `Exit #${cb.display_id} ${cb.host}?`}
+        </div>
+        <div className={styles.confirmText}>
+          {isBulk
+            ? `This will task all ${targets.length} selected agents to terminate.`
+            : 'This will task the agent to terminate.'}
+        </div>
         <div className={styles.editActions}>
           <button className={`${styles.btnSave} ${styles.btnExit}`} onClick={submitExit}>Exit</button>
           <button className={styles.btnCancel} onClick={onClose}>Cancel</button>
@@ -149,6 +168,7 @@ export function CallbackContextMenu({ cb, x, y, onClose }: Props) {
   return (
     <div ref={menuRef} className={styles.menu} style={style} onContextMenu={e => e.preventDefault()}>
       <div className={styles.header}>#{cb.display_id} {cb.host}</div>
+      {isBulk && <div className={styles.bulkNote}>{targets.length} callbacks selected</div>}
 
       <button className={styles.item} onClick={() => setView('annotate')}>
         Annotate callback
@@ -166,14 +186,14 @@ export function CallbackContextMenu({ cb, x, y, onClose }: Props) {
       <div className={styles.divider} />
 
       <button className={`${styles.item} ${styles.danger}`} onClick={() => setView('confirmExit')}>
-        Exit callback
+        {isBulk ? `Exit ${targets.length} callbacks` : 'Exit callback'}
       </button>
 
       <button className={`${styles.item} ${styles.danger}`} onClick={() => {
-        hideCb({ variables: { callback_display_id: cb.display_id } })
+        Promise.allSettled(targets.map((t) => hideCb({ variables: { callback_display_id: t.display_id } })))
         onClose()
       }}>
-        Hide callback
+        {isBulk ? `Hide ${targets.length} callbacks` : 'Hide callback'}
       </button>
     </div>
   )

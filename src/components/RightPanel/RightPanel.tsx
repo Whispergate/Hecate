@@ -8,7 +8,7 @@ import { CallbackContextMenu }                              from '@/components/C
 import { GET_OPERATIONS, SUB_ALL_CALLBACKS }                from '@/apollo/operations'
 import { useStore, useSelectedCallback, useAliveCallbacks, type HecateStore } from '@/store'
 import type { Callback }                                    from '@/store'
-import { parseTs, formatSleepInterval, formatSleepJitter }  from '@/components/Sidebar/utils'
+import { parseTs, formatSleepInterval, formatSleepJitter, parseSleepNumbers }  from '@/components/Sidebar/utils'
 import styles                                               from './RightPanel.module.css'
 
 // ── Protocol helpers ──────────────────────────────────
@@ -29,34 +29,9 @@ function protocolInfo(c2name: string): ProtoInfo {
 // ── Late-checkin detection ────────────────────────────
 
 function parseSleepSeconds(cb: Callback): number {
-  const raw = cb.sleep_info?.trim()
-  if (raw) {
-    if (raw.startsWith('{')) {
-      try {
-        const obj = JSON.parse(raw) as Record<string, { interval?: number }>
-        const first = Object.values(obj)[0]
-        if (first?.interval !== undefined) return first.interval
-      } catch { /* fall through */ }
-    } else {
-      const token = raw.toLowerCase().split(/\s+/)[0]
-      if (token.endsWith('h')) return parseFloat(token) * 3600
-      if (token.endsWith('m')) return parseFloat(token) * 60
-      if (token.endsWith('s')) return parseFloat(token)
-      const n = parseFloat(token)
-      if (!isNaN(n)) return n
-    }
-  }
-  // fall back to last sleep task
-  if (cb.tasks[0]) {
-    try {
-      const p = JSON.parse(cb.tasks[0].params) as { interval?: number }
-      if (p.interval !== undefined) return p.interval
-    } catch { /* fall through */ }
-  }
-  // fall back to payload config
-  const iv = cb.payload.c2profileparametersinstances
-    .find(p => p.c2profileparameter.name === 'callback_interval')?.value
-  return iv !== undefined ? parseFloat(iv) : 0
+  return parseSleepNumbers(
+    cb.sleep_info, cb.tasks[0], cb.payload.c2profileparametersinstances,
+  ).intervalSec
 }
 
 function isLateCheckin(cb: Callback): boolean {

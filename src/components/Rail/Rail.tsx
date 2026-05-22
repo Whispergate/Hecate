@@ -43,6 +43,15 @@ const ITEMS: { id: RailView; title: string; icon: React.ReactNode }[] = [
     ),
   },
   {
+    id: 'health',
+    title: 'Beacon Health',
+    icon: (
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1.5 8.5h3l1.5-4 2.5 7 1.8-5 1.2 2h3" />
+      </svg>
+    ),
+  },
+  {
     id: 'payloads',
     title: 'Payloads',
     icon: (
@@ -186,7 +195,7 @@ export function Rail() {
     <nav className={styles.rail}>
       {ITEMS.map((item, idx) => (
         <>
-          {idx === 4 && <div key="sep" className={styles.sep} />}
+          {idx === 5 && <div key="sep" className={styles.sep} />}
           <div key={item.id} className={styles.btnWrap}>
             <button
               className={`${styles.btn} ${activeRailView === item.id ? styles.active : ''}`}

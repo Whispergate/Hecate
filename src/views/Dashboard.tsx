@@ -21,6 +21,7 @@ import { EventLogPanel }      from '@/components/EventLogPanel/EventLogPanel'
 import { ProxiesPanel }            from '@/components/ProxiesPanel/ProxiesPanel'
 import { TimelinePanel }          from '@/components/TimelinePanel/TimelinePanel'
 import { ReplayPanel }            from '@/components/ReplayPanel/ReplayPanel'
+import { BeaconHealthPanel }      from '@/components/BeaconHealthPanel/BeaconHealthPanel'
 import { AttackPanel }            from '@/components/AttackPanel/AttackPanel'
 import { EventingPanel }          from '@/components/EventingPanel/EventingPanel'
 import { CallbackToastContainer }  from '@/components/Toast/CallbackToast'
@@ -178,7 +179,7 @@ export function Dashboard() {
   useWarningBadge()
 
   const activeRailView = useStore((s) => s.activeRailView)
-  const isFullPanel    = activeRailView === 'overview' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'proxies' || activeRailView === 'report' || activeRailView === 'files' || activeRailView === 'operations' || activeRailView === 'credentials' || activeRailView === 'logs' || activeRailView === 'timeline' || activeRailView === 'replay' || activeRailView === 'attack' || activeRailView === 'eventing'
+  const isFullPanel    = activeRailView === 'overview' || activeRailView === 'health' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'proxies' || activeRailView === 'report' || activeRailView === 'files' || activeRailView === 'operations' || activeRailView === 'credentials' || activeRailView === 'logs' || activeRailView === 'timeline' || activeRailView === 'replay' || activeRailView === 'attack' || activeRailView === 'eventing'
 
   return (
     <div className={styles.root}>
@@ -194,6 +195,7 @@ export function Dashboard() {
         {isFullPanel ? (
           <div className={styles.fullPanel}>
             {activeRailView === 'overview'  && <OverviewPanel />}
+            {activeRailView === 'health'    && <BeaconHealthPanel />}
             {activeRailView === 'payloads'  && <PayloadPanel />}
             {activeRailView === 'services'  && <ServicesPanel />}
             {activeRailView === 'proxies'   && <ProxiesPanel />}
