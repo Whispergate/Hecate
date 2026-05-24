@@ -3,13 +3,15 @@
    ═══════════════════════════════════════════════════ */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useQuery, useMutation, useSubscription } from '@apollo/client'
+import { useQuery, useLazyQuery, useMutation, useSubscription } from '@apollo/client'
 import { uploadTaskFile } from '@/uploadTaskFile'
 import {
   GET_PAYLOAD_TYPES,
   GET_PAYLOADS,
   GET_COMMANDS_FOR_TYPE,
   GET_WRAPPABLE_PAYLOADS,
+  GET_C2_PROFILE_INSTANCES,
+  GET_C2_INSTANCE_VALUES,
   CREATE_PAYLOAD,
   SUB_PAYLOAD_BUILD,
 } from '@/apollo/operations'
@@ -847,6 +849,41 @@ function Configure({
   const c2Profile = type.payloadtypec2profiles
     .find(p => p.c2profile.name === selectedC2)?.c2profile ?? null
 
+  // ── Saved C2 instances ────────────────────────────────
+  const activeOp = useStore(s => s.activeOperation)
+  const [selectedInstance, setSelectedInstance] = useState('')
+
+  const { data: instListData } = useQuery(GET_C2_PROFILE_INSTANCES, {
+    variables: { c2_profile_id: c2Profile?.id ?? 0, operation_id: activeOp?.id ?? 0 },
+    skip: !c2Profile || !activeOp,
+    fetchPolicy: 'cache-and-network',
+  })
+  const savedInstances: string[] = (instListData?.c2profileparametersinstance ?? []).map(
+    (r: { instance_name: string }) => r.instance_name
+  )
+
+  const [loadInstanceValues] = useLazyQuery(GET_C2_INSTANCE_VALUES, { fetchPolicy: 'network-only' })
+
+  useEffect(() => { setSelectedInstance('') }, [selectedC2])
+
+  const handleInstanceSelect = useCallback(async (name: string) => {
+    setSelectedInstance(name)
+    if (!name) {
+      setC2Params(defaultsForC2(c2Profile, selectedC2))
+      return
+    }
+    if (!c2Profile || !activeOp) return
+    const result = await loadInstanceValues({
+      variables: { instance_name: name, c2_profile_id: c2Profile.id, operation_id: activeOp.id },
+    })
+    const rows: { value: string; c2profileparameter: { name: string } }[] =
+      result?.data?.c2profileparametersinstance ?? []
+    if (!rows.length) return
+    const loaded: Record<string, string> = {}
+    for (const row of rows) loaded[row.c2profileparameter.name] = row.value
+    setC2Params(prev => ({ ...prev, ...loaded }))
+  }, [c2Profile, activeOp, selectedC2, defaultsForC2, loadInstanceValues])
+
   const setBuildParam  = useCallback((name: string, v: string) =>
     setBuildParams(prev => ({ ...prev, [name]: v })), [])
   const setC2Param     = useCallback((name: string, v: string) =>
@@ -1011,6 +1048,21 @@ function Configure({
           </div>
           {c2Profile && (
             <div className={styles.c2Params}>
+              {savedInstances.length > 0 && (
+                <div className={styles.field}>
+                  <label className={styles.fieldLabel}>Saved Instance</label>
+                  <select
+                    className={styles.fieldSelect}
+                    value={selectedInstance}
+                    onChange={e => handleInstanceSelect(e.target.value)}
+                  >
+                    <option value="">— defaults —</option>
+                    {savedInstances.map(name => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               {[...c2Profile.c2profileparameters]
                 .filter(p => {
                   const dev = type.c2_parameter_deviations?.[selectedC2]?.[p.name]

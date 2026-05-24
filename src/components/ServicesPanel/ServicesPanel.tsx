@@ -2,8 +2,8 @@
    src/components/ServicesPanel/ServicesPanel.tsx
    ═══════════════════════════════════════════════════ */
 
-import { useState, useEffect, useMemo } from 'react'
-import { useSubscription, useMutation, useLazyQuery } from '@apollo/client'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useSubscription, useMutation, useLazyQuery, useQuery } from '@apollo/client'
 import {
   SUB_PAYLOAD_TYPES,
   SUB_C2_PROFILES,
@@ -14,8 +14,14 @@ import {
   CONTAINER_DOWNLOAD_FILE,
   CONTAINER_WRITE_FILE,
   GET_AGENT_COMMANDS,
+  GET_C2_PROFILE_PARAMS,
+  GET_C2_INSTANCE_VALUES_BY_NAME,
+  CREATE_C2_INSTANCE,
+  DELETE_C2_INSTANCE,
+  IMPORT_C2_INSTANCE,
 } from '@/apollo/operations'
 import styles from './ServicesPanel.module.css'
+import { agentColor } from '@/agentColor'
 
 // ── Types ──────────────────────────────────────────────
 
@@ -49,6 +55,20 @@ interface AgentCommand {
 }
 
 // ── Helpers ────────────────────────────────────────────
+
+function AgentIcon({ name, size = 'sm' }: { name: string; size?: 'sm' | 'md' }) {
+  const [failed, setFailed] = useState(false)
+  const color = agentColor(name)
+  const cls = size === 'md' ? styles.iconMd : styles.iconSm
+  const imgCls = size === 'md' ? styles.iconMdImg : styles.iconSmImg
+  return (
+    <span className={cls} style={{ '--agent-color': color } as React.CSSProperties}>
+      {!failed
+        ? <img src={`/static/${name.toLowerCase()}_dark.svg`} alt="" className={imgCls} onError={() => setFailed(true)} />
+        : name.charAt(0).toUpperCase()}
+    </span>
+  )
+}
 
 function StatusDot({ running }: { running: boolean }) {
   return <span className={`${styles.dot} ${running ? styles.dotOn : styles.dotOff}`} />
@@ -278,12 +298,264 @@ function CommandsPanel({ agentName }: { agentName: string }) {
 
 // ── Detail panel ───────────────────────────────────────
 
+// ── Instances modal ────────────────────────────────────
+
+interface C2ParamDef {
+  id: number
+  name: string
+  parameter_type: string
+  default_value: string
+  description: string
+  required: boolean
+  choices: string
+}
+
+function InstancesModal({ c2ProfileId, c2ProfileName, onClose }: {
+  c2ProfileId: number
+  c2ProfileName: string
+  onClose: () => void
+}) {
+  const [selectedInstance, setSelectedInstance] = useState('')
+  const [instanceName,     setInstanceName]     = useState('')
+  const [params,           setParams]           = useState<Record<string, string>>({})
+  const [status,           setStatus]           = useState('')
+  const importRef = useRef<HTMLInputElement>(null)
+
+  const { data: profileData, refetch } = useQuery(GET_C2_PROFILE_PARAMS, {
+    variables: { id: c2ProfileId },
+    fetchPolicy: 'cache-and-network',
+  })
+  const c2ParamDefs: C2ParamDef[] = profileData?.c2profile_by_pk?.c2profileparameters ?? []
+  const instances: string[] = (profileData?.c2profile_by_pk?.c2profileparametersinstances ?? []).map(
+    (i: { instance_name: string }) => i.instance_name
+  )
+
+  useEffect(() => {
+    if (!c2ParamDefs.length) return
+    const defaults: Record<string, string> = {}
+    for (const p of c2ParamDefs) defaults[p.name] = p.default_value ?? ''
+    setParams(defaults)
+  }, [profileData])
+
+  const [loadInstance] = useLazyQuery(GET_C2_INSTANCE_VALUES_BY_NAME, { fetchPolicy: 'network-only' })
+
+  const handleSelectInstance = useCallback(async (name: string) => {
+    setSelectedInstance(name)
+    setInstanceName(name)
+    setStatus('')
+    if (!name) {
+      const defaults: Record<string, string> = {}
+      for (const p of c2ParamDefs) defaults[p.name] = p.default_value ?? ''
+      setParams(defaults)
+      return
+    }
+    const result = await loadInstance({ variables: { instance_name: name, c2_profile_id: c2ProfileId } })
+    const rows: { value: string; c2profileparameter: { name: string } }[] =
+      result?.data?.c2profileparametersinstance ?? []
+    const loaded: Record<string, string> = {}
+    for (const p of c2ParamDefs) loaded[p.name] = p.default_value ?? ''
+    for (const row of rows) loaded[row.c2profileparameter.name] = row.value
+    setParams(loaded)
+  }, [c2ParamDefs, c2ProfileId, loadInstance])
+
+  const [createInstance] = useMutation(CREATE_C2_INSTANCE, {
+    onCompleted(data) {
+      const r = data.create_c2_instance
+      setStatus(r.status === 'success' ? 'Saved.' : (r.error ?? 'Failed'))
+      if (r.status === 'success') refetch()
+    },
+    onError(e) { setStatus(e.message) },
+  })
+
+  const [deleteInstance] = useMutation(DELETE_C2_INSTANCE, {
+    onCompleted() {
+      setStatus('Deleted.')
+      setSelectedInstance('')
+      setInstanceName('')
+      const defaults: Record<string, string> = {}
+      for (const p of c2ParamDefs) defaults[p.name] = p.default_value ?? ''
+      setParams(defaults)
+      refetch()
+    },
+    onError(e) { setStatus(e.message) },
+  })
+
+  const [importInstance] = useMutation(IMPORT_C2_INSTANCE, {
+    onCompleted(data) {
+      const r = data.import_c2_instance
+      setStatus(r.status === 'success' ? 'Imported.' : (r.error ?? 'Import failed'))
+      if (r.status === 'success') refetch()
+    },
+    onError(e) { setStatus(e.message) },
+  })
+
+  function handleSave() {
+    if (!instanceName.trim()) { setStatus('Instance name required.'); return }
+    setStatus('')
+    createInstance({
+      variables: {
+        instance_name: instanceName.trim(),
+        c2_instance: JSON.stringify(params),
+        c2profile_id: c2ProfileId,
+      },
+    })
+  }
+
+  function handleDelete() {
+    if (!selectedInstance) return
+    setStatus('')
+    deleteInstance({ variables: { name: selectedInstance, c2_profile_id: c2ProfileId } })
+  }
+
+  function handleExport() {
+    const payload = { instance_name: instanceName || selectedInstance, c2profile_name: c2ProfileName, params }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${c2ProfileName}_${instanceName || selectedInstance || 'instance'}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function handleImportFile(file: File) {
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string)
+        const name = data.instance_name ?? ''
+        const paramValues = data.params ?? data
+        importInstance({ variables: { instance_name: name, c2_instance: paramValues, c2profile_name: c2ProfileName } })
+      } catch { setStatus('Invalid JSON file.') }
+    }
+    reader.readAsText(file)
+  }
+
+  function setParam(name: string, value: string) {
+    setParams(prev => ({ ...prev, [name]: value }))
+  }
+
+  function renderParam(p: C2ParamDef) {
+    const val = params[p.name] ?? p.default_value ?? ''
+    switch (p.parameter_type) {
+      case 'Boolean':
+        return (
+          <label key={p.name} className={styles.instCheckRow}>
+            <input type="checkbox" checked={val === 'true'} onChange={e => setParam(p.name, e.target.checked ? 'true' : 'false')} />
+            <span className={styles.instParamLabel}>{p.name}</span>
+            {p.description && <span className={styles.instParamDesc}>{p.description}</span>}
+          </label>
+        )
+      case 'ChooseOne':
+      case 'ChooseOneCustom': {
+        let choices: string[] = []
+        try { choices = JSON.parse(p.choices) } catch {}
+        return (
+          <div key={p.name} className={styles.instParamRow}>
+            <span className={styles.instParamLabel}>{p.name}</span>
+            <select className={styles.instParamInput} value={val} onChange={e => setParam(p.name, e.target.value)}>
+              {choices.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        )
+      }
+      case 'Number':
+        return (
+          <div key={p.name} className={styles.instParamRow}>
+            <span className={styles.instParamLabel}>{p.name}</span>
+            <input type="number" className={styles.instParamInput} value={val} onChange={e => setParam(p.name, e.target.value)} />
+          </div>
+        )
+      case 'File':
+      case 'FileMultiple':
+        return (
+          <div key={p.name} className={styles.instParamRow}>
+            <span className={styles.instParamLabel}>{p.name}</span>
+            <span className={styles.instParamDesc}>file upload not supported in instances editor</span>
+          </div>
+        )
+      default:
+        return (
+          <div key={p.name} className={styles.instParamRow}>
+            <span className={styles.instParamLabel}>{p.name}</span>
+            <input className={styles.instParamInput} value={val} onChange={e => setParam(p.name, e.target.value)} />
+          </div>
+        )
+    }
+  }
+
+  return (
+    <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className={styles.instModal}>
+        <div className={styles.modalHeader}>
+          <span className={styles.modalTitle}>Instances — {c2ProfileName}</span>
+          <button className={styles.modalClose} onClick={onClose}>✕</button>
+        </div>
+
+        <div className={styles.instBody}>
+          {/* load / delete / export / import row */}
+          <div className={styles.instTopRow}>
+            <select
+              className={styles.instSelect}
+              value={selectedInstance}
+              onChange={e => handleSelectInstance(e.target.value)}
+            >
+              <option value="">— new instance —</option>
+              {instances.map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+            {selectedInstance && (
+              <button className={`${styles.btn} ${styles.btnStop}`} onClick={handleDelete}>delete</button>
+            )}
+            <button className={styles.btn} onClick={handleExport}>export</button>
+            <label className={styles.btn} style={{ cursor: 'pointer' }}>
+              import
+              <input
+                ref={importRef}
+                type="file"
+                accept=".json"
+                style={{ display: 'none' }}
+                onChange={e => { const f = e.target.files?.[0]; if (f) { handleImportFile(f); e.target.value = '' } }}
+              />
+            </label>
+          </div>
+
+          {/* instance name */}
+          <div className={styles.instParamRow}>
+            <span className={styles.instParamLabel}>instance name</span>
+            <input
+              className={styles.instParamInput}
+              placeholder="my-config"
+              value={instanceName}
+              onChange={e => setInstanceName(e.target.value)}
+            />
+          </div>
+
+          <div className={styles.instDivider} />
+
+          {/* params */}
+          <div className={styles.instParams}>
+            {c2ParamDefs.map(p => renderParam(p))}
+            {!c2ParamDefs.length && <span className={styles.instParamDesc}>No configurable parameters.</span>}
+          </div>
+        </div>
+
+        <div className={styles.instFooter}>
+          {status && <span className={status.includes('ailed') || status.includes('required') ? styles.errMsg : styles.instOk}>{status}</span>}
+          <button className={`${styles.btn} ${styles.btnStart}`} onClick={handleSave}>save</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Detail panel ───────────────────────────────────────
+
 type DetailView = 'info' | 'commands' | 'files'
 
 function DetailPanel({
   name, author, description, semver, container_running,
-  docsPath, showCommands, showConfig, showStart, c2Id, c2Running,
-  extra,
+  docsPath, showCommands, showConfig, showStart, showInstances, c2Id, c2Running,
+  iconName, extra,
 }: {
   name: string
   author?: string
@@ -294,12 +566,14 @@ function DetailPanel({
   showCommands?: boolean
   showConfig?: boolean
   showStart?: boolean
+  showInstances?: boolean
   c2Id?: number
   c2Running?: boolean
+  iconName?: string
   extra?: React.ReactNode
 }) {
   const [view, setView] = useState<DetailView>('info')
-  const [modal, setModal] = useState<'config' | 'files' | null>(null)
+  const [modal, setModal] = useState<'config' | 'files' | 'instances' | null>(null)
   const [c2Status, setC2Status] = useState('')
 
   const [startStop, { loading: toggling }] = useMutation(START_STOP_C2, {
@@ -321,6 +595,7 @@ function DetailPanel({
       {/* header */}
       <div className={styles.detailHeader}>
         <div className={styles.detailTitle}>
+          {iconName && <AgentIcon name={iconName} size="md" />}
           <StatusDot running={container_running} />
           <span className={styles.detailName}>{name}</span>
           {semver && <span className={styles.semver}>{semver}</span>}
@@ -337,6 +612,9 @@ function DetailPanel({
           )}
           {showConfig && (
             <button className={styles.btn} onClick={() => setModal('config')}>config</button>
+          )}
+          {showInstances && (
+            <button className={styles.btn} onClick={() => setModal('instances')}>instances</button>
           )}
           <button className={styles.btn} onClick={() => setModal('files')}>files</button>
           {docsPath && (
@@ -384,6 +662,9 @@ function DetailPanel({
       {modal === 'files' && (
         <FilesModal containerName={name} onClose={() => setModal(null)} />
       )}
+      {modal === 'instances' && showInstances && c2Id != null && (
+        <InstancesModal c2ProfileId={c2Id} c2ProfileName={name} onClose={() => setModal(null)} />
+      )}
     </div>
   )
 }
@@ -391,16 +672,17 @@ function DetailPanel({
 // ── List row ───────────────────────────────────────────
 
 function ListRow({
-  name, running, selected, badges, onClick,
+  name, running, selected, badges, onClick, iconName,
 }: {
   name: string; running: boolean; selected: boolean
-  badges?: React.ReactNode; onClick: () => void
+  badges?: React.ReactNode; onClick: () => void; iconName?: string
 }) {
   return (
     <button
       className={`${styles.listRow} ${selected ? styles.listRowActive : ''}`}
       onClick={onClick}
     >
+      {iconName && <AgentIcon name={iconName} size="sm" />}
       <StatusDot running={running} />
       <span className={styles.listName}>{name}</span>
       {badges}
@@ -428,6 +710,7 @@ function AgentsPane() {
             running={pt.container_running}
             selected={(sel ?? types[0]?.id) === pt.id}
             onClick={() => setSel(pt.id)}
+            iconName={pt.name}
             badges={<>
               {pt.wrapper && <span className={styles.badge}>WRAP</span>}
               {pt.agent_type && pt.agent_type !== 'agent' && (
@@ -447,6 +730,7 @@ function AgentsPane() {
           container_running={selected.container_running}
           docsPath={`/docs/${selected.wrapper ? 'wrappers' : 'agents'}/${selected.name.toLowerCase()}`}
           showCommands={!selected.wrapper}
+          iconName={selected.name}
           extra={<>
             {selected.supported_os?.length > 0 && (
               <MetaRow label="os">
@@ -493,11 +777,14 @@ function C2Pane() {
             running={p.container_running}
             selected={(sel ?? profiles[0]?.id) === p.id}
             onClick={() => setSel(p.id)}
+            iconName={p.name}
             badges={<>
-              {p.is_p2p && <span className={styles.badge}>P2P</span>}
-              <span className={`${styles.badge} ${p.running ? styles.badgeOn : styles.badgeOff}`}>
-                {p.running ? 'on' : 'off'}
-              </span>
+              {p.is_p2p
+                ? <span className={styles.badge}>P2P</span>
+                : <span className={`${styles.badge} ${p.running ? styles.badgeOn : styles.badgeOff}`}>
+                    {p.running ? 'on' : 'off'}
+                  </span>
+              }
             </>}
           />
         ))}
@@ -512,16 +799,21 @@ function C2Pane() {
           container_running={selected.container_running}
           docsPath={`/docs/c2-profiles/${selected.name.toLowerCase()}`}
           showConfig
-          showStart
+          showInstances
+          showStart={!selected.is_p2p}
+          iconName={selected.name}
           c2Id={selected.id}
           c2Running={selected.running}
-          extra={agents.length > 0 && (
-            <MetaRow label="agents">
-              <div className={styles.chips}>
-                {agents.map(a => <Chip key={a} label={a} />)}
-              </div>
-            </MetaRow>
-          )}
+          extra={<>
+            <MetaRow label="type">{selected.is_p2p ? 'P2P (agent-handled)' : 'Egress'}</MetaRow>
+            {agents.length > 0 && (
+              <MetaRow label="agents">
+                <div className={styles.chips}>
+                  {agents.map(a => <Chip key={a} label={a} />)}
+                </div>
+              </MetaRow>
+            )}
+          </>}
         />
       )}
     </div>

@@ -121,6 +121,53 @@
   white-space: nowrap;
 }
 
+/* ── Agent icons ── */
+.iconSm {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--agent-color, #666) 18%, transparent);
+  color: var(--agent-color, #888);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.iconSmImg {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+  filter: brightness(0.9);
+}
+
+.iconMd {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--agent-color, #666) 18%, transparent);
+  color: var(--agent-color, #888);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.iconMdImg {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: brightness(0.9);
+}
+
 /* ── Status dot ── */
 .dot {
   width: 6px;
@@ -584,4 +631,123 @@
   background: var(--bg-void);
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+/* ── Instances modal ── */
+.instModal {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  width: min(680px, 92vw);
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.instBody {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  padding: 12px 14px 0;
+}
+
+.instTopRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.instSelect {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--bg-elevated);
+  color: var(--bone-200);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  padding: 4px 8px;
+  outline: none;
+}
+
+.instDivider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 10px 0 8px;
+  flex-shrink: 0;
+}
+
+.instParams {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 10px;
+}
+
+.instFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.instOk {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--status-ok);
+  flex: 1;
+}
+
+.instParamRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.instCheckRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.instParamLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-400);
+  width: 160px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.instParamInput {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--bg-elevated);
+  color: var(--bone-200);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  padding: 4px 8px;
+  outline: none;
+  transition: border-color var(--t-fast);
+}
+.instParamInput:focus { border-color: var(--border-default); }
+
+.instParamDesc {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-700);
 }

@@ -256,6 +256,114 @@ export const GET_PAYLOAD_TYPES = gql`
   }
 `
 
+// Saved C2 profile instance names for a given profile + operation
+export const GET_C2_PROFILE_INSTANCES = gql`
+  query GetC2ProfileInstances($c2_profile_id: Int!, $operation_id: Int!) {
+    c2profileparametersinstance(
+      where: {
+        c2_profile_id: { _eq: $c2_profile_id }
+        operation_id:  { _eq: $operation_id }
+        instance_name: { _is_null: false }
+      }
+      distinct_on: instance_name
+      order_by: { instance_name: asc }
+    ) {
+      instance_name
+    }
+  }
+`
+
+// Parameter values for a specific saved instance
+export const GET_C2_INSTANCE_VALUES = gql`
+  query GetC2InstanceValues($instance_name: String!, $c2_profile_id: Int!, $operation_id: Int!) {
+    c2profileparametersinstance(
+      where: {
+        instance_name: { _eq: $instance_name }
+        c2_profile_id: { _eq: $c2_profile_id }
+        operation_id:  { _eq: $operation_id }
+      }
+    ) {
+      value
+      c2profileparameter { name }
+    }
+  }
+`
+
+// C2 profile parameters + saved instance names (for the instances management modal)
+export const GET_C2_PROFILE_PARAMS = gql`
+  query GetC2ProfileParams($id: Int!) {
+    c2profile_by_pk(id: $id) {
+      id
+      name
+      c2profileparameters(
+        where: { deleted: { _eq: false }, crypto_type: { _eq: false } }
+        order_by: { name: asc }
+      ) {
+        id
+        name
+        parameter_type
+        default_value
+        description
+        required
+        choices
+      }
+      c2profileparametersinstances(
+        where: { instance_name: { _is_null: false } }
+        distinct_on: instance_name
+        order_by: { instance_name: asc }
+      ) {
+        instance_name
+      }
+    }
+  }
+`
+
+// Instance values by name (no operation_id — RLS from JWT scopes it)
+export const GET_C2_INSTANCE_VALUES_BY_NAME = gql`
+  query GetC2InstanceValuesByName($instance_name: String!, $c2_profile_id: Int!) {
+    c2profileparametersinstance(
+      where: {
+        instance_name: { _eq: $instance_name }
+        c2_profile_id: { _eq: $c2_profile_id }
+      }
+    ) {
+      value
+      c2profileparameter { name }
+    }
+  }
+`
+
+// Create / update a named C2 instance (Hasura action)
+export const CREATE_C2_INSTANCE = gql`
+  mutation CreateC2Instance($instance_name: String!, $c2_instance: String!, $c2profile_id: Int!) {
+    create_c2_instance(c2_instance: $c2_instance, instance_name: $instance_name, c2profile_id: $c2profile_id) {
+      status
+      error
+    }
+  }
+`
+
+// Delete all rows for a named instance
+export const DELETE_C2_INSTANCE = gql`
+  mutation DeleteC2Instance($name: String!, $c2_profile_id: Int!) {
+    delete_c2profileparametersinstance(
+      where: { instance_name: { _eq: $name }, c2_profile_id: { _eq: $c2_profile_id } }
+    ) {
+      affected_rows
+    }
+  }
+`
+
+// Import a previously exported instance JSON (Hasura action)
+export const IMPORT_C2_INSTANCE = gql`
+  mutation ImportC2Instance($c2_instance: jsonb!, $instance_name: String!, $c2profile_name: String!) {
+    import_c2_instance(c2_instance: $c2_instance, instance_name: $instance_name, c2profile_name: $c2profile_name) {
+      status
+      error
+    }
+  }
+`
+
 // Payloads that can be wrapped by a given wrapper type
 export const GET_WRAPPABLE_PAYLOADS = gql`
   query GetWrappablePayloads($wrapper_type_id: Int!) {
