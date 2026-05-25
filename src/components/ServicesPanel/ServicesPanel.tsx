@@ -94,6 +94,7 @@ function ConfigModal({ containerName, onClose }: { containerName: string; onClos
   const [content, setContent] = useState<string | null>(null)
   const [status, setStatus] = useState('')
   const [saving, setSaving] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [fetchFile] = useLazyQuery(CONTAINER_DOWNLOAD_FILE, {
     fetchPolicy: 'network-only',
@@ -123,6 +124,34 @@ function ConfigModal({ containerName, onClose }: { containerName: string; onClos
     writeFile({ variables: { container_name: containerName, file_path: filename, data: btoa(content) } })
   }
 
+  function exportConfig() {
+    if (content == null) return
+    const blob = new Blob([content], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${containerName}_config.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    setStatus('exported')
+  }
+
+  function onImportPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    e.target.value = ''
+    if (!f) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const text = typeof reader.result === 'string' ? reader.result : ''
+      setContent(text)
+      setStatus('imported — review & save to apply')
+    }
+    reader.onerror = () => setStatus('import failed')
+    reader.readAsText(f)
+  }
+
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
@@ -140,8 +169,19 @@ function ConfigModal({ containerName, onClose }: { containerName: string; onClos
           />
         )}
         {status && <div className={styles.modalStatus}>{status}</div>}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json,application/json"
+          style={{ display: 'none' }}
+          onChange={onImportPick}
+        />
         <div className={styles.modalFooter}>
           <button className={styles.btn} onClick={onClose}>close</button>
+          <button className={styles.btn} onClick={() => fileInputRef.current?.click()}>import</button>
+          {content != null && (
+            <button className={styles.btn} onClick={exportConfig}>export</button>
+          )}
           {content != null && (
             <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={save} disabled={saving}>
               {saving ? 'saving…' : 'save'}
