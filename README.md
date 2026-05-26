@@ -22,12 +22,14 @@ Crimson-black operator interface replacing Mythic's built-in React UI. Talks dir
 
 | Layer | Choice |
 |---|---|
-| Framework | React 18 + Vite |
-| Styling | Vanilla CSS Modules + custom design tokens (dark + light themes) |
-| GraphQL | Apollo Client 3 |
+| Framework | React 19 + Vite 6 |
+| Styling | Vanilla CSS Modules + custom design tokens (5 themes: dark, light, ember, abyss, sage) |
+| GraphQL | Apollo Client 3.14 |
 | Real-time | GraphQL Subscriptions over WebSocket (`graphql-ws`) |
 | State | Zustand |
+| Build node | Node 22 (Alpine, build stage only) |
 | Serve (prod) | nginx (Docker) — HTTPS only, self-signed cert auto-generated |
+| Build determinism | `package-lock.json` consumed by `npm ci` in the Dockerfile |
 
 ---
 
@@ -143,6 +145,8 @@ Switch active operation, view registered C2 / payload type containers.
 
 ### Callback management
 - Live callback list with alive / idle / dead status, sleep-aware check-in detection
+- **Beacon Health panel** — fleet-wide check-in health (healthy / overdue / late / dead) with per-callback cadence strip, accounting for sleep + jitter
+- Streaming / interactive callbacks (`last_checkin` epoch sentinel)
 - Per-callback annotations (color + freetext) persisted per operation
 - Multi-select for batched tasking across callbacks (Ctrl/Cmd-click)
 - Filter by status, agent type, search
@@ -161,19 +165,26 @@ Switch active operation, view registered C2 / payload type containers.
 - Network topology SVG with protocol-aware edges (HTTP / SMB / TCP / WebSocket / DNS), broken lines for dead agents
 - Full pivot graph panel — animated SOCKS traffic, P2P parent / child routing, host labels
 - Horizontal timeline of all tasks across callbacks (zoom 1× – 8×)
+- **Session Replay** — scrub the operation back in time, watch nodes appear / edges open and close, filter the feed to any point
 - MITRE ATT&CK matrix with command-coverage / task-coverage overlays; export as Navigator JSON layer
 
 ### Operations
-- Payload manager — build, list, soft-delete, full C2 parameter configuration, file-param uploads
+- Payload manager — build, list, soft-delete, full C2 parameter configuration, file-param uploads, wrapper payload selection, "rebuild with edits" + "rebuild as-is" (wrapper payloads keep their wrapped UUID), config export / import
 - Files panel — categorised downloads / uploads / screenshots with text-file inspector
 - Credentials panel
 - Operation event log with warning resolution
 - Services panel — registered C2 profile / payload type containers
 - Operations panel — switch active operation
 - Report panel — TTP-attributed task summary, sourced from `attacktask` + `attackcommand`
+- **Eventing Workflows** — visual DAG editor for Mythic eventing pipelines with YAML round-trip and live instance view
+
+### Operator QoL
+- **Cmd-K command palette** — fuzzy-jump to any rail view or callback (search by host, user, agent, display_id, IP)
+- **Mythic connection indicator** in the topbar — live state of the subscription WebSocket (connecting / connected / disconnected, with retry)
+- **Browser tab title** reflects active operation + unresolved warning count, so multiple tabs stay distinguishable
 
 ### Theming
-- Dark (WhisperGate crimson-on-black, default) and light (warm parchment) themes
+- Five themes: **dark** (WhisperGate crimson-on-black, default), **light** (warm parchment), **ember**, **abyss**, **sage** — cycle via the topbar toggle
 
 ---
 
@@ -182,32 +193,38 @@ Switch active operation, view registered C2 / payload type containers.
 ```
 src/
 ├── apollo/
-│   ├── client.ts          Apollo setup, lazy WS link, login / logout
-│   └── operations.ts      All GQL queries, mutations, subscriptions
+│   ├── client.ts             Apollo setup, lazy WS link, connection-state wiring, login / logout
+│   └── operations.ts         All GQL queries, mutations, subscriptions
 ├── components/
-│   ├── AttackPanel/       MITRE ATT&CK matrix view
-│   ├── CommandBar/        Input, tab completion, history, modals, snippets
-│   ├── CredentialsPanel/  Credential store browser
-│   ├── EventLogPanel/     Operation event log with warning resolution
-│   ├── FilesPanel/        Downloads / uploads / screenshots
-│   ├── OperationsPanel/   Switch active operation
-│   ├── OverviewPanel/     Operation dashboard
-│   ├── PayloadPanel/      Build / list / delete payloads
-│   ├── ProxiesPanel/      SOCKS, reverse port-forwards, pivot graph
-│   ├── Rail/              Icon strip — switches sidebar / panel view
-│   ├── ReportPanel/       TTP-attributed report generator
-│   ├── RightPanel/        Stats, network topology, agent detail
-│   ├── ServicesPanel/     Registered C2 / agent containers
-│   ├── Sidebar/           Callback list, selected callback detail
-│   ├── TaskFeed/          Feed + console views, file / process browsers
-│   ├── TimelinePanel/     Horizontal swimlane task timeline
-│   ├── Toast/             Callback + proxy notifications
-│   └── Topbar/            Logo, operation badge
-├── agentColor.ts          Shared agent identity colour map
-├── uploadTaskFile.ts      Shared file upload helper (Mythic /api/v1.4/task_upload_file_webhook)
-├── store/index.ts         Zustand store (token, operation, callbacks, tasks…)
-├── styles/tokens.css      Design tokens (dark + light themes, palette, fonts)
-└── views/                 Login → OperationSelect → Dashboard
+│   ├── AttackPanel/          MITRE ATT&CK matrix view
+│   ├── BeaconHealthPanel/    Fleet-wide check-in health + cadence
+│   ├── CommandBar/           Input, tab completion, history, modals, snippets
+│   ├── CommandPalette/       Cmd-K fuzzy palette for views + callbacks
+│   ├── CredentialsPanel/     Credential store browser
+│   ├── EventingPanel/        Eventing workflow DAG editor + instances
+│   ├── EventLogPanel/        Operation event log with warning resolution
+│   ├── FilesPanel/           Downloads / uploads / screenshots
+│   ├── OperationsPanel/      Switch active operation
+│   ├── OverviewPanel/        Operation dashboard
+│   ├── PayloadPanel/         Build / list / delete payloads (incl. wrappers)
+│   ├── ProxiesPanel/         SOCKS, reverse port-forwards, pivot graph
+│   ├── Rail/                 Icon strip — switches sidebar / panel view
+│   ├── ReplayPanel/          Session replay scrubber
+│   ├── ReportPanel/          TTP-attributed report generator
+│   ├── RightPanel/           Stats, network topology, agent detail
+│   ├── ServicesPanel/        Registered C2 / agent containers
+│   ├── SettingsPanel/        Operator settings (density, toasts, thresholds…)
+│   ├── Sidebar/              Callback list, selected callback detail
+│   ├── TaskFeed/             Feed + console views, file / process browsers
+│   ├── TimelinePanel/        Horizontal swimlane task timeline
+│   ├── Toast/                Callback + proxy notifications
+│   └── Topbar/               Logo, operation badge, connection indicator
+├── agentColor.ts             Shared agent identity colour map
+├── annotationColors.ts       Callback annotation palette
+├── uploadTaskFile.ts         Shared file upload helper (Mythic /api/v1.4/task_upload_file_webhook)
+├── store/index.ts            Zustand store (token, operation, callbacks, tasks, connection, …)
+├── styles/tokens.css         Design tokens (5 themes, palette, fonts)
+└── views/                    Login → OperationSelect → Dashboard
 ```
 
 ---
@@ -232,12 +249,27 @@ All proxied through nginx → `mythic_nginx:7443`.
 There is no local `node_modules` — the app runs inside Docker. Type-check is the primary correctness gate (no test suite).
 
 ```bash
-# Type-check via Docker
-docker run --rm -v "$PWD:/app" -w /app node:20-alpine \
-  sh -c "npm install --silent && npm run typecheck"
+# Type-check via Docker (uses the committed lockfile)
+docker run --rm -v "$PWD:/app" -w /app node:22-alpine \
+  sh -c "npm ci --silent && npm run typecheck"
+
+# Production build (same image the Dockerfile uses)
+docker run --rm -v "$PWD:/app" -w /app node:22-alpine \
+  sh -c "npm ci --silent && npm run build"
 ```
 
 The Vite dev server (`npm run dev`, port 3000) proxies `/api` to `https://localhost:7443` but **not** `/graphql/` or `/auth` — use Docker for real testing against Mythic.
+
+### Dependency updates
+
+The Dockerfile uses `npm ci`, so `package-lock.json` is the source of truth for what's shipped — both files are committed. To pull in new transitive versions:
+
+```bash
+docker run --rm -v "$PWD:/app" -w /app node:22-alpine npm update
+# review the diff in package-lock.json, then commit it
+```
+
+Major bumps (React, Apollo, Vite, …) should be done deliberately by editing `package.json` and re-running `npm install`. Re-run typecheck + build before committing.
 
 ---
 
