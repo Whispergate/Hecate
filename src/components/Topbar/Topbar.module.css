@@ -67,6 +67,53 @@
   color: var(--bone-800);
 }
 
+/* ── Mythic connection indicator ── */
+.connIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--bone-600);
+  cursor: default;
+}
+
+.connDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.connIdle {
+  background: var(--bone-800);
+}
+
+.connConnecting {
+  background: var(--status-warn-text, #d4a849);
+  animation: connPulse 1.2s ease-in-out infinite;
+}
+
+.connConnected {
+  background: #6fbf73;
+  box-shadow: 0 0 4px rgba(111, 191, 115, 0.6);
+}
+
+.connDisconnected {
+  background: var(--crimson-400, #d24a4a);
+  animation: connPulse 1s ease-in-out infinite;
+}
+
+.connLabel {
+  color: inherit;
+}
+
+@keyframes connPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
 /* ── User avatar button ── */
 .userDot {
   width: 26px;

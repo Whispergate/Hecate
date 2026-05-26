@@ -136,6 +136,8 @@ export interface HecateStore {
   removeProxyToast: (id: number) => void
   unresolvedWarnings: number
   setUnresolvedWarnings: (n: number) => void
+  mythicConnection: 'idle' | 'connecting' | 'connected' | 'disconnected'
+  setMythicConnection: (s: HecateStore['mythicConnection']) => void
 }
 
 export const useStore = create<HecateStore>((set) => ({
@@ -207,6 +209,8 @@ export const useStore = create<HecateStore>((set) => ({
   removeProxyToast: (id) => set((s) => ({ proxyToasts: s.proxyToasts.filter((t) => t.id !== id) })),
   unresolvedWarnings: 0,
   setUnresolvedWarnings: (unresolvedWarnings) => set({ unresolvedWarnings }),
+  mythicConnection: 'idle',
+  setMythicConnection: (mythicConnection) => set({ mythicConnection }),
 }))
 
 export const useSelectedCallback = () =>

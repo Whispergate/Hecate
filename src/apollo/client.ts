@@ -22,6 +22,7 @@ import { getMainDefinition } from '@apollo/client/utilities'
 import { setContext }        from '@apollo/client/link/context'
 import { onError }           from '@apollo/client/link/error'
 import { createClient }      from 'graphql-ws'
+import { useStore }          from '@/store'
 
 const HTTP_URL = '/graphql/'
 const AUTH_URL = '/auth'
@@ -66,8 +67,16 @@ function getWsLink(): GraphQLWsLink {
           )
         },
         on: {
-          error: (err) => console.error('[WS] error', err),
-          closed: () => console.warn('[WS] closed'),
+          connecting: () => useStore.getState().setMythicConnection('connecting'),
+          connected:  () => useStore.getState().setMythicConnection('connected'),
+          closed: () => {
+            console.warn('[WS] closed')
+            useStore.getState().setMythicConnection('disconnected')
+          },
+          error: (err) => {
+            console.error('[WS] error', err)
+            useStore.getState().setMythicConnection('disconnected')
+          },
         },
       })
     )
@@ -154,6 +163,7 @@ export function resetWsLink() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(_wsLink as any).client?.dispose?.()
     _wsLink = null
+    useStore.getState().setMythicConnection('idle')
   }
 }
 
@@ -161,5 +171,6 @@ export function mythicLogout() {
   sessionStorage.removeItem('hecate_token')
   sessionStorage.removeItem('hecate_user_id')
   _wsLink = null
+  useStore.getState().setMythicConnection('idle')
   apolloClient.clearStore()
 }

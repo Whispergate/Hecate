@@ -35,6 +35,8 @@ function parseSleepSeconds(cb: Callback): number {
 }
 
 function isLateCheckin(cb: Callback): boolean {
+  // Streaming callbacks (epoch sentinel) are never "late".
+  if (cb.last_checkin?.startsWith('1970-01-01')) return false
   const sleepSecs = parseSleepSeconds(cb)
   const elapsed   = (Date.now() - parseTs(cb.last_checkin).getTime()) / 1000
   // sleep=0 means continuous check-in — threshold is just the 5-min grace window

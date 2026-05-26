@@ -26,31 +26,34 @@ function buildDefinition(p: Payload, filename: string): string {
     byProfile.get(prof)!.params[inst.c2profileparameter.name] = inst.value
   }
 
+  const isWrapper = p.payloadtype.wrapper
   return JSON.stringify({
     description:      p.description,
     payload_type:     p.payloadtype.name,
     selected_os:      p.os,
     filename,
-    commands:         p.payloadcommands.map(pc => pc.command.cmd),
+    commands:         isWrapper ? [] : p.payloadcommands.map(pc => pc.command.cmd),
     build_parameters: p.buildparameterinstances.map(b => ({ name: b.buildparameter.name, value: b.value })),
-    c2_profiles: [...byProfile.entries()].map(([name, v]) => ({
+    c2_profiles: isWrapper ? [] : [...byProfile.entries()].map(([name, v]) => ({
       c2_profile:            name,
       c2_profile_is_p2p:     v.is_p2p,
       c2_profile_parameters: v.params,
     })),
+    ...(isWrapper ? { wrapper: true, wrapped_payload: p.wrapped_payload?.uuid ?? '' } : {}),
   })
 }
 
 function exportConfig(p: Payload, filename: string) {
+  const isWrapper = p.payloadtype.wrapper
   const obj = {
     payload_type:     p.payloadtype.name,
     os:               p.os,
     description:      p.description,
     filename,
     uuid:             p.uuid,
-    commands:         p.payloadcommands.map(pc => pc.command.cmd),
+    commands:         isWrapper ? [] : p.payloadcommands.map(pc => pc.command.cmd),
     build_parameters: p.buildparameterinstances.map(b => ({ name: b.buildparameter.name, value: b.value })),
-    c2_profiles: (() => {
+    c2_profiles: isWrapper ? {} : (() => {
       const m = new Map<string, Record<string, string>>()
       for (const inst of p.c2profileparametersinstances) {
         const prof = inst.c2profileparameter.c2profile.name
@@ -59,6 +62,7 @@ function exportConfig(p: Payload, filename: string) {
       }
       return Object.fromEntries(m)
     })(),
+    ...(isWrapper ? { wrapper: true, wrapped_payload: p.wrapped_payload?.uuid ?? '' } : {}),
   }
   const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' })
   const url  = URL.createObjectURL(blob)

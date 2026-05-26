@@ -9,12 +9,16 @@ export function parseTs(iso: string): Date {
   return new Date(/[Z+]/.test(iso) ? iso : iso + 'Z')
 }
 
+// Mythic uses last_checkin = "1970-01-01T00:00:00" as a sentinel for
+// streaming/interactive callbacks (its own UI shows "Streaming Now").
 export function timeSince(iso: string): string {
+  if (!iso || iso.startsWith('1970-01-01')) return 'streaming'
   const diff = Date.now() - parseTs(iso).getTime()
-  if (diff < 0)         return 'just now'
-  if (diff < 60_000)    return `${Math.floor(diff / 1_000)}s ago`
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`
-  return `${Math.floor(diff / 3_600_000)}h ago`
+  if (diff < 0)          return 'just now'
+  if (diff < 60_000)     return `${Math.floor(diff / 1_000)}s ago`
+  if (diff < 3_600_000)  return `${Math.floor(diff / 60_000)}m ago`
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`
+  return `${Math.floor(diff / 86_400_000)}d ago`
 }
 
 // Priority: sleep_info > last completed sleep task params > payload C2 config

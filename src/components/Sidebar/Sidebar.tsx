@@ -113,7 +113,13 @@ export function Sidebar() {
   const needle = filterText.toLowerCase()
 
   const sorted = useMemo(() => [...callbacks]
-    .map((cb) => ({ cb, elapsed: Date.now() - parseTs(cb.last_checkin).getTime() }))
+    .map((cb) => ({
+      cb,
+      // Streaming callbacks (epoch sentinel) sort as freshly-alive (elapsed = 0).
+      elapsed: cb.last_checkin?.startsWith('1970-01-01')
+        ? 0
+        : Date.now() - parseTs(cb.last_checkin).getTime(),
+    }))
     .sort((a, b) => {
       const rank = (e: number) => e < callbackAliveMs ? 0 : e < callbackIdleMs ? 1 : 2
       const dr = rank(a.elapsed) - rank(b.elapsed)
@@ -410,6 +416,14 @@ export function Sidebar() {
             <div className={styles.detailGroup}>Comms</div>
             <InfoRow label="IP" value={selected.ip || '—'} copy={selected.ip || undefined} />
             <InfoRow label="Agent" value={selected.payload.payloadtype.name} />
+            {selected.payload.description?.trim() && (
+              <InfoRow
+                label="Payload"
+                value={selected.payload.description}
+                copy={selected.payload.description}
+                title={selected.payload.description}
+              />
+            )}
             <InfoRow label="C2" value={selected.callbackc2profiles[0]?.c2profile.name ?? '—'} />
             <InfoRow
               label="Sleep"

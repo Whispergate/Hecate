@@ -27,6 +27,7 @@ import { EventingPanel }          from '@/components/EventingPanel/EventingPanel
 import { CallbackToastContainer }  from '@/components/Toast/CallbackToast'
 import { ProxyToastContainer }     from '@/components/Toast/ProxyToast'
 import { SettingsPanel }         from '@/components/SettingsPanel/SettingsPanel'
+import { CommandPalette }        from '@/components/CommandPalette/CommandPalette'
 import { SUB_CALLBACKS, SUB_OPERATION_ALERT_COUNT, SUB_CALLBACK_PORTS, SUB_CALLBACK_GRAPH_EDGES } from '@/apollo/operations'
 import { parseTs }       from '@/components/Sidebar/utils'
 import { useStore, useSelectedCallback } from '@/store'
@@ -188,6 +189,7 @@ export function Dashboard() {
       <CallbackToastContainer />
       <ProxyToastContainer />
       <SettingsPanel />
+      <CommandPalette />
 
       <div className={styles.body}>
         <Rail />

@@ -123,10 +123,12 @@ export function BeaconHealthPanel() {
   }, [callbacks])
 
   // Observed check-in history — appended whenever a last_checkin changes.
+  // Skip the streaming sentinel ("1970-01-01...") — those aren't real check-ins.
   const historyRef = useRef<Map<number, number[]>>(new Map())
   useEffect(() => {
     const hist = historyRef.current
     for (const cb of callbacks) {
+      if (cb.last_checkin?.startsWith('1970-01-01')) continue
       const lastMs = parseTs(cb.last_checkin).getTime()
       if (!Number.isFinite(lastMs)) continue
       const arr = hist.get(cb.id)
@@ -142,12 +144,14 @@ export function BeaconHealthPanel() {
   const stats: BeaconStat[] = useMemo(() => {
     return callbacks.map(cb => {
       const cfg        = sleepCfg.get(cb.id) ?? { intervalSec: 0, jitterPct: 0 }
+      const streaming  = cb.last_checkin?.startsWith('1970-01-01')
       const lastMs     = parseTs(cb.last_checkin).getTime()
-      const elapsedSec = Math.max(0, (now - lastMs) / 1000)
+      const elapsedSec = streaming ? 0 : Math.max(0, (now - lastMs) / 1000)
       const band       = cfg.intervalSec > 0 ? cfg.intervalSec * (1 + cfg.jitterPct / 100) : 0
       const effBand    = Math.max(band, 60)
       let health: Health
       if      (!cb.active)                            health = 'dead'
+      else if (streaming)                             health = 'healthy'
       else if (elapsedSec <= effBand + GRACE_SEC)     health = 'healthy'
       else if (elapsedSec <= effBand * 3 + GRACE_SEC) health = 'overdue'
       else                                            health = 'late'
@@ -158,7 +162,7 @@ export function BeaconHealthPanel() {
         elapsedSec,
         effBand,
         health,
-        nextMs: cfg.intervalSec > 0 ? lastMs + cfg.intervalSec * 1000 : 0,
+        nextMs: streaming || cfg.intervalSec <= 0 ? 0 : lastMs + cfg.intervalSec * 1000,
       }
     })
   }, [callbacks, sleepCfg, now])
@@ -192,7 +196,7 @@ export function BeaconHealthPanel() {
 
   const nextText = (s: BeaconStat): string => {
     if (s.health === 'dead') return 'inactive'
-    if (s.intervalSec <= 0)  return 'continuous'
+    if (s.nextMs <= 0)       return 'continuous'
     const d = (s.nextMs - now) / 1000
     return d >= 0 ? `in ${fmtDur(d)}` : `overdue ${fmtDur(-d)}`
   }

@@ -47,7 +47,8 @@ export interface Payload {
   creation_time:  string
   auto_generated: boolean
   operator:       { username: string }
-  payloadtype:    { name: string }
+  payloadtype:    { name: string; wrapper: boolean }
+  wrapped_payload: { uuid: string } | null
   filemetum:      { id: number; agent_file_id: string; filename_text: string; md5: string; sha1: string } | null
   callbacks_aggregate: { aggregate: { count: number } }
   c2profileparametersinstances: C2ParamInstance[]

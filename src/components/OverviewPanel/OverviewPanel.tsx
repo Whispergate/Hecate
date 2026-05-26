@@ -23,6 +23,8 @@ import styles                                         from './OverviewPanel.modu
 type CheckinState = 'alive' | 'idle' | 'dead'
 
 function checkinState(cb: Callback): CheckinState {
+  // Streaming/interactive callbacks have last_checkin = epoch sentinel.
+  if (cb.last_checkin?.startsWith('1970-01-01')) return 'alive'
   const elapsed = Date.now() - parseTs(cb.last_checkin).getTime()
   if (elapsed < 60_000)  return 'alive'
   if (elapsed < 600_000) return 'idle'

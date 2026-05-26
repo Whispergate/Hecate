@@ -39,6 +39,7 @@ function parseSleepSeconds(cb: Callback): number {
 }
 
 export function isLateCheckin(cb: Callback): boolean {
+  if (cb.last_checkin?.startsWith('1970-01-01')) return false
   const sleepSecs = parseSleepSeconds(cb)
   const elapsed   = (Date.now() - parseTs(cb.last_checkin).getTime()) / 1000
   const threshold = sleepSecs > 0 ? sleepSecs + 300 : 300

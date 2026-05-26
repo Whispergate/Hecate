@@ -174,7 +174,8 @@ export const GET_PAYLOADS = gql`
       creation_time
       auto_generated
       operator    { username }
-      payloadtype { name }
+      payloadtype { name wrapper }
+      wrapped_payload: payload { uuid }
       filemetum   { id agent_file_id filename_text md5 sha1 }
       callbacks_aggregate { aggregate { count } }
       c2profileparametersinstances {

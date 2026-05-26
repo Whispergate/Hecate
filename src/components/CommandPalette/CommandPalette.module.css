@@ -1,0 +1,140 @@
+/* src/components/CommandPalette/CommandPalette.module.css */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 500;
+  display: flex;
+  justify-content: center;
+  /* Anchor near the top — feels more app-like than centered */
+  padding-top: 12vh;
+}
+
+.palette {
+  width: 560px;
+  max-width: 92vw;
+  max-height: 70vh;
+  background: var(--bg-elevated);
+  border: 1px solid var(--beige-border-md);
+  border-radius: var(--radius-md, 6px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--beige-border);
+  color: var(--bone-100, var(--beige));
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 14px 18px;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--bone-800);
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.empty {
+  padding: 18px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-800);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  color: var(--bone-400);
+  transition: background var(--t-fast);
+}
+
+.rowActive,
+.row:hover {
+  background: var(--beige-dim);
+  color: var(--beige);
+}
+
+.kindTag {
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  padding: 2px 6px;
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-sm, 3px);
+  text-align: center;
+  color: var(--bone-600);
+}
+
+.kindView { color: var(--beige); border-color: var(--beige-border-md); }
+.kindCb   { color: var(--bone-400); }
+
+.title {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subtitle {
+  font-size: 9px;
+  color: var(--bone-800);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.rowActive .subtitle {
+  color: var(--bone-600);
+}
+
+.hint {
+  display: flex;
+  gap: 14px;
+  padding: 6px 16px;
+  border-top: 1px solid var(--beige-border);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--bone-800);
+}
+
+.hint kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1px solid var(--beige-border);
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-600);
+  background: transparent;
+  margin-right: 3px;
+}
+
+.hintRight {
+  margin-left: auto;
+}

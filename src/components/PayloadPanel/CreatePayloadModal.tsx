@@ -31,6 +31,7 @@ interface InitialConfig {
   c2Name:      string
   c2Params:    Record<string, string>
   commands:    string[]
+  wrappedUuid?: string
 }
 
 function decodeB64(b64: string | undefined | null): string {
@@ -59,6 +60,7 @@ function payloadToInitialConfig(payload: Payload): InitialConfig {
     c2Name,
     c2Params,
     commands:    payload.payloadcommands.map(pc => pc.command.cmd),
+    wrappedUuid: payload.wrapped_payload?.uuid ?? undefined,
   }
 }
 
@@ -96,6 +98,7 @@ function configFromJson(json: unknown): { typeName: string; config: InitialConfi
       commands: Array.isArray(j.commands)
         ? (j.commands as unknown[]).filter((c): c is string => typeof c === 'string')
         : [],
+      wrappedUuid: typeof j.wrapped_payload === 'string' ? j.wrapped_payload : undefined,
     },
   }
 }
@@ -826,7 +829,7 @@ function Configure({
   const [allCmds,      setAllCmds]      = useState<Command[]>([])
   const [cmdsLoaded,   setCmdsLoaded]   = useState(false)
   const [cmdFilter,    setCmdFilter]    = useState('')
-  const [wrappedUuid,  setWrappedUuid]  = useState('')
+  const [wrappedUuid,  setWrappedUuid]  = useState(initialConfig?.wrappedUuid ?? '')
 
   const { data: cmdData } = useQuery(GET_COMMANDS_FOR_TYPE, {
     variables: { payload_type_id: type.id },
