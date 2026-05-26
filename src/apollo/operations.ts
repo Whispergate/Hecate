@@ -183,7 +183,7 @@ export const GET_PAYLOADS = gql`
       }
       buildparameterinstances {
         value
-        buildparameter { name }
+        buildparameter { name group_name ui_position }
       }
       payloadcommands { command { cmd } }
       payload_build_steps(order_by: { step_number: asc }) {
@@ -230,6 +230,7 @@ export const GET_PAYLOAD_TYPES = gql`
         crypto_type
         hide_conditions
         ui_position
+        group_name
       }
       payloadtypec2profiles {
         c2profile {

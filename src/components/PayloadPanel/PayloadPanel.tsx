@@ -35,7 +35,7 @@ export interface C2ParamInstance {
 
 export interface BuildParamInstance {
   value: string
-  buildparameter: { name: string }
+  buildparameter: { name: string; group_name?: string; ui_position?: number }
 }
 
 export interface Payload {
@@ -367,24 +367,42 @@ function PayloadDetail({ payload, onDelete }: { payload: Payload; onDelete: () =
             ))
           })()}
 
-          {/* Build parameters */}
-          {payload.buildparameterinstances.length > 0 && (
-            <div className={styles.configGroup}>
-              <div className={styles.configGroupLabel}>Build Parameters</div>
-              <table className={styles.infoTable}>
-                <tbody>
-                  {payload.buildparameterinstances.map(p => (
-                    <tr key={p.buildparameter.name}>
-                      <td className={styles.tdKey}>{p.buildparameter.name}</td>
-                      <td className={`${styles.tdVal} ${styles.tdValMono}`}>
-                        {p.value || '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {/* Build parameters — grouped by buildparameter.group_name */}
+          {payload.buildparameterinstances.length > 0 && (() => {
+            const byGroup = new Map<string, BuildParamInstance[]>()
+            for (const inst of payload.buildparameterinstances) {
+              const g = inst.buildparameter.group_name || ''
+              if (!byGroup.has(g)) byGroup.set(g, [])
+              byGroup.get(g)!.push(inst)
+            }
+            for (const [, params] of byGroup) {
+              params.sort((a, b) =>
+                ((a.buildparameter.ui_position ?? 0) - (b.buildparameter.ui_position ?? 0))
+                || a.buildparameter.name.localeCompare(b.buildparameter.name)
+              )
+            }
+            return [...byGroup.entries()].map(([groupName, params]) => {
+              const isDefault = groupName === '' || groupName.toLowerCase() === 'default'
+              const label = isDefault ? 'Build Parameters' : groupName
+              return (
+                <div key={groupName || '__default__'} className={styles.configGroup}>
+                  <div className={styles.configGroupLabel}>{label}</div>
+                  <table className={styles.infoTable}>
+                    <tbody>
+                      {params.map(p => (
+                        <tr key={p.buildparameter.name}>
+                          <td className={styles.tdKey}>{p.buildparameter.name}</td>
+                          <td className={`${styles.tdVal} ${styles.tdValMono}`}>
+                            {p.value || '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            })
+          })()}
 
           {/* Commands */}
           {payload.payloadcommands.length > 0 && (

@@ -130,6 +130,7 @@ interface Param {
   crypto_type:     boolean
   hide_conditions: HideCondition[]
   ui_position:     number
+  group_name?:     string
 }
 
 function evalHideConditions(param: Param, allValues: Record<string, string>): boolean {
@@ -899,7 +900,26 @@ function Configure({
       prev.size === allCmds.length ? new Set() : new Set(allCmds.map(c => c.cmd))
     ), [allCmds])
 
-  const visibleBuildParams = [...type.buildparameters].sort((a, b) => a.name.localeCompare(b.name))
+  // Group build parameters by group_name (preserving server order within groups).
+  // Falsy/missing group_name → "Default" group (no header). Mythic UI renders each
+  // group as a labelled section, with non-default groups acting as collapsible accordions.
+  const buildParamGroups = (() => {
+    const order: string[] = []
+    const map = new Map<string, Param[]>()
+    for (const p of type.buildparameters) {
+      const g = p.group_name || ''
+      if (!map.has(g)) { map.set(g, []); order.push(g) }
+      map.get(g)!.push(p)
+    }
+    for (const [, params] of map) {
+      params.sort((a, b) => (a.ui_position - b.ui_position) || a.name.localeCompare(b.name))
+    }
+    return order.map(name => ({ name, params: map.get(name)! }))
+  })()
+
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
+  const toggleGroup = (g: string) =>
+    setCollapsedGroups(prev => ({ ...prev, [g]: !prev[g] }))
 
   // Picked files waiting to be uploaded. Key format: "build:<name>" or "c2:<name>"
   // For File:        files[0] is uploaded, value becomes the UUID
@@ -998,19 +1018,57 @@ function Configure({
       </div>
 
       {/* Build parameters */}
-      {visibleBuildParams.length > 0 && (
+      {type.buildparameters.length > 0 && (
         <div className={styles.section}>
           <div className={styles.sectionLabel}>Build Parameters</div>
-          {visibleBuildParams.map(p => (
-            <ParamInput
-              key={p.id}
-              param={p}
-              value={buildParams[p.name] ?? ''}
-              onChange={v => setBuildParam(p.name, v)}
-              onPickFiles={files => setFiles(`build:${p.name}`, files)}
-              allValues={buildParams}
-            />
-          ))}
+          {buildParamGroups.map(({ name: groupName, params }) => {
+            const allHidden = params.every(p => evalHideConditions(p, buildParams))
+            if (allHidden) return null
+            const isDefault = groupName === '' || groupName.toLowerCase() === 'default'
+            const collapsed = !!collapsedGroups[groupName]
+            if (isDefault) {
+              return (
+                <div key={groupName || '__default__'} className={styles.paramGroup}>
+                  {params.map(p => (
+                    <ParamInput
+                      key={p.id}
+                      param={p}
+                      value={buildParams[p.name] ?? ''}
+                      onChange={v => setBuildParam(p.name, v)}
+                      onPickFiles={files => setFiles(`build:${p.name}`, files)}
+                      allValues={buildParams}
+                    />
+                  ))}
+                </div>
+              )
+            }
+            return (
+              <div key={groupName} className={styles.paramGroup}>
+                <button
+                  type="button"
+                  className={styles.paramGroupHeader}
+                  onClick={() => toggleGroup(groupName)}
+                >
+                  <span className={styles.paramGroupChevron}>{collapsed ? '▸' : '▾'}</span>
+                  <span className={styles.paramGroupName}>{groupName}</span>
+                </button>
+                {!collapsed && (
+                  <div className={styles.paramGroupBody}>
+                    {params.map(p => (
+                      <ParamInput
+                        key={p.id}
+                        param={p}
+                        value={buildParams[p.name] ?? ''}
+                        onChange={v => setBuildParam(p.name, v)}
+                        onPickFiles={files => setFiles(`build:${p.name}`, files)}
+                        allValues={buildParams}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 

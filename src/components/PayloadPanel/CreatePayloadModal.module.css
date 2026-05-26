@@ -1145,3 +1145,50 @@
   color: var(--bone-200);
   border-color: var(--border-default);
 }
+
+/* ── Build parameter groups ── */
+.paramGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.paramGroupHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--bg-void);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--bone-400);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  text-align: left;
+  transition: all var(--t-fast);
+}
+.paramGroupHeader:hover {
+  color: var(--bone-200);
+  border-color: var(--border-default);
+}
+
+.paramGroupChevron {
+  font-size: 9px;
+  color: var(--bone-600);
+  width: 10px;
+}
+
+.paramGroupName {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.paramGroupBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 10px;
+  border-left: 1px solid var(--border-subtle);
+  margin-left: 4px;
+}
