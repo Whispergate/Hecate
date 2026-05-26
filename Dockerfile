@@ -4,13 +4,14 @@
 # ═══════════════════════════════════════════════════
 
 # ── Stage 1: Build ──────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Install deps first (layer cache)
-COPY package.json ./
-RUN npm install
+# Install deps first (layer cache).
+# `npm ci` uses package-lock.json as the source of truth — reproducible builds.
+COPY package.json package-lock.json ./
+RUN npm ci
 
 # Copy source and build
 COPY . .
