@@ -9,13 +9,13 @@
   display: flex;
   justify-content: center;
   /* Anchor near the top — feels more app-like than centered */
-  padding-top: 12vh;
+  padding-top: calc(12 * var(--svh));
 }
 
 .palette {
   width: 560px;
-  max-width: 92vw;
-  max-height: 70vh;
+  max-width: calc(92 * var(--svw));
+  max-height: calc(70 * var(--svh));
   background: var(--bg-elevated);
   border: 1px solid var(--beige-border-md);
   border-radius: var(--radius-md, 6px);

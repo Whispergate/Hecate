@@ -67,10 +67,13 @@ export function CallbackContextMenu({ cb, x, y, onClose }: Props) {
 
   const menuHeight = view === 'annotate' ? 200 : view === 'confirmExit' ? 100 : (isBulk ? 193 : 175)
   const menuWidth  = view === 'annotate' ? 230 : 180
+  // position: fixed inside the transformed #root resolves top/left in #root's local
+  // coord space, but the click coords (x, y) are real viewport pixels — divide by scale.
+  const s = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-scale')) || 1
   const style: React.CSSProperties = {
     position: 'fixed',
-    top:  y + menuHeight > window.innerHeight ? y - menuHeight : y,
-    left: x + menuWidth  > window.innerWidth  ? x - menuWidth  : x,
+    top:  (y + menuHeight > window.innerHeight ? y - menuHeight : y) / s,
+    left: (x + menuWidth  > window.innerWidth  ? x - menuWidth  : x) / s,
   }
 
   const submitAnnotate = () => {

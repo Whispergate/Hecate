@@ -11,7 +11,7 @@ import { Login }             from './views/Login'
 import { OperationSelect }   from './views/OperationSelect'
 import { Dashboard }         from './views/Dashboard'
 
-const FONT_SCALE = { small: '0.9', normal: '1', large: '1.2' } as const
+const FONT_SCALE = { small: '0.85', normal: '1', large: '1.35' } as const
 
 export default function App() {
   const token              = useStore((s) => s.token)

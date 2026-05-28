@@ -16,8 +16,8 @@
   background: var(--bg-raised);
   border: 1px solid var(--beige-border);
   border-radius: var(--radius-md);
-  width: min(680px, 96vw);
-  max-height: 88vh;
+  width: min(680px, calc(96 * var(--svw)));
+  max-height: calc(88 * var(--svh));
   display: flex;
   flex-direction: column;
   overflow: hidden;

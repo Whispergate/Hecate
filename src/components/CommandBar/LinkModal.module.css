@@ -14,7 +14,7 @@
   background: var(--bg-raised);
   border: 1px solid var(--beige-border);
   border-radius: var(--radius-md);
-  width: min(460px, 94vw);
+  width: min(460px, calc(94 * var(--svw)));
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -55,7 +55,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-height: 65vh;
+  max-height: calc(65 * var(--svh));
   overflow-y: auto;
 }
 

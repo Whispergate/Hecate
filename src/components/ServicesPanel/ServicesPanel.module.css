@@ -515,8 +515,8 @@
   background: var(--bg-raised);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
-  width: min(1000px, 92vw);
-  height: 85vh;
+  width: min(1000px, calc(92 * var(--svw)));
+  height: calc(85 * var(--svh));
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -638,8 +638,8 @@
   background: var(--bg-raised);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
-  width: min(680px, 92vw);
-  max-height: 82vh;
+  width: min(680px, calc(92 * var(--svw)));
+  max-height: calc(82 * var(--svh));
   display: flex;
   flex-direction: column;
   overflow: hidden;

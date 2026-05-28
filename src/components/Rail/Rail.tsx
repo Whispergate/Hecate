@@ -193,37 +193,41 @@ export function Rail() {
 
   return (
     <nav className={styles.rail}>
-      {ITEMS.map((item, idx) => (
-        <>
-          {idx === 5 && <div key="sep" className={styles.sep} />}
-          <div key={item.id} className={styles.btnWrap}>
-            <button
-              className={`${styles.btn} ${activeRailView === item.id ? styles.active : ''}`}
-              title={item.title}
-              onClick={() => setActiveRailView(item.id)}
-            >
-              {item.icon}
-            </button>
-            {item.id === 'logs' && unresolvedWarnings > 0 && (
-              <span className={styles.badge}>{unresolvedWarnings > 99 ? '99+' : unresolvedWarnings}</span>
-            )}
-            {item.id === 'proxies' && activePortCount > 0 && (
-              <span className={`${styles.badge} ${styles.badgeProxy}`}>{activePortCount}</span>
-            )}
-          </div>
-        </>
-      ))}
+      <div className={styles.scrollArea}>
+        {ITEMS.map((item, idx) => (
+          <>
+            {idx === 5 && <div key="sep" className={styles.sep} />}
+            <div key={item.id} className={styles.btnWrap}>
+              <button
+                className={`${styles.btn} ${activeRailView === item.id ? styles.active : ''}`}
+                title={item.title}
+                onClick={() => setActiveRailView(item.id)}
+              >
+                {item.icon}
+              </button>
+              {item.id === 'logs' && unresolvedWarnings > 0 && (
+                <span className={styles.badge}>{unresolvedWarnings > 99 ? '99+' : unresolvedWarnings}</span>
+              )}
+              {item.id === 'proxies' && activePortCount > 0 && (
+                <span className={`${styles.badge} ${styles.badgeProxy}`}>{activePortCount}</span>
+              )}
+            </div>
+          </>
+        ))}
+      </div>
 
-      {/* Push settings to bottom */}
-      <div className={styles.spacer} />
-      <div className={styles.sep} />
-      <button
-        className={`${styles.btn} ${isSettingsOpen ? styles.active : ''}`}
-        title="Settings"
-        onClick={() => setSettingsOpen(!isSettingsOpen)}
-      >
-        {SETTINGS_ICON}
-      </button>
+      {/* Settings pinned at the bottom — always visible even when the rail
+          can't fit all items (large font scale on short viewports). */}
+      <div className={styles.footer}>
+        <div className={styles.sep} />
+        <button
+          className={`${styles.btn} ${isSettingsOpen ? styles.active : ''}`}
+          title="Settings"
+          onClick={() => setSettingsOpen(!isSettingsOpen)}
+        >
+          {SETTINGS_ICON}
+        </button>
+      </div>
     </nav>
   )
 }

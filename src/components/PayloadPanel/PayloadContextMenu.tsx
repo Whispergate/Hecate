@@ -1,6 +1,6 @@
 /* src/components/PayloadPanel/PayloadContextMenu.tsx */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useMutation } from '@apollo/client'
 import {
   UPDATE_PAYLOAD_DESCRIPTION,
@@ -177,10 +177,27 @@ export function PayloadContextMenu({ payload, payloads, x, y, onClose, onRebuilt
     }
   }, [onClose, view])
 
+  const [pos, setPos] = useState<{ top: number; left: number }>({ top: y, left: x })
+
+  useLayoutEffect(() => {
+    const el = menuRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    const m = 8
+    // Clamp in real viewport coords (clientX/Y, innerWidth/Height, getBoundingClientRect
+    // all live there), then divide by --ui-scale because position: fixed inside the
+    // transformed #root resolves top/left in #root's local space.
+    const s = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-scale')) || 1
+    setPos({
+      top:  Math.max(m, Math.min(y, window.innerHeight - r.height - m)) / s,
+      left: Math.max(m, Math.min(x, window.innerWidth  - r.width  - m)) / s,
+    })
+  }, [x, y, view, compareId])
+
   const style: React.CSSProperties = {
     position: 'fixed',
-    top:  Math.min(y, window.innerHeight - 420),
-    left: x + 240 > window.innerWidth ? x - 240 : x,
+    top:  pos.top,
+    left: pos.left,
   }
 
   const copyToClipboard = (text: string, label: string) => {

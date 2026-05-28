@@ -7,7 +7,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 12vh;
+  padding-top: calc(12 * var(--svh));
   z-index: 1000;
 }
 
@@ -15,8 +15,8 @@
   background: var(--bg-raised);
   border: 1px solid var(--beige-border);
   border-radius: var(--radius-md);
-  width: min(540px, 94vw);
-  max-height: 70vh;
+  width: min(540px, calc(94 * var(--svw)));
+  max-height: calc(70 * var(--svh));
   display: flex;
   flex-direction: column;
   overflow: hidden;
