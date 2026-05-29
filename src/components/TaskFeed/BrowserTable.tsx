@@ -11,6 +11,7 @@
 */
 
 import { useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useMutation } from '@apollo/client'
 import { CREATE_TASK } from '@/apollo/operations'
 import styles from './BrowserTable.module.css'
@@ -98,10 +99,24 @@ function cellValue(col: ColDef, row: Row): string {
   return v === undefined || v === null ? '' : String(v)
 }
 
+interface MenuState { idx: number; x: number; y: number; up: boolean }
+
 export function BrowserTable({ config, rows, callbackDisplayId }: Props) {
   const [createTask] = useMutation(CREATE_TASK)
-  const [openMenu, setOpenMenu] = useState<number | null>(null)
+  const [openMenu, setOpenMenu] = useState<MenuState | null>(null)
   const [copied, setCopied]     = useState<string | null>(null)
+
+  // Menu is position:fixed (anchored to the button rect) so it escapes the
+  // scroll container's overflow:auto clipping. Flip upward near viewport bottom.
+  const toggleMenu = useCallback((idx: number, count: number, e: React.MouseEvent) => {
+    // Read the rect synchronously — React nulls currentTarget before a deferred
+    // state updater runs, so this must happen outside setOpenMenu's callback.
+    const r    = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const estH = count * 28 + 4
+    const up   = r.bottom + estH > window.innerHeight && r.top - estH > 0
+    const next: MenuState = { idx, x: r.left, y: up ? r.top : r.bottom, up }
+    setOpenMenu(m => (m?.idx === idx ? null : next))
+  }, [])
 
   const run = useCallback((a: ActionDef, row: Row) => {
     if (a.disabled?.(row)) return
@@ -172,12 +187,20 @@ export function BrowserTable({ config, rows, callbackDisplayId }: Props) {
                       <div className={styles.menuWrap}>
                         <button
                           className={styles.actBtn}
-                          onClick={() => setOpenMenu(m => (m === idx ? null : idx))}
+                          onClick={e => toggleMenu(idx, actions.length, e)}
                         >actions ▾</button>
-                        {openMenu === idx && (
+                        {openMenu?.idx === idx && createPortal(
                           <>
                             <div className={styles.menuBackdrop} onClick={() => setOpenMenu(null)} />
-                            <div className={styles.menu}>
+                            <div
+                              className={styles.menu}
+                              style={{
+                                left: openMenu.x,
+                                ...(openMenu.up
+                                  ? { bottom: window.innerHeight - openMenu.y }
+                                  : { top: openMenu.y }),
+                              }}
+                            >
                               {actions.map(a => {
                                 const dis = a.disabled?.(row)
                                 return (
@@ -190,7 +213,8 @@ export function BrowserTable({ config, rows, callbackDisplayId }: Props) {
                                 )
                               })}
                             </div>
-                          </>
+                          </>,
+                          document.body,
                         )}
                       </div>
                     ) : (
