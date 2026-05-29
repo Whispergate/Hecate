@@ -8,6 +8,10 @@ import { SUB_TASK_RESPONSES }                               from '@/apollo/opera
 import type { Task }                                        from '@/store'
 import { FileBrowser, parseLsOutput }                       from './FileBrowser'
 import { ProcessBrowser, parsePsOutput }                    from './ProcessBrowser'
+import { InjectionBrowser, parseInjectionTechniques }       from './InjectionBrowser'
+import { BrowserTable, parseConcatRows }                     from './BrowserTable'
+import { BROWSER_TABLE_CONFIGS }                             from './browserTableConfigs'
+import { ScreenshotView, parseScreenshotIds }                from './ScreenshotView'
 import styles                                               from './TaskFeed.module.css'
 
 interface Props { task: Task }
@@ -191,6 +195,19 @@ export const TaskBlock = memo(function TaskBlock({ task }: Props) {
             if (lsResult) return <FileBrowser result={lsResult} callbackDisplayId={task.callback.display_id} />
             const psResult = parsePsOutput(fullOutput)
             if (psResult) return <ProcessBrowser processes={psResult} callbackDisplayId={task.callback.display_id} />
+            if (task.command_name === 'get_injection_techniques') {
+              const injResult = parseInjectionTechniques(fullOutput)
+              if (injResult) return <InjectionBrowser techniques={injResult} callbackDisplayId={task.callback.display_id} />
+            }
+            const tableCfg = BROWSER_TABLE_CONFIGS[task.command_name]
+            if (tableCfg) {
+              const rows = parseConcatRows(fullOutput)
+              if (rows) return <BrowserTable config={tableCfg} rows={rows} callbackDisplayId={task.callback.display_id} />
+            }
+            if (task.command_name === 'screenshot') {
+              const shots = parseScreenshotIds(fullOutput)
+              if (shots) return <ScreenshotView fileIds={shots} />
+            }
             return <pre ref={outputRef} className={styles.outputPre}>{fullOutput}</pre>
           })()}
         </div>

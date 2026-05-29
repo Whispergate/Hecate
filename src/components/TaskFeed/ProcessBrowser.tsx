@@ -267,6 +267,21 @@ export function ProcessBrowser({ processes, callbackDisplayId }: Props) {
                           onClick={() => { setInjectTarget(proc); if (shellcodePayloads.length > 0) setSelectedTpl(shellcodePayloads[0].template) }}
                         >inject</button>
                         <button
+                          className={styles.actBtn}
+                          title={`steal token from PID ${proc.process_id}`}
+                          onClick={() => issueCmd('steal_token', String(proc.process_id))}
+                        >token</button>
+                        <button
+                          className={styles.actBtn}
+                          title={`screenshot via PID ${proc.process_id}`}
+                          onClick={() => issueCmd('screenshot_inject', JSON.stringify({ pid: proc.process_id, count: 1, interval: 0 }))}
+                        >shot</button>
+                        <button
+                          className={styles.actBtn}
+                          title={`inject keylogger into PID ${proc.process_id}`}
+                          onClick={() => issueCmd('keylog_inject', String(proc.process_id))}
+                        >keylog</button>
+                        <button
                           className={`${styles.actBtn} ${styles.actKill}`}
                           title={`kill PID ${proc.process_id}`}
                           onClick={() => issueCmd('kill', String(proc.process_id))}

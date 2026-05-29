@@ -1,0 +1,125 @@
+/* src/components/TaskFeed/InjectionBrowser.module.css */
+
+.browser {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+}
+
+/* ── Toolbar ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--beige-border);
+  flex-shrink: 0;
+}
+
+.title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--beige);
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-700);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  padding: 1px 5px;
+}
+
+.currentLabel {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--crimson-400);
+}
+
+/* ── Table ── */
+.tableWrap {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-raised);
+}
+.table thead tr { border-bottom: 1px solid var(--beige-border); }
+
+.table th {
+  text-align: left;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bone-700);
+  padding: 4px 8px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.thAct  { width: 70px; }
+.thName { min-width: 160px; }
+
+/* ── Rows ── */
+.row {
+  border-bottom: 1px solid var(--beige-dim);
+  transition: background var(--t-fast);
+}
+.row:hover { background: var(--beige-dim); }
+.rowCurrent { background: rgba(181,40,40,0.06); }
+
+.table td { padding: 3px 8px; vertical-align: middle; }
+
+.tdName {
+  color: var(--bone-200);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.techName { color: var(--bone-200); }
+
+.currentDot { font-size: 7px; color: var(--crimson-400); }
+
+/* ── Set button ── */
+.tdAct { padding-left: 10px; }
+
+.setBtn {
+  background: transparent;
+  border: 1px solid var(--beige-border);
+  color: var(--bone-700);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  cursor: pointer;
+  padding: 1px 8px;
+  border-radius: 2px;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+  white-space: nowrap;
+}
+.setBtn:hover:not(:disabled) {
+  color: var(--crimson-300);
+  border-color: rgba(181,40,40,0.4);
+  background: rgba(181,40,40,0.1);
+}
+.setBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  color: var(--bone-900);
+}
