@@ -421,16 +421,18 @@
   --crimson-300:#443aa0;   /* bright accent */
   --crimson-200:#342c88;   /* highlight */
 
-  /* ── Bone — deep violet ink, contrast-checked on lavender bg ── */
-  --bone-100:   #0c0a18;   /* primary text */
-  --bone-200:   #14102a;
-  --bone-300:   #1c1838;   /* mild emphasis */
-  --bone-400:   #221d3e;   /* body text */
-  --bone-500:   #2c2650;   /* mid emphasis */
-  --bone-600:   #342e5c;   /* secondary labels */
-  --bone-700:   #423a70;   /* tertiary labels */
-  --bone-800:   #4e4684;   /* dimmed */
-  --bone-900:   #645aa0;   /* placeholders */
+  /* ── Bone — neutral slate-grey ink (only a hint of violet) so text reads
+        cleanly on lavender AND "dead"/muted states stay distinct from the
+        violet accent ramp. ── */
+  --bone-100:   #14141a;   /* primary text */
+  --bone-200:   #1e1e26;
+  --bone-300:   #282933;   /* mild emphasis */
+  --bone-400:   #30313d;   /* body text */
+  --bone-500:   #3c3d4c;   /* mid emphasis */
+  --bone-600:   #46485a;   /* secondary labels */
+  --bone-700:   #585a70;   /* tertiary labels / dead tier — clear grey */
+  --bone-800:   #6c6e86;   /* dimmed */
+  --bone-900:   #8688a0;   /* placeholders */
 
   /* ── Accent (cyan, used for ports / live counters) ── */
   --accent-info:      #0a5a78;
@@ -470,9 +472,10 @@
   --beige-border-md:   rgba(58,44,112,0.30);
   --beige-border-strong:rgba(58,44,112,0.50);
 
-  /* ── Semantic ── */
-  --status-alive:      #4838b0;
-  --status-alive-glow: rgba(72,56,176,0.5);
+  /* ── Semantic ── (distinct hues, NOT violet, so status-coded bars don't
+        collapse into the lavender accent — e.g. beacon-health tiers) ── */
+  --status-alive:      #2e8b57;   /* green — clearly apart from violet/grey */
+  --status-alive-glow: rgba(46,139,87,0.5);
   --status-idle:       #885010;
   --status-dead:       #601818;
   --status-ok:         #2a6830;
