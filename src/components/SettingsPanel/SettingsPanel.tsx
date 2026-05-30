@@ -82,6 +82,7 @@ function AppearanceSection() {
             { label: 'Ember', value: 'ember' },
             { label: 'Abyss', value: 'abyss' },
             { label: 'Sage',  value: 'sage'  },
+            { label: 'Lavender', value: 'lavender' },
           ]}
           value={theme}
           onChange={setTheme}

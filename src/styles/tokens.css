@@ -374,3 +374,124 @@
   --glow-crimson:   rgba(80,160,112,0.14);
   --glow-crimson-md:rgba(80,160,112,0.26);
 }
+
+/* ═══════════════════════════════════════════════════
+   Lavender theme — LIGHT theme, soft lavender surfaces (#D3D3FF)
+   with deep violet ink/accents for contrast.
+   ═══════════════════════════════════════════════════ */
+
+[data-theme="lavender"] {
+  /* ── Topology SVG (light mode) — dark nodes on light bg ── */
+  --topo-svg-bg:       transparent;
+  --topo-c2-bg:        #2c2858;
+  --topo-node-bg:      #34306a;
+  --topo-node-sel:     #443e84;
+  --topo-label-bg:     rgba(220,220,250,0.95);
+  --topo-dead-line:    rgba(60,50,110,0.45);
+  --topo-text-accent:  #564bb0;          /* inside dark node */
+  --topo-text-node:    #160c34;          /* hostname on light SVG bg */
+  --topo-text-node-sel:#0c0820;
+  --topo-text-info:    #1c1448;
+  /* protocol line colors — darker/saturated for light bg */
+  --proto-http:    #1e6810;
+  --proto-smb:     #4a3810;
+  --proto-tcp:     #6a4a00;
+  --proto-ws:      #4a1880;
+  --proto-dns:     #085870;
+  --proto-default: #5648a0;
+
+  /* ── Rail ── */
+  --rail-icon-opacity:       0.65;
+  --rail-icon-opacity-hover: 0.95;
+
+  /* ── Backgrounds — soft lavender, #D3D3FF as the main surface ── */
+  --bg-void:    #e6e6fc;
+  --bg-base:    #dedefa;
+  --bg-raised:  #d3d3ff;   /* main color */
+  --bg-elevated:#c6c6f4;
+  --bg-hover:   #b8b8ec;
+
+  /* ── Crimson ramp = violet, deeper for contrast on light ── */
+  --crimson-900:#ecebfd;
+  --crimson-800:#dcdbfa;
+  --crimson-700:#c8c6f4;
+  --crimson-600:#9b96e0;
+  --crimson-500:#6a60c8;
+  --crimson-400:#564bb0;   /* primary accent */
+  --crimson-300:#443aa0;   /* bright accent */
+  --crimson-200:#342c88;   /* highlight */
+
+  /* ── Bone — deep violet ink, contrast-checked on lavender bg ── */
+  --bone-100:   #0c0a18;   /* primary text */
+  --bone-200:   #14102a;
+  --bone-300:   #1c1838;   /* mild emphasis */
+  --bone-400:   #221d3e;   /* body text */
+  --bone-500:   #2c2650;   /* mid emphasis */
+  --bone-600:   #342e5c;   /* secondary labels */
+  --bone-700:   #423a70;   /* tertiary labels */
+  --bone-800:   #4e4684;   /* dimmed */
+  --bone-900:   #645aa0;   /* placeholders */
+
+  /* ── Accent (cyan, used for ports / live counters) ── */
+  --accent-info:      #0a5a78;
+  --accent-info-bg:   rgba(10,90,120,0.10);
+  --accent-info-bd:   rgba(10,90,120,0.40);
+
+  /* ── Agent colors — darker/saturated for contrast on light ── */
+  --agent-apollo:     #1e6810;
+  --agent-poseidon:   #185868;
+  --agent-medusa:     #5a2890;
+  --agent-hermes:     #785010;
+  --agent-thanatos:   #802020;
+  --agent-athena:     #204870;
+  --agent-merlin:     #804010;
+  --agent-freyja:     #4828a0;
+  --agent-arachne:    #5a5810;
+  --agent-atlas:      #105868;
+  --agent-nimplant:   #487010;
+  --agent-xenon:      #803060;
+  --agent-forgemaster:#704830;
+  --agent-service-wrapper: #5a4818;
+
+  /* ── Timeline track palette — darker hues for light bg ── */
+  --track-1: #a04810;
+  --track-2: #1e4080;
+  --track-3: #1e6810;
+  --track-4: #5a2890;
+  --track-5: #105868;
+  --track-6: #785010;
+  --track-7: #80305a;
+  --track-8: #487010;
+
+  /* ── Beige — deep violet on light backgrounds ── */
+  --beige:             #3a2c70;
+  --beige-dim:         rgba(58,44,112,0.07);
+  --beige-border:      rgba(58,44,112,0.18);
+  --beige-border-md:   rgba(58,44,112,0.30);
+  --beige-border-strong:rgba(58,44,112,0.50);
+
+  /* ── Semantic ── */
+  --status-alive:      #4838b0;
+  --status-alive-glow: rgba(72,56,176,0.5);
+  --status-idle:       #885010;
+  --status-dead:       #601818;
+  --status-ok:         #2a6830;
+  --status-ok-text:    #1a5020;
+  --status-warn:       #705010;
+  --status-warn-text:  #905818;
+  --status-err:        #881818;
+  --status-err-text:   #6a1010;
+
+  /* ── Integrity indicators ── */
+  --integrity-med:     #8a5c10;
+  --integrity-high:    #a02020;
+
+  /* ── Borders ── */
+  --border-subtle:  rgba(60,50,130,0.18);
+  --border-default: rgba(60,50,130,0.34);
+  --border-strong:  rgba(60,50,130,0.54);
+
+  /* ── Glows ── */
+  --glow-crimson:   rgba(86,75,176,0.10);
+  --glow-crimson-md:rgba(86,75,176,0.18);
+}

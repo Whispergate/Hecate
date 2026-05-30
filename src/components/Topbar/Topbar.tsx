@@ -64,7 +64,7 @@ export function Topbar() {
         <button
           className={styles.themeToggle}
           onClick={() => {
-            const order = ['dark', 'light', 'ember', 'abyss', 'sage'] as const
+            const order = ['dark', 'light', 'ember', 'abyss', 'sage', 'lavender'] as const
             const next = order[(order.indexOf(theme) + 1) % order.length]
             setTheme(next)
           }}
@@ -74,7 +74,8 @@ export function Topbar() {
           : theme === 'light' ? '☀'
           : theme === 'ember' ? '✦'
           : theme === 'abyss' ? '✶'
-          : '❋'}
+          : theme === 'sage'  ? '❋'
+          : '♥'}
         </button>
 
         {token && (

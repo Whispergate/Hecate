@@ -122,7 +122,7 @@ export interface HecateStore {
   setCurrentTasks: (tasks: Task[]) => void
   activeRailView: 'overview' | 'callbacks' | 'health' | 'payloads' | 'services' | 'proxies' | 'credentials' | 'files' | 'attack' | 'logs' | 'report' | 'operations' | 'timeline' | 'replay' | 'eventing'
   setActiveRailView: (v: HecateStore['activeRailView']) => void
-  theme: 'dark' | 'light' | 'ember' | 'abyss' | 'sage'
+  theme: 'dark' | 'light' | 'ember' | 'abyss' | 'sage' | 'lavender'
   setTheme: (t: HecateStore['theme']) => void
   settings: HecateSettings
   updateSettings: (patch: Partial<HecateSettings>) => void
