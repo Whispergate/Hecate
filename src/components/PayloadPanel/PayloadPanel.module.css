@@ -426,6 +426,18 @@
 }
 .hDotOk  { color: var(--status-ok);  background: color-mix(in srgb, var(--status-ok)  20%, transparent); }
 .hDotErr { color: var(--status-err); background: color-mix(in srgb, var(--status-err) 20%, transparent); }
+/* Skipped: hatched, dashed border, muted — clearly distinct from green "done" */
+.hDotSkipped {
+  color: var(--bone-700);
+  border-style: dashed;
+  opacity: 0.8;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent, transparent 2px,
+    color-mix(in srgb, var(--bone-700) 40%, transparent) 2px,
+    color-mix(in srgb, var(--bone-700) 40%, transparent) 4px
+  );
+}
 
 @keyframes hpulse {
   0%, 100% { opacity: 1; }
@@ -439,6 +451,11 @@
   text-align: center;
   max-width: 64px;
   word-break: break-word;
+}
+.hLabelSkipped {
+  color: var(--bone-800);
+  text-decoration: line-through;
+  opacity: 0.75;
 }
 
 /* Popover drops below the node */
@@ -465,7 +482,29 @@
   font-size: 10px;
   font-weight: 700;
   color: var(--bone-200);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
+
+.hStatusBadge {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 1px 5px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.hStatus_skipped { color: var(--bone-700); }
+.hStatus_running { color: var(--status-warn); }
+.hStatus_ok      { color: var(--status-ok); }
+.hStatus_err     { color: var(--status-err); }
+.hStatus_pending { color: var(--bone-800); }
 
 .hPopoverDesc {
   font-size: 9px;

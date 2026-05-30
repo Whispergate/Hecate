@@ -135,6 +135,22 @@
   padding: 6px 12px;
 }
 
+.logBox {
+  margin: 8px 12px 4px;
+  max-height: 320px;
+  overflow: auto;
+  background: var(--bg-void);
+  border: 1px solid var(--beige-border-md);
+  border-radius: 2px;
+  color: var(--bone-200);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1.45;
+  padding: 7px 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* ── Diff / compare ── */
 .select {
   display: block;

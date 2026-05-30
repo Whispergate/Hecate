@@ -5,8 +5,8 @@
    ═══════════════════════════════════════════════════ */
 
 import { useState, useCallback } from 'react'
-import { useQuery, useMutation } from '@apollo/client'
-import { GET_PAYLOADS, DELETE_PAYLOAD } from '@/apollo/operations'
+import { useQuery, useMutation, useSubscription } from '@apollo/client'
+import { GET_PAYLOADS, DELETE_PAYLOAD, SUB_PAYLOAD_BUILD } from '@/apollo/operations'
 import { useStore }              from '@/store'
 import { parseTs }               from '@/components/Sidebar/utils'
 import { agentColor }            from '@/agentColor'
@@ -22,6 +22,7 @@ interface PayloadBuildStep {
   step_name:        string
   step_description: string
   step_success:     boolean
+  step_skip:        boolean
   start_time:       string | null
   end_time:         string | null
   step_stdout:      string
@@ -44,6 +45,9 @@ export interface Payload {
   description:    string
   os:             string
   build_phase:    string
+  build_message:  string | null
+  build_stderr:   string | null
+  build_stdout:   string | null
   creation_time:  string
   auto_generated: boolean
   operator:       { username: string }
@@ -161,7 +165,24 @@ function PayloadRow({
 
 // ── Horizontal build step chain ───────────────────────
 
-function HorizStepChain({ steps }: { steps: PayloadBuildStep[] }) {
+function stepState(s: PayloadBuildStep, buildPhase: string):
+  'skipped' | 'running' | 'ok' | 'err' | 'pending' {
+  // Mirrors Mythic's PayloadsTableRowBuildProgress getButton() priority:
+  // step_skip wins over everything (the server auto-completes unreported steps
+  // with step_success=true + step_skip=true — those are skipped, NOT done).
+  if (s.step_skip) return 'skipped'
+  if (!s.end_time) {
+    if (!s.start_time) return 'pending'           // no info yet → waiting
+    return buildPhase === 'building' ? 'running' : 'pending'
+  }
+  return s.step_success ? 'ok' : 'err'
+}
+
+const STATE_LABEL: Record<ReturnType<typeof stepState>, string> = {
+  skipped: 'Skipped', running: 'Running…', ok: 'Success', err: 'Error', pending: 'Waiting to run…',
+}
+
+function HorizStepChain({ steps, buildPhase }: { steps: PayloadBuildStep[]; buildPhase: string }) {
   const [openId, setOpenId] = useState<number | null>(null)
 
   if (!steps.length) return null
@@ -169,11 +190,11 @@ function HorizStepChain({ steps }: { steps: PayloadBuildStep[] }) {
   return (
     <div className={styles.horizChain}>
       {steps.map((s, i) => {
-        const done    = !!s.end_time
-        const running = !!s.start_time && !done
-        const dotCls  = running       ? styles.hDotRunning
-                      : done && s.step_success  ? styles.hDotOk
-                      : done && !s.step_success ? styles.hDotErr
+        const state   = stepState(s, buildPhase)
+        const dotCls  = state === 'skipped' ? styles.hDotSkipped
+                      : state === 'running' ? styles.hDotRunning
+                      : state === 'ok'      ? styles.hDotOk
+                      : state === 'err'     ? styles.hDotErr
                       : styles.hDotPending
         const isOpen  = openId === s.id
 
@@ -186,15 +207,22 @@ function HorizStepChain({ steps }: { steps: PayloadBuildStep[] }) {
               <button
                 className={`${styles.hBubble} ${dotCls}`}
                 onClick={() => setOpenId(isOpen ? null : s.id)}
-                title={s.step_name}
+                title={`${s.step_name} — ${STATE_LABEL[state]}`}
               />
-              <span className={styles.hLabel}>{s.step_name}</span>
+              <span className={`${styles.hLabel} ${state === 'skipped' ? styles.hLabelSkipped : ''}`}>
+                {s.step_name}
+              </span>
             </div>
 
             {/* expanded detail — rendered below the full chain via absolute/portal-free approach */}
             {isOpen && (
               <div className={styles.hPopover}>
-                <div className={styles.hPopoverName}>{s.step_name}</div>
+                <div className={styles.hPopoverName}>
+                  {s.step_name}
+                  <span className={`${styles.hStatusBadge} ${styles[`hStatus_${state}`]}`}>
+                    {STATE_LABEL[state]}
+                  </span>
+                </div>
                 {s.step_description && (
                   <div className={styles.hPopoverDesc}>{s.step_description}</div>
                 )}
@@ -232,6 +260,19 @@ function PayloadDetail({ payload, onDelete }: { payload: Payload; onDelete: () =
   const agent     = agentStyle(payload.payloadtype.name)
   const callCount = payload.callbacks_aggregate.aggregate.count
 
+  // Live build progress: while a payload is building, the one-shot GET_PAYLOADS
+  // snapshot never advances, so steps freeze (and read all-green once done).
+  // Subscribe to push build_phase / step updates only while it's building.
+  const isBuilding = payload.build_phase === 'building'
+  const { data: liveBuild } = useSubscription(SUB_PAYLOAD_BUILD, {
+    variables: { uuid: payload.uuid },
+    skip: !isBuilding,
+  })
+  const live       = liveBuild?.payload?.[0]
+  const buildPhase = live?.build_phase ?? payload.build_phase
+  const buildSteps = (live?.payload_build_steps ?? payload.payload_build_steps) as PayloadBuildStep[]
+  const fileId     = payload.filemetum?.agent_file_id ?? live?.filemetum?.agent_file_id
+
   const [deletePayload] = useMutation(DELETE_PAYLOAD)
 
   const copyUuid = useCallback(() => {
@@ -249,8 +290,8 @@ function PayloadDetail({ payload, onDelete }: { payload: Payload; onDelete: () =
   }, [confirmDel, deletePayload, payload.id, onDelete])
 
   // Handler accepts both filemeta agent_file_id and payload UUID
-  const downloadUrl = payload.build_phase === 'success'
-    ? `/direct/download/${payload.filemetum?.agent_file_id ?? payload.uuid}`
+  const downloadUrl = buildPhase === 'success'
+    ? `/direct/download/${fileId ?? payload.uuid}`
     : null
 
   const filename = decodeFilename(payload.filemetum?.filename_text)
@@ -269,8 +310,8 @@ function PayloadDetail({ payload, onDelete }: { payload: Payload; onDelete: () =
           >
             {payload.payloadtype.name}
           </span>
-          <span className={`${styles.phasePill} ${buildPhaseStyle(payload.build_phase)}`}>
-            {buildPhaseLabel(payload.build_phase)}
+          <span className={`${styles.phasePill} ${buildPhaseStyle(buildPhase)}`}>
+            {buildPhaseLabel(buildPhase)}
           </span>
           <div className={styles.headerActions}>
             {downloadUrl ? (
@@ -327,10 +368,10 @@ function PayloadDetail({ payload, onDelete }: { payload: Payload; onDelete: () =
       </div>
 
       {/* ── Build steps ── */}
-      {payload.payload_build_steps?.length > 0 && (
+      {buildSteps?.length > 0 && (
         <div className={styles.detailSection}>
           <div className="sec-label">Build Steps</div>
-          <HorizStepChain steps={payload.payload_build_steps} />
+          <HorizStepChain steps={buildSteps} buildPhase={buildPhase} />
         </div>
       )}
 

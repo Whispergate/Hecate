@@ -171,6 +171,9 @@ export const GET_PAYLOADS = gql`
       description
       os
       build_phase
+      build_message
+      build_stderr
+      build_stdout
       creation_time
       auto_generated
       operator    { username }
@@ -192,6 +195,7 @@ export const GET_PAYLOADS = gql`
         step_number
         step_name
         step_success
+        step_skip
         start_time
         end_time
         step_stdout
@@ -461,16 +465,19 @@ export const CREATE_PAYLOAD = gql`
 export const SUB_PAYLOAD_BUILD = gql`
   subscription SubPayloadBuild($uuid: String!) {
     payload(where: { uuid: { _eq: $uuid } }) {
+      id
       build_phase
       build_message
       build_stderr
-      filemetum { agent_file_id }
+      build_stdout
+      filemetum { id agent_file_id }
       payload_build_steps(order_by: { step_number: asc }) {
         id
         step_number
         step_name
         step_description
         step_success
+        step_skip
         start_time
         end_time
         step_stdout

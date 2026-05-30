@@ -136,7 +136,7 @@ function compareParams(a: Payload, b: Payload): ParamRow[] {
 
 // ── component ─────────────────────────────────────────
 
-type View = 'menu' | 'editDesc' | 'rename' | 'iocs' | 'compare' | 'confirmBuild'
+type View = 'menu' | 'editDesc' | 'rename' | 'iocs' | 'compare' | 'confirmBuild' | 'buildMsg' | 'buildErr'
 
 interface Props {
   payload:          Payload
@@ -408,6 +408,36 @@ export function PayloadContextMenu({ payload, payloads, x, y, onClose, onRebuilt
     </div>
   )
 
+  if (view === 'buildMsg' || view === 'buildErr') {
+    const isErr = view === 'buildErr'
+    // Mirrors Mythic's "Payload Build Messages" dialog: the message view shows
+    // build_message + build_stdout together; the error view shows build_stderr.
+    const msg    = payload.build_message ?? ''
+    const stdout = payload.build_stdout ?? ''
+    const text   = isErr
+      ? (payload.build_stderr ?? '')
+      : [
+          msg.trim()    && `Message:\n${msg}`,
+          stdout.trim() && `STDOUT:\n${stdout}`,
+        ].filter(Boolean).join('\n\n')
+    return (
+      <div ref={menuRef} className={styles.menu} style={{ ...style, minWidth: 360 }} onContextMenu={e => e.preventDefault()}>
+        <div className={styles.header}>{isErr ? 'Build stderr' : 'Build messages'}</div>
+        {text.trim()
+          ? <pre className={styles.logBox}>{text}</pre>
+          : <div className={styles.empty}>{isErr ? 'No build stderr' : 'No build messages'}</div>}
+        <div className={styles.rowActions}>
+          {text.trim() && (
+            <button className={styles.btnSecondary} onClick={() => copyToClipboard(text, isErr ? 'stderr' : 'message')}>
+              {copied === (isErr ? 'stderr' : 'message') ? 'Copied ✓' : 'Copy'}
+            </button>
+          )}
+          <button className={styles.btnSecondary} onClick={() => setView('menu')}>Back</button>
+        </div>
+      </div>
+    )
+  }
+
   // ── Main menu ─────────────────────────────────────
 
   return (
@@ -424,6 +454,15 @@ export function PayloadContextMenu({ payload, payloads, x, y, onClose, onRebuilt
       </button>
       <button className={styles.item} onClick={() => setView('compare')}>
         Compare configuration
+      </button>
+
+      <div className={styles.divider} />
+
+      <button className={styles.item} onClick={() => setView('buildMsg')}>
+        Show build messages
+      </button>
+      <button className={styles.item} onClick={() => setView('buildErr')}>
+        Show build stderr
       </button>
 
       <div className={styles.divider} />
