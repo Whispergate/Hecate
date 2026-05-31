@@ -13,12 +13,17 @@ import {
   CONTAINER_LIST_FILES,
   CONTAINER_DOWNLOAD_FILE,
   CONTAINER_WRITE_FILE,
+  CONTAINER_REMOVE_FILE,
   GET_AGENT_COMMANDS,
   GET_C2_PROFILE_PARAMS,
   GET_C2_INSTANCE_VALUES_BY_NAME,
   CREATE_C2_INSTANCE,
   DELETE_C2_INSTANCE,
   IMPORT_C2_INSTANCE,
+  TOGGLE_CONSUMING_DELETE,
+  TEST_WEBHOOK,
+  TEST_LOG,
+  GET_IDP_METADATA,
 } from '@/apollo/operations'
 import styles from './ServicesPanel.module.css'
 import { agentColor } from '@/agentColor'
@@ -48,7 +53,12 @@ interface TranslationContainer {
 interface ConsumingService {
   id: number; name: string; description: string
   type: string; container_running: boolean; semver: string
+  subscriptions: string[] | null
 }
+
+// Event types Mythic can fire a test for (mirrors ConsumingServicesTable.js)
+const WEBHOOK_EVENTS = ['new_alert', 'new_callback', 'new_custom', 'new_feedback', 'new_startup']
+const LOGGING_EVENTS = ['new_artifact', 'new_callback', 'new_credential', 'new_file', 'new_keylog', 'new_payload', 'new_response', 'new_task']
 
 interface AgentCommand {
   id: number; cmd: string; description: string; help_cmd: string; version: number
@@ -200,6 +210,9 @@ function FilesModal({ containerName, onClose }: { containerName: string; onClose
   const [status, setStatus] = useState('')
   const [viewing, setViewing] = useState<string | null>(null)
   const [fileContent, setFileContent] = useState<string | null>(null)
+  const [editing, setEditing] = useState(false)
+  const [editContent, setEditContent] = useState('')
+  const uploadRef = useRef<HTMLInputElement>(null)
 
   const [listFiles] = useLazyQuery(CONTAINER_LIST_FILES, {
     fetchPolicy: 'network-only',
@@ -222,11 +235,79 @@ function FilesModal({ containerName, onClose }: { containerName: string; onClose
     onError(e) { setStatus(e.message) },
   })
 
-  useEffect(() => { listFiles({ variables: { container_name: containerName } }) }, [])
+  const refresh = useCallback(
+    () => listFiles({ variables: { container_name: containerName } }),
+    [containerName, listFiles],
+  )
+
+  const [writeFile] = useMutation(CONTAINER_WRITE_FILE, {
+    onCompleted(data) {
+      const r = data?.containerWriteFile
+      setStatus(r?.status === 'success' ? 'saved' : (r?.error ?? 'save failed'))
+      if (r?.status === 'success') refresh()
+    },
+    onError(e) { setStatus(e.message) },
+  })
+
+  const [removeFile] = useMutation(CONTAINER_REMOVE_FILE, {
+    onCompleted(data) {
+      const r = data?.containerRemoveFile
+      setStatus(r?.status === 'success' ? 'removed' : (r?.error ?? 'remove failed'))
+      if (r?.status === 'success') refresh()
+    },
+    onError(e) { setStatus(e.message) },
+  })
+
+  useEffect(() => { refresh() }, [])
 
   function openFile(f: string) {
-    setViewing(f); setFileContent(null)
+    setViewing(f); setFileContent(null); setEditing(false)
     fetchFile({ variables: { container_name: containerName, filename: f } })
+  }
+
+  // mirrors Mythic's C2ProfileListFilesDialog upload: readAsBinaryString → btoa, one write per file
+  function onUploadPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const picked = e.target.files
+    e.target.value = ''
+    if (!picked) return
+    setStatus('')
+    Array.from(picked).forEach(file => {
+      const reader = new FileReader()
+      reader.onload = ev => {
+        const contents = typeof ev.target?.result === 'string' ? ev.target.result : ''
+        writeFile({ variables: { container_name: containerName, file_path: file.name, data: btoa(contents) } })
+      }
+      reader.onerror = () => setStatus('upload read failed')
+      reader.readAsBinaryString(file)
+    })
+  }
+
+  function downloadCurrent() {
+    if (fileContent == null || !viewing) return
+    const bytes = new Uint8Array(fileContent.length)
+    for (let i = 0; i < fileContent.length; i++) bytes[i] = fileContent.charCodeAt(i) & 0xff
+    const url = URL.createObjectURL(new Blob([bytes]))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = viewing
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  function saveEdit() {
+    if (!viewing) return
+    setStatus('')
+    writeFile({ variables: { container_name: containerName, file_path: viewing, data: btoa(editContent) } })
+    setFileContent(editContent)
+    setEditing(false)
+  }
+
+  function deleteFile(f: string) {
+    setStatus('')
+    removeFile({ variables: { container_name: containerName, filename: f } })
+    if (viewing === f) { setViewing(null); setFileContent(null); setEditing(false) }
   }
 
   return (
@@ -237,22 +318,28 @@ function FilesModal({ containerName, onClose }: { containerName: string; onClose
             {containerName} — {viewing ?? 'files'}
           </span>
           {viewing && (
-            <button className={styles.btn} onClick={() => { setViewing(null); setFileContent(null) }}>
+            <button className={styles.btn} onClick={() => { setViewing(null); setFileContent(null); setEditing(false) }}>
               ← back
             </button>
           )}
+          {!viewing && (
+            <button className={styles.btn} onClick={() => uploadRef.current?.click()}>upload</button>
+          )}
+          <input ref={uploadRef} type="file" multiple style={{ display: 'none' }} onChange={onUploadPick} />
           <button className={styles.modalClose} onClick={onClose}>✕</button>
         </div>
 
         {!viewing && (
           <>
             {files == null && !status && <div className={styles.modalMsg}>loading…</div>}
-            {status && <div className={styles.modalStatus}>{status}</div>}
             {files != null && files.length === 0 && <div className={styles.modalMsg}>no files</div>}
             {files != null && files.length > 0 && (
               <div className={styles.fileList}>
                 {files.map(f => (
-                  <button key={f} className={styles.fileItem} onClick={() => openFile(f)}>{f}</button>
+                  <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <button className={styles.fileItem} style={{ flex: 1 }} onClick={() => openFile(f)}>{f}</button>
+                    <button className={`${styles.btn} ${styles.btnStop}`} onClick={() => deleteFile(f)}>del</button>
+                  </div>
                 ))}
               </div>
             )}
@@ -262,12 +349,31 @@ function FilesModal({ containerName, onClose }: { containerName: string; onClose
         {viewing && (
           <>
             {fileContent == null && <div className={styles.modalMsg}>loading…</div>}
-            {fileContent != null && <pre className={styles.fileViewPre}>{fileContent}</pre>}
+            {fileContent != null && !editing && <pre className={styles.fileViewPre}>{fileContent}</pre>}
+            {fileContent != null && editing && (
+              <textarea
+                className={styles.configEditor}
+                value={editContent}
+                onChange={e => setEditContent(e.target.value)}
+                spellCheck={false}
+              />
+            )}
           </>
         )}
 
+        {status && <div className={styles.modalStatus}>{status}</div>}
+
         <div className={styles.modalFooter}>
           <button className={styles.btn} onClick={onClose}>close</button>
+          {viewing && fileContent != null && !editing && (
+            <>
+              <button className={styles.btn} onClick={downloadCurrent}>download</button>
+              <button className={styles.btn} onClick={() => { setEditing(true); setEditContent(fileContent) }}>edit</button>
+            </>
+          )}
+          {viewing && editing && (
+            <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={saveEdit}>save</button>
+          )}
         </div>
       </div>
     </div>
@@ -594,8 +700,9 @@ type DetailView = 'info' | 'commands' | 'files'
 
 function DetailPanel({
   name, author, description, semver, container_running,
-  docsPath, showCommands, showConfig, showStart, showInstances, c2Id, c2Running,
-  iconName, extra,
+  docsPath, showCommands, showConfig, showStart, showInstances,
+  c2Id, c2Running,
+  iconName, extra, actions,
 }: {
   name: string
   author?: string
@@ -611,6 +718,7 @@ function DetailPanel({
   c2Running?: boolean
   iconName?: string
   extra?: React.ReactNode
+  actions?: React.ReactNode
 }) {
   const [view, setView] = useState<DetailView>('info')
   const [modal, setModal] = useState<'config' | 'files' | 'instances' | null>(null)
@@ -650,6 +758,7 @@ function DetailPanel({
               {toggling ? '…' : c2Running ? 'stop' : 'start'}
             </button>
           )}
+          {actions}
           {showConfig && (
             <button className={styles.btn} onClick={() => setModal('config')}>config</button>
           )}
@@ -904,6 +1013,133 @@ function TranslationPane() {
   )
 }
 
+interface ParsedSub { name: string; description?: string; type?: string }
+
+// Type-aware detail for a consuming container — mirrors Mythic's ConsumingServicesTable.
+// webhook/logging → test-event buttons, eventing → function/description table,
+// auth → per-IDP metadata fetch. All types → delete + view files (via DetailPanel).
+function ConsumingDetailPanel({ service }: { service: ConsumingService }) {
+  const [status, setStatus] = useState('')
+  const [idpName, setIdpName] = useState<string | null>(null)
+  const [idpMeta, setIdpMeta] = useState<string | null>(null)
+
+  const [toggleDelete] = useMutation(TOGGLE_CONSUMING_DELETE, {
+    onCompleted() { setStatus('deleted') },
+    onError(e) { setStatus(e.message) },
+  })
+  const [testWebhook] = useMutation(TEST_WEBHOOK, {
+    onCompleted(d) {
+      const r = d?.consumingServicesTestWebhook
+      setStatus(r?.status === 'success' ? 'test sent' : (r?.error ?? 'no webhook listening'))
+    },
+    onError(e) { setStatus(e.message) },
+  })
+  const [testLog] = useMutation(TEST_LOG, {
+    onCompleted(d) {
+      const r = d?.consumingServicesTestLog
+      setStatus(r?.status === 'success' ? 'test sent' : (r?.error ?? 'no logger listening'))
+    },
+    onError(e) { setStatus(e.message) },
+  })
+  const [fetchIdp] = useLazyQuery(GET_IDP_METADATA, {
+    fetchPolicy: 'network-only',
+    onCompleted(d) {
+      const r = d?.consumingContainerGetIDPMetadata
+      if (r?.status === 'success') { setIdpMeta(r.metadata); setStatus('') }
+      else { setIdpMeta(null); setStatus(r?.error ?? 'fetch failed') }
+    },
+    onError(e) { setStatus(e.message) },
+  })
+
+  const subs = service.subscriptions ?? []
+  const parsed: ParsedSub[] = useMemo(() => {
+    if (service.type === 'eventing' || service.type === 'auth') {
+      return subs.map(s => {
+        try {
+          const o = JSON.parse(s)
+          return { name: o.name ?? '', description: o.description ?? '', type: o.type ?? '' }
+        } catch { return { name: s } }
+      })
+    }
+    return subs.map(s => ({ name: s }))
+  }, [service])
+
+  const actions = (
+    <button
+      className={`${styles.btn} ${styles.btnStop}`}
+      onClick={() => { setStatus(''); toggleDelete({ variables: { id: service.id, deleted: true } }) }}
+    >
+      delete
+    </button>
+  )
+
+  const testRow = (events: string[], fire: (ev: string) => void, label: string) => (
+    <MetaRow label={label}>
+      <div className={styles.chips}>
+        {events.map(ev => (
+          <button
+            key={ev}
+            className={styles.btn}
+            disabled={!subs.includes(ev) || !service.container_running}
+            onClick={() => { setStatus(''); fire(ev) }}
+          >
+            {ev}
+          </button>
+        ))}
+      </div>
+    </MetaRow>
+  )
+
+  const extra = (
+    <>
+      <MetaRow label="type">{service.type}</MetaRow>
+      {service.type === 'webhook' &&
+        testRow(WEBHOOK_EVENTS, ev => testWebhook({ variables: { service_type: ev } }), 'test events')}
+      {service.type === 'logging' &&
+        testRow(LOGGING_EVENTS, ev => testLog({ variables: { service_type: ev } }), 'test events')}
+      {service.type === 'eventing' && parsed.map((s, i) => (
+        <MetaRow key={i} label={s.name}>{s.description}</MetaRow>
+      ))}
+      {service.type === 'auth' && parsed.length > 0 && (
+        <MetaRow label="idps">
+          <div className={styles.chips}>
+            {parsed.map((s, i) => (
+              <button
+                key={i}
+                className={styles.btn}
+                disabled={!service.container_running}
+                onClick={() => {
+                  setStatus(''); setIdpMeta(null); setIdpName(s.name)
+                  fetchIdp({ variables: { container_name: service.name, idp_name: s.name } })
+                }}
+              >
+                {s.name}
+              </button>
+            ))}
+          </div>
+        </MetaRow>
+      )}
+      {idpMeta != null && (
+        <MetaRow label={idpName ?? 'metadata'}>
+          <pre className={styles.fileViewPre}>{idpMeta}</pre>
+        </MetaRow>
+      )}
+      {status && <div className={styles.modalStatus}>{status}</div>}
+    </>
+  )
+
+  return (
+    <DetailPanel
+      name={service.name}
+      description={service.description}
+      semver={service.semver}
+      container_running={service.container_running}
+      actions={actions}
+      extra={extra}
+    />
+  )
+}
+
 function ConsumingPane() {
   const { data } = useSubscription(SUB_CONSUMING_SERVICES)
   const services: ConsumingService[] = data?.consuming_container ?? []
@@ -922,21 +1158,11 @@ function ConsumingPane() {
             running={s.container_running}
             selected={(sel ?? services[0]?.id) === s.id}
             onClick={() => setSel(s.id)}
+            badges={s.type ? <span className={styles.badge}>{s.type.toUpperCase()}</span> : undefined}
           />
         ))}
       </div>
-      {selected && (
-        <DetailPanel
-          key={selected.id}
-          name={selected.name}
-          description={selected.description}
-          semver={selected.semver}
-          container_running={selected.container_running}
-          extra={selected.type && (
-            <MetaRow label="type">{selected.type}</MetaRow>
-          )}
-        />
-      )}
+      {selected && <ConsumingDetailPanel key={selected.id} service={selected} />}
     </div>
   )
 }

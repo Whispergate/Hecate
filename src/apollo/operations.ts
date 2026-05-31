@@ -547,12 +547,53 @@ export const SUB_CONSUMING_SERVICES = gql`
       description
       type
       container_running
+      subscriptions
       semver
     }
   }
 `
 
 // ── Container/service actions ──────────────────────────
+
+// Soft-delete / restore a consuming container (webhook/logging/eventing/auth)
+export const TOGGLE_CONSUMING_DELETE = gql`
+  mutation ToggleConsumingDelete($id: Int!, $deleted: Boolean!) {
+    update_consuming_container_by_pk(pk_columns: { id: $id }, _set: { deleted: $deleted }) {
+      id
+    }
+  }
+`
+
+// Send a test event to a webhook consuming container
+export const TEST_WEBHOOK = gql`
+  mutation TestWebhook($service_type: String!) {
+    consumingServicesTestWebhook(service_type: $service_type) {
+      status
+      error
+    }
+  }
+`
+
+// Send a test event to a logging consuming container
+export const TEST_LOG = gql`
+  mutation TestLog($service_type: String!) {
+    consumingServicesTestLog(service_type: $service_type) {
+      status
+      error
+    }
+  }
+`
+
+// Fetch IDP metadata from an auth consuming container
+export const GET_IDP_METADATA = gql`
+  query GetIDPMetadata($container_name: String!, $idp_name: String!) {
+    consumingContainerGetIDPMetadata(container_name: $container_name, idp_name: $idp_name) {
+      status
+      error
+      metadata
+    }
+  }
+`
 
 export const START_STOP_C2 = gql`
   mutation StartStopC2($id: Int!, $action: String) {
@@ -591,6 +632,15 @@ export const CONTAINER_WRITE_FILE = gql`
       status
       error
       filename
+    }
+  }
+`
+
+export const CONTAINER_REMOVE_FILE = gql`
+  mutation ContainerRemoveFile($container_name: String!, $filename: String!) {
+    containerRemoveFile(container_name: $container_name, filename: $filename) {
+      status
+      error
     }
   }
 `
