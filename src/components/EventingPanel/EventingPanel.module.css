@@ -602,3 +602,214 @@
 .validItem {
   padding: 1px 0;
 }
+
+/* ── Wizard modal ───────────────────────────────── */
+
+.wizBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.wizModal {
+  width: min(880px, 94vw);
+  height: min(88vh, 900px);
+  background: var(--bg-base);
+  border: 1px solid var(--beige-border);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+
+.wizHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--beige-border);
+  background: var(--bg-raised);
+}
+.wizTitle {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--beige);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.wizStepper {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+}
+.wizStepChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--beige-border);
+  color: var(--bone-600);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.wizStepChip:hover { color: var(--bone-200); }
+.wizStepChipActive {
+  color: var(--crimson-200);
+  border-color: var(--crimson-400);
+  background: var(--crimson-900);
+}
+.wizStepChipDone { color: var(--status-ok-text); border-color: var(--status-ok); }
+.wizStepNum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  font-size: 9px;
+}
+.wizClose {
+  background: transparent;
+  border: none;
+  color: var(--bone-600);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+.wizClose:hover { color: var(--crimson-300); }
+
+.wizBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+}
+.wizForm {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 620px;
+  margin: 0 auto;
+}
+.wizRow2 {
+  display: flex;
+  gap: 10px;
+}
+.wizRow2 > * { flex: 1; }
+
+.wizHint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-700);
+  line-height: 1.5;
+  margin-top: 3px;
+}
+.wizHintBig {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--bone-700);
+  text-align: center;
+  padding: 24px 0;
+}
+.wizSubHead {
+  font-family: var(--font-serif);
+  font-size: 11px;
+  color: var(--beige);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin: 12px 0 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--beige-border);
+}
+
+/* step cards */
+.wizStepCard {
+  border: 1px solid var(--beige-border);
+  border-radius: 3px;
+  margin-bottom: 10px;
+  background: var(--bg-raised);
+  border-bottom: 3px solid var(--crimson-800);
+}
+.wizStepCardHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--beige-border);
+}
+.wizCollapse {
+  background: transparent;
+  border: none;
+  color: var(--bone-500);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 2px;
+}
+.wizStepCardTitle {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--bone-100);
+}
+.wizStepCardAction {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--crimson-300);
+}
+.wizStepCardBody {
+  padding: 10px 12px;
+}
+
+/* typed input/output rows */
+.wizIoRow {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+  align-items: center;
+}
+
+/* review */
+.wizReview {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.wizOk {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--status-ok-text);
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  border: 1px solid var(--status-ok);
+  background: rgba(80,136,80,0.12);
+  border-radius: 2px;
+}
+.wizYaml {
+  background: var(--bg-void);
+  border: 1px solid var(--beige-border);
+  color: var(--bone-200);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 12px;
+  border-radius: 2px;
+  white-space: pre;
+  overflow-x: auto;
+  margin: 0;
+  tab-size: 2;
+}
+
+.wizFooter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--beige-border);
+  background: var(--bg-raised);
+}

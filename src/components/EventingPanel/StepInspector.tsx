@@ -234,7 +234,7 @@ function DependsOnPicker({
 
 // ─── ActionDataForm: per-action-type config ─────────
 
-function ActionDataForm({
+export function ActionDataForm({
   action,
   data,
   onChange,

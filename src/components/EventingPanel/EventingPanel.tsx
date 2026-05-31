@@ -16,6 +16,7 @@ import {
 } from '@/apollo/operations'
 import { useStore } from '@/store'
 import { WorkflowEditor } from './WorkflowEditor'
+import { WorkflowWizard } from './WorkflowWizard'
 import { emptyWorkflow, type Workflow, type WorkflowStep } from './eventingTypes'
 import styles from './EventingPanel.module.css'
 
@@ -69,6 +70,7 @@ export function EventingPanel() {
   const [updateGroup] = useMutation(EVENTING_TRIGGER_UPDATE)
 
   const [mode, setMode] = useState<Mode>({ kind: 'none' })
+  const [wizardOpen, setWizardOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
   const [globalError, setGlobalError] = useState<string | null>(null)
@@ -98,6 +100,55 @@ export function EventingPanel() {
     setMode({ kind: 'draft', workflow: emptyWorkflow('new workflow'), dirty: true })
   }
 
+  const startWizard = () => {
+    if (mode.kind !== 'none' && (mode as Exclude<Mode, { kind: 'none' }>).dirty) {
+      if (!confirm('Discard unsaved changes?')) return
+    }
+    setGlobalError(null)
+    setMode({ kind: 'none' })
+    setWizardOpen(true)
+  }
+
+  // Shared REST upload (POST /api/v1.4/eventing_import_webhook). Returns new id.
+  const uploadYaml = async (yamlText: string, name: string): Promise<number> => {
+    const form = new FormData()
+    const blob = new Blob([yamlText], { type: 'application/x-yaml' })
+    form.append('file', blob, `${name.replace(/\s+/g, '_')}.yaml`)
+    form.append('comment', 'Uploaded from Hecate')
+    const resp = await fetch('/api/v1.4/eventing_import_webhook', {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        MythicSource: 'web',
+      },
+      body: form,
+    })
+    const json = await resp.json()
+    if (json.status !== 'success') throw new Error(json.error || 'Import failed')
+    await refetch()
+    return json.eventgroup_id
+  }
+
+  const handleWizardCreate = async (yamlText: string, name: string) => {
+    setIsSaving(true)
+    setGlobalError(null)
+    try {
+      const id = await uploadYaml(yamlText, name)
+      setWizardOpen(false)
+      await selectExisting(id)
+    } catch (e) {
+      setGlobalError(e instanceof Error ? e.message : String(e))
+      throw e
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleWizardToEditor = (workflow: Workflow) => {
+    setWizardOpen(false)
+    setMode({ kind: 'draft', workflow, dirty: true })
+  }
+
   const handleChange = (next: Workflow) => {
     if (mode.kind === 'draft') {
       setMode({ ...mode, workflow: next, dirty: true })
@@ -124,25 +175,9 @@ export function EventingPanel() {
         await refetch()
         setMode({ ...mode, original: mode.workflow, dirty: false })
       } else {
-        // Create new workflow via REST: POST /api/v1.4/eventing_import_webhook (multipart form)
-        const form = new FormData()
-        const blob = new Blob([yamlText], { type: 'application/x-yaml' })
-        form.append('file', blob, `${mode.workflow.name.replace(/\s+/g, '_')}.yaml`)
-        form.append('comment', 'Uploaded from Hecate')
-
-        const resp = await fetch('/api/v1.4/eventing_import_webhook', {
-          method: 'POST',
-          headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            MythicSource: 'web',
-          },
-          body: form,
-        })
-        const json = await resp.json()
-        if (json.status !== 'success') throw new Error(json.error || 'Import failed')
-        await refetch()
-        // Switch to the just-created workflow
-        await selectExisting(json.eventgroup_id)
+        // Create new workflow via REST upload, then switch to it
+        const id = await uploadYaml(yamlText, mode.workflow.name)
+        await selectExisting(id)
       }
     } catch (e) {
       setGlobalError(e instanceof Error ? e.message : String(e))
@@ -193,7 +228,10 @@ export function EventingPanel() {
       <div className={styles.list}>
         <div className={styles.listHeader}>
           <span className={styles.listTitle}>WORKFLOWS</span>
-          <button className={styles.newBtn} onClick={startNew}>+ NEW</button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button className={styles.newBtn} onClick={startWizard}>✨ WIZARD</button>
+            <button className={styles.newBtn} onClick={startNew}>+ NEW</button>
+          </div>
         </div>
         {globalError && <div className={styles.error}>{globalError}</div>}
         <div className={styles.listScroll}>
@@ -236,6 +274,15 @@ export function EventingPanel() {
           isSaving={isSaving}
           isRunning={isRunning}
           isDirty={mode.dirty}
+        />
+      )}
+
+      {wizardOpen && (
+        <WorkflowWizard
+          onCancel={() => setWizardOpen(false)}
+          onCreate={handleWizardCreate}
+          onOpenInEditor={handleWizardToEditor}
+          isSaving={isSaving}
         />
       )}
     </div>
