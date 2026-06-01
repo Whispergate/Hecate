@@ -7,7 +7,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { useSubscription }                           from '@apollo/client'
 import { SUB_TASK_RESPONSES }                        from '@/apollo/operations'
-import type { Task }                                 from '@/store'
+import { taskCmd, type Task }                        from '@/store'
 import { FileBrowser, parseLsOutput }                from './FileBrowser'
 import { ProcessBrowser, parsePsOutput }             from './ProcessBrowser'
 import { InjectionBrowser, parseInjectionTechniques } from './InjectionBrowser'
@@ -131,7 +131,7 @@ export function TaskOutputPanel({ task }: Props) {
         <div className={styles.headerPrompt}>
           <span className={styles.promptOp}>[{task.operator?.username ?? 'op'}@{task.callback.host}]</span>
           <span className={styles.promptDollar}>$</span>
-          <span className={styles.promptCmd}>{task.command_name}</span>
+          <span className={styles.promptCmd}>{taskCmd(task)}</span>
           {displayArgs && <span className={styles.promptArgs}>{displayArgs}</span>}
         </div>
 

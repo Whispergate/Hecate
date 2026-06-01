@@ -4,9 +4,9 @@
    Handles file upload → task creation flow.
    ═══════════════════════════════════════════════════ */
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useMutation, useQuery } from '@apollo/client'
-import { CREATE_TASK, GET_CREDENTIALS } from '@/apollo/operations'
+import { CREATE_TASK, GET_CREDENTIALS, GET_DYNAMIC_QUERY_PARAMS } from '@/apollo/operations'
 import { useStore }          from '@/store'
 import { uploadTaskFile }    from '@/uploadTaskFile'
 import styles                from './FileTaskModal.module.css'
@@ -28,16 +28,21 @@ export interface CommandParam {
   required:                boolean
   default_value:           string | null
   choices:                 string[] | null
+  // Non-empty when the param's choices are computed server-side at task time
+  // (e.g. assembly_inject's assembly_name). Resolved via GET_DYNAMIC_QUERY_PARAMS.
+  dynamic_query_function:  string | null
   parameter_group_name:    string
   limit_credentials_by_type: string[] | null
 }
 
 interface Props {
-  command:    string
-  params:     CommandParam[]
-  displayId:  number
-  defaultCwd: string
-  onClose:    () => void
+  command:     string
+  params:      CommandParam[]
+  displayId:   number
+  callbackId:  number   // internal callback id (NOT display_id) — required by the dynamic_query_function action
+  payloadType: string
+  defaultCwd:  string
+  onClose:     () => void
 }
 
 // Params whose value should be taken from the selected file's name — hide from form
@@ -98,7 +103,7 @@ function labelGroup(name: string): string {
   return name.replace(/_/g, ' ')
 }
 
-export function FileTaskModal({ command, params, displayId, defaultCwd, onClose }: Props) {
+export function FileTaskModal({ command, params, displayId, callbackId, payloadType, defaultCwd, onClose }: Props) {
   const { token } = useStore()
 
   const allGroups = getGroups(params)
@@ -139,6 +144,47 @@ export function FileTaskModal({ command, params, displayId, defaultCwd, onClose 
   const hasCredentialParam = visibleParams.some(p => p.type === 'CredentialJson')
   const { data: credData } = useQuery(GET_CREDENTIALS, { skip: !hasCredentialParam })
   const credentials: CredentialOption[] = credData?.credential ?? []
+
+  // ── Dynamic-query choices ──
+  // Some ChooseOne/ChooseMultiple params have no static `choices`; Mythic computes
+  // them at task time (e.g. assembly_inject's assembly_name lists uploaded .exe
+  // files). Resolve them via the dynamic_query_function action and merge in below.
+  const [dynChoices, setDynChoices] = useState<Record<string, string[]>>({})
+  const [dynLoading, setDynLoading] = useState<Record<string, boolean>>({})
+  const [resolveDynamic] = useMutation(GET_DYNAMIC_QUERY_PARAMS)
+
+  useEffect(() => {
+    let cancelled = false
+    const dynParams = visibleParams.filter(p => (p.dynamic_query_function ?? '') !== '')
+    for (const p of dynParams) {
+      setDynLoading(m => ({ ...m, [p.name]: true }))
+      resolveDynamic({
+        variables: {
+          callback:       callbackId,
+          command,
+          payload_type:   payloadType,
+          parameter_name: p.name,
+        },
+      })
+        .then(res => {
+          if (cancelled) return
+          const fn = res.data?.dynamic_query_function
+          if (fn?.status === 'success' && Array.isArray(fn.choices)) {
+            setDynChoices(m => ({ ...m, [p.name]: fn.choices }))
+          }
+        })
+        .catch(() => { /* leave choices empty on failure */ })
+        .finally(() => { if (!cancelled) setDynLoading(m => ({ ...m, [p.name]: false })) })
+    }
+    return () => { cancelled = true }
+    // Re-run when the active group changes (visibleParams shape depends on it).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedGroup, command, callbackId, payloadType])
+
+  // Effective choices for a param: dynamic results take precedence, else static.
+  function choicesFor(p: CommandParam): string[] {
+    return dynChoices[p.name] ?? p.choices ?? []
+  }
 
   function setValue(name: string, val: string) {
     setValues(v => ({ ...v, [name]: val }))
@@ -331,10 +377,13 @@ export function FileTaskModal({ command, params, displayId, defaultCwd, onClose 
                   className={styles.select}
                   value={values[p.name] ?? ''}
                   onChange={e => setValue(p.name, e.target.value)}
-                  disabled={loading}
+                  disabled={loading || dynLoading[p.name]}
                 >
                   {!p.required && <option value="">— select —</option>}
-                  {(p.choices ?? []).map(c => (
+                  {dynLoading[p.name] && choicesFor(p).length === 0 && (
+                    <option value="">loading…</option>
+                  )}
+                  {choicesFor(p).map(c => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>

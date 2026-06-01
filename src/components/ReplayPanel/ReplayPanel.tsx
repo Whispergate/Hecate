@@ -9,7 +9,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useQuery }                                          from '@apollo/client'
 import { GET_TIMELINE_TASKS, GET_REPLAY_CALLBACKS, GET_REPLAY_EDGES } from '@/apollo/operations'
-import { useStore }                                          from '@/store'
+import { useStore, taskCmd }                                 from '@/store'
 import { parseTs }                                           from '@/components/Sidebar/utils'
 import { agentColor }                                        from '@/agentColor'
 import styles                                                from './ReplayPanel.module.css'
@@ -29,7 +29,7 @@ interface ReplayEdge {
 }
 
 interface ReplayTask {
-  id: number; display_id: number; command_name: string; display_params: string
+  id: number; display_id: number; command_name: string; command: { cmd: string | null } | null; display_params: string
   status: string; completed: boolean; timestamp: string
   operator: { username: string }
   callback: { id: number; display_id: number; host: string }
@@ -501,7 +501,7 @@ export function ReplayPanel() {
                           />
                           <text x={nd.x} y={nd.y - NODE_R - 8.5} textAnchor="middle"
                                 className={styles.cmdFlag} fill={STATUS_COLOR[statusOf(last)]}>
-                            {last.command_name.slice(0, 14)}
+                            {taskCmd(last).slice(0, 14)}
                           </text>
                         </g>
                       )}
@@ -536,7 +536,7 @@ export function ReplayPanel() {
                   <span className={styles.feedDot} style={{ background: STATUS_COLOR[statusOf(t)] }} />
                   <div className={styles.feedBody}>
                     <div className={styles.feedCmd}>
-                      <span className={styles.feedCmdName}>{t.command_name}</span>
+                      <span className={styles.feedCmdName}>{taskCmd(t)}</span>
                       {t.display_params && <span className={styles.feedParams}> {t.display_params}</span>}
                     </div>
                     <div className={styles.feedMeta}>

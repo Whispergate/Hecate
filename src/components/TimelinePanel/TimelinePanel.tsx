@@ -5,7 +5,7 @@
 import { useState, useMemo } from 'react'
 import { useQuery }                              from '@apollo/client'
 import { GET_TIMELINE_TASKS }                    from '@/apollo/operations'
-import { useStore }                              from '@/store'
+import { useStore, taskCmd }                     from '@/store'
 import { parseTs }                               from '@/components/Sidebar/utils'
 import styles                                    from './TimelinePanel.module.css'
 
@@ -15,6 +15,7 @@ interface TaskRow {
   id:             number
   display_id:     number
   command_name:   string
+  command:        { cmd: string | null } | null
   display_params: string
   status:         string
   completed:      boolean
@@ -105,7 +106,7 @@ export function TimelinePanel() {
     if (!filterLc) return allTasks
     return allTasks.filter(t =>
       t.callback.host.toLowerCase().includes(filterLc) ||
-      t.command_name.toLowerCase().includes(filterLc) ||
+      taskCmd(t).toLowerCase().includes(filterLc) ||
       (t.display_params ?? '').toLowerCase().includes(filterLc)
     )
   }, [allTasks, filterLc])
@@ -232,7 +233,7 @@ export function TimelinePanel() {
                       ].join(' ')}
                       style={{ left: `${ev.leftPct}%` }}
                       onClick={() => setSelected(s => s?.id === ev.id ? null : ev)}
-                      title={`${ev.command_name}${ev.display_params ? ' ' + ev.display_params : ''}\n${ev.status} · ${ev.operator.username}`}
+                      title={`${taskCmd(ev)}${ev.display_params ? ' ' + ev.display_params : ''}\n${ev.status} · ${ev.operator.username}`}
                     />
                   ))}
                 </div>
@@ -261,7 +262,7 @@ export function TimelinePanel() {
           <div className={styles.detailItem}>
             <span className={styles.diLabel}>command</span>
             <span className={`${styles.diValue} ${styles.diMono}`}>
-              {selected.command_name}{selected.display_params ? ` ${selected.display_params}` : ''}
+              {taskCmd(selected)}{selected.display_params ? ` ${selected.display_params}` : ''}
             </span>
           </div>
           <div className={styles.detailItem}>

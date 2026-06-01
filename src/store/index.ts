@@ -46,12 +46,26 @@ export interface Callback {
 export interface Task {
   id: number; display_id: number
   command_name: string; display_params: string; params: string
+  // The originally-tasked command (via command_id relationship). Aliases like
+  // register_assembly overwrite command_name on the task row (→ register_file),
+  // but command.cmd keeps the name the operator actually issued. Prefer it for
+  // display via taskCmd(); keep command_name for rich-output dispatch (it tracks
+  // the real executed command, so the response shape matches).
+  command?: { cmd: string | null } | null
   agent_task_id: string
   status: string; completed: boolean; timestamp: string
   operator: { username: string }
   callback: { id: number; display_id: number; host: string; ip: string }
   response_count: number
   tags: Array<{ tagtype: { name: string; color: string } }>
+}
+
+// Display name for a task's command. Prefers the command relationship (the
+// originally-issued command) over command_name, which agent aliases overwrite
+// with the underlying command (e.g. register_assembly → register_file). Matches
+// Mythic's own UI: `task?.command?.cmd || task.command_name`.
+export function taskCmd(t: { command_name: string; command?: { cmd: string | null } | null }): string {
+  return t.command?.cmd || t.command_name
 }
 
 export interface Operation { id: number; name: string }

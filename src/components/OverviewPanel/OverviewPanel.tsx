@@ -7,7 +7,7 @@
    ═══════════════════════════════════════════════════ */
 
 import { useSubscription }                            from '@apollo/client'
-import { useStore }                                   from '@/store'
+import { useStore, taskCmd }                          from '@/store'
 import type { Callback, Task }                        from '@/store'
 import { SUB_ALL_CALLBACKS, SUB_RECENT_OP_TASKS }     from '@/apollo/operations'
 import { parseTs, timeSince, integrityLabel, formatSleepInterval, formatSleepJitter } from '@/components/Sidebar/utils'
@@ -129,7 +129,7 @@ function AgentCard({ cb, lastTask, onSelect }: { cb: Callback; lastTask: Task | 
       {/* ── Last task ── */}
       {lastTask && (
         <div className={styles.cardLastTask}>
-          <span className={styles.ltCmd}>{lastTask.command_name}</span>
+          <span className={styles.ltCmd}>{taskCmd(lastTask)}</span>
           <span className={styles.ltParams}>
             {lastTask.display_params.slice(0, 28)}{lastTask.display_params.length > 28 ? '…' : ''}
           </span>
@@ -151,7 +151,7 @@ function ActivityRow({ task }: { task: Task }) {
       <span className={styles.actTime}>{hms}</span>
       <span className={styles.actHost} title={task.callback.host}>{task.callback.host.slice(0, 16)}</span>
       <span className={styles.actOp}>{task.operator.username.slice(0, 12)}</span>
-      <span className={styles.actCmd}>{task.command_name}</span>
+      <span className={styles.actCmd}>{taskCmd(task)}</span>
       <span className={styles.actParams}>
         {task.display_params.slice(0, 44)}{task.display_params.length > 44 ? '…' : ''}
       </span>
@@ -218,7 +218,8 @@ export function OverviewPanel() {
   const maxOs = Math.max(...Object.values(osCounts), 1)
 
   const cmdCounts = recentTasks.reduce((acc, t) => {
-    acc[t.command_name] = (acc[t.command_name] || 0) + 1
+    const name = taskCmd(t)
+    acc[name] = (acc[name] || 0) + 1
     return acc
   }, {} as Record<string, number>)
   const topCmds = Object.entries(cmdCounts).sort((a, b) => b[1] - a[1]).slice(0, 6)

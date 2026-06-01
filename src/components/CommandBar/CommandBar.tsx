@@ -5,7 +5,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useMutation, useQuery, useLazyQuery } from '@apollo/client'
 import { CREATE_TASK, GET_COMMANDS, GET_CALLBACK_TASK_HISTORY } from '@/apollo/operations'
-import { useStore }                                 from '@/store'
+import { useStore, taskCmd }                        from '@/store'
 import { FileTaskModal, type CommandParam }         from './FileTaskModal'
 import { SocksModal }                               from './SocksModal'
 import { RpfwdModal }                               from './RpfwdModal'
@@ -44,6 +44,7 @@ interface ModalState {
   command:    string
   params:     CommandParam[]
   displayId:  number
+  callbackId: number   // internal callback id — for the dynamic_query_function action
   defaultCwd: string
 }
 
@@ -102,9 +103,10 @@ export function CommandBar() {
     onCompleted(data) {
       if (!displayId) return
       if (historyRef.current[displayId] !== undefined) return  // already seeded this session
-      const entries: string[] = (data?.task ?? []).map((t: { command_name: string; display_params: string }) => {
+      const entries: string[] = (data?.task ?? []).map((t: { command_name: string; command?: { cmd: string | null } | null; display_params: string }) => {
+        const name = taskCmd(t)
         const p = (t.display_params ?? '').trim()
-        return p ? `${t.command_name} ${p}` : t.command_name
+        return p ? `${name} ${p}` : name
       })
       historyRef.current[displayId] = entries
     },
@@ -248,7 +250,7 @@ export function CommandBar() {
       if (hasAnyFileParam || hasRequiredCred || isScriptOnly || hasRequiredParam || hasMultipleGroups) {
         pushHistory(displayId, raw)
         setInput('')
-        setModal({ command, params: cmdParams, displayId, defaultCwd: extractCwd(cb?.extra_info ?? '', cb?.description ?? '') })
+        setModal({ command, params: cmdParams, displayId, callbackId: cb?.id ?? 0, defaultCwd: extractCwd(cb?.extra_info ?? '', cb?.description ?? '') })
         return
       }
     }
@@ -384,6 +386,8 @@ export function CommandBar() {
         command={modal.command}
         params={modal.params}
         displayId={modal.displayId}
+        callbackId={modal.callbackId}
+        payloadType={agentName}
         defaultCwd={modal.defaultCwd}
         onClose={() => { setModal(null); inputRef.current?.focus() }}
       />

@@ -8,7 +8,7 @@
 import { useRef, useEffect, useLayoutEffect, useState, useCallback } from 'react'
 import { useSubscription }             from '@apollo/client'
 import { SUB_TASK_RESPONSES }          from '@/apollo/operations'
-import type { Task }                   from '@/store'
+import { taskCmd, type Task }          from '@/store'
 import { FileBrowser, parseLsOutput }  from './FileBrowser'
 import { ProcessBrowser, parsePsOutput } from './ProcessBrowser'
 import { InjectionBrowser, parseInjectionTechniques } from './InjectionBrowser'
@@ -93,7 +93,7 @@ function ConsoleEntry({ task, isLast, onOutputChange }: EntryProps) {
         <span className={styles.ts}>{formatTimestamp(task.timestamp)}</span>
         <span className={styles.op}>[{task.operator?.username ?? 'op'}@{task.callback.host}]</span>
         <span className={styles.dollar}>$</span>
-        <span className={styles.cmd}>{task.command_name}</span>
+        <span className={styles.cmd}>{taskCmd(task)}</span>
         {displayArgs && <span className={styles.args}>{displayArgs}</span>}
         <span className={styles.taskId}>#{task.display_id}</span>
         {!task.completed && <KillTaskButton task={task} />}
@@ -218,7 +218,7 @@ export function ConsoleView({ tasks }: Props) {
   const filtered = isFiltered
     ? ordered.filter(t => {
         const q = query.toLowerCase()
-        const line = `${t.command_name} ${t.display_params ?? ''} ${t.params ?? ''}`.toLowerCase()
+        const line = `${taskCmd(t)} ${t.command_name} ${t.display_params ?? ''} ${t.params ?? ''}`.toLowerCase()
         const out  = (outputCache[t.id] ?? '').toLowerCase()
         return line.includes(q) || out.includes(q)
       })

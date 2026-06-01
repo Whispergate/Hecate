@@ -18,6 +18,7 @@ export const TASK_FIELDS = gql`
     id
     display_id
     command_name
+    command { cmd }
     display_params
     params
     agent_task_id
@@ -683,6 +684,7 @@ export const GET_REPORT_TASKS = gql`
       id
       display_id
       command_name
+      command { cmd }
       display_params
       params
       status
@@ -713,9 +715,36 @@ export const GET_COMMANDS = gql`
         required
         default_value
         choices
+        dynamic_query_function
         parameter_group_name
         limit_credentials_by_type
       }
+    }
+  }
+`
+
+// Resolve a command parameter's choices at runtime. Some ChooseOne/ChooseMultiple
+// params (e.g. assembly_inject's assembly_name, register_file's existingFile)
+// have no static choices — Apollo computes them via a dynamic_query_function RPC
+// (typically an RPC file-search for already-uploaded files). Mythic exposes this
+// as the `dynamic_query_function` Hasura action. `callback` is the display_id.
+export const GET_DYNAMIC_QUERY_PARAMS = gql`
+  mutation GetDynamicQueryParams(
+    $callback: Int!
+    $command: String!
+    $payload_type: String!
+    $parameter_name: String!
+  ) {
+    dynamic_query_function(
+      callback: $callback
+      command: $command
+      payload_type: $payload_type
+      parameter_name: $parameter_name
+    ) {
+      status
+      error
+      choices
+      parameter_name
     }
   }
 `
@@ -1086,6 +1115,7 @@ export const GET_ATTACK_TASKS = gql`
         id
         display_id
         command_name
+        command { cmd }
         display_params
         callback { display_id host }
       }
@@ -1133,6 +1163,7 @@ export const GET_TIMELINE_TASKS = gql`
       id
       display_id
       command_name
+      command { cmd }
       display_params
       status
       completed
@@ -1196,6 +1227,7 @@ export const GET_CALLBACK_TASK_HISTORY = gql`
       limit:    $limit
     ) {
       command_name
+      command { cmd }
       display_params
     }
   }
