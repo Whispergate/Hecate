@@ -7,7 +7,7 @@
 <p align="center">
   <strong>Custom WhisperGate-themed web UI for <a href="https://github.com/its-a-feature/Mythic">Mythic C2</a> (v3)</strong>
   <br/>
-  <em>Status: public beta — <code>v0.1.0</code></em>
+  <em>Status: public beta — <code>v0.2.0</code></em>
 </p>
 
 Crimson-black operator interface replacing Mythic's built-in React UI. Talks directly to Mythic's existing GraphQL / WebSocket API — no Mythic modifications required.
