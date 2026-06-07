@@ -1,0 +1,33 @@
+/* src/components/TaskFeed/ScreenshotView.module.css */
+
+.wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px;
+  overflow: auto;
+}
+
+.imgLink {
+  display: block;
+  border: 1px solid var(--beige-border);
+  background: var(--bg-raised);
+  line-height: 0;
+  transition: border-color var(--t-fast);
+}
+.imgLink:hover { border-color: var(--beige-border-strong); }
+
+.img {
+  display: block;
+  max-width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+}
+
+.err {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-800);
+  border: 1px dashed var(--beige-border);
+  padding: 10px 14px;
+}

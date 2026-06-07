@@ -46,9 +46,9 @@ function Seg<T extends string>({
   )
 }
 
-function Row({ label, sub, children }: { label: string; sub?: string; children: React.ReactNode }) {
+function Row({ label, sub, stack, children }: { label: string; sub?: string; stack?: boolean; children: React.ReactNode }) {
   return (
-    <div className={styles.row}>
+    <div className={`${styles.row} ${stack ? styles.rowStack : ''}`}>
       <div className={styles.rowLabel}>
         <span className={styles.rowTitle}>{label}</span>
         {sub && <span className={styles.rowSub}>{sub}</span>}
@@ -74,9 +74,16 @@ function AppearanceSection() {
 
   return (
     <Section title="Appearance">
-      <Row label="Theme">
+      <Row label="Theme" stack>
         <Seg
-          options={[{ label: 'Dark', value: 'dark' }, { label: 'Light', value: 'light' }]}
+          options={[
+            { label: 'Dark',  value: 'dark'  },
+            { label: 'Light', value: 'light' },
+            { label: 'Ember', value: 'ember' },
+            { label: 'Abyss', value: 'abyss' },
+            { label: 'Sage',  value: 'sage'  },
+            { label: 'Lavender', value: 'lavender' },
+          ]}
           value={theme}
           onChange={setTheme}
         />

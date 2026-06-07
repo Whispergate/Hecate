@@ -129,7 +129,7 @@
 .thArch    { width: 54px; }
 .thIl      { width: 82px; }
 .thSession { width: 46px; }
-.thAct     { width: 110px; text-align: right; }
+.thAct     { width: 230px; text-align: right; }
 
 /* ── Rows ── */
 .row {
@@ -231,6 +231,16 @@
   border-radius: 2px;
   transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
   white-space: nowrap;
+}
+
+.actBtn {
+  color: var(--bone-700);
+  border-color: var(--beige-border);
+}
+.actBtn:hover {
+  color: var(--bone-200);
+  border-color: var(--beige-border-strong);
+  background: var(--beige-dim);
 }
 
 .actInject {

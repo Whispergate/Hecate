@@ -7,6 +7,7 @@ export interface HecateSettings {
   callbackAliveMs:      number
   callbackIdleMs:       number
   showCallbackDisplayId: boolean
+  callbackDensity:      'comfortable' | 'compact'
 }
 
 const SETTINGS_KEY = 'hecate_settings'
@@ -17,6 +18,7 @@ export const DEFAULT_SETTINGS: HecateSettings = {
   callbackAliveMs:      60_000,
   callbackIdleMs:       600_000,
   showCallbackDisplayId: false,
+  callbackDensity:      'comfortable',
 }
 function loadSettings(): HecateSettings {
   try {
@@ -44,12 +46,26 @@ export interface Callback {
 export interface Task {
   id: number; display_id: number
   command_name: string; display_params: string; params: string
+  // The originally-tasked command (via command_id relationship). Aliases like
+  // register_assembly overwrite command_name on the task row (→ register_file),
+  // but command.cmd keeps the name the operator actually issued. Prefer it for
+  // display via taskCmd(); keep command_name for rich-output dispatch (it tracks
+  // the real executed command, so the response shape matches).
+  command?: { cmd: string | null } | null
   agent_task_id: string
   status: string; completed: boolean; timestamp: string
   operator: { username: string }
   callback: { id: number; display_id: number; host: string; ip: string }
   response_count: number
   tags: Array<{ tagtype: { name: string; color: string } }>
+}
+
+// Display name for a task's command. Prefers the command relationship (the
+// originally-issued command) over command_name, which agent aliases overwrite
+// with the underlying command (e.g. register_assembly → register_file). Matches
+// Mythic's own UI: `task?.command?.cmd || task.command_name`.
+export function taskCmd(t: { command_name: string; command?: { cmd: string | null } | null }): string {
+  return t.command?.cmd || t.command_name
 }
 
 export interface Operation { id: number; name: string }
@@ -118,10 +134,10 @@ export interface HecateStore {
   setCallbacks: (cbs: Callback[]) => void
   currentTasks: Task[]
   setCurrentTasks: (tasks: Task[]) => void
-  activeRailView: 'overview' | 'callbacks' | 'payloads' | 'services' | 'proxies' | 'credentials' | 'files' | 'attack' | 'logs' | 'report' | 'operations' | 'timeline'
+  activeRailView: 'overview' | 'callbacks' | 'health' | 'payloads' | 'services' | 'proxies' | 'credentials' | 'files' | 'attack' | 'logs' | 'report' | 'operations' | 'timeline' | 'replay' | 'eventing'
   setActiveRailView: (v: HecateStore['activeRailView']) => void
-  theme: 'dark' | 'light'
-  setTheme: (t: 'dark' | 'light') => void
+  theme: 'dark' | 'light' | 'ember' | 'abyss' | 'sage' | 'lavender'
+  setTheme: (t: HecateStore['theme']) => void
   settings: HecateSettings
   updateSettings: (patch: Partial<HecateSettings>) => void
   isSettingsOpen: boolean
@@ -134,6 +150,8 @@ export interface HecateStore {
   removeProxyToast: (id: number) => void
   unresolvedWarnings: number
   setUnresolvedWarnings: (n: number) => void
+  mythicConnection: 'idle' | 'connecting' | 'connected' | 'disconnected'
+  setMythicConnection: (s: HecateStore['mythicConnection']) => void
 }
 
 export const useStore = create<HecateStore>((set) => ({
@@ -184,7 +202,7 @@ export const useStore = create<HecateStore>((set) => ({
   setCurrentTasks: (tasks) => set({ currentTasks: tasks }),
   activeRailView: 'callbacks',
   setActiveRailView: (v) => set({ activeRailView: v }),
-  theme: (localStorage.getItem('hecate_theme') as 'dark' | 'light') ?? 'dark',
+  theme: (localStorage.getItem('hecate_theme') as HecateStore['theme']) ?? 'dark',
   setTheme: (theme) => {
     localStorage.setItem('hecate_theme', theme)
     set({ theme })
@@ -205,6 +223,8 @@ export const useStore = create<HecateStore>((set) => ({
   removeProxyToast: (id) => set((s) => ({ proxyToasts: s.proxyToasts.filter((t) => t.id !== id) })),
   unresolvedWarnings: 0,
   setUnresolvedWarnings: (unresolvedWarnings) => set({ unresolvedWarnings }),
+  mythicConnection: 'idle',
+  setMythicConnection: (mythicConnection) => set({ mythicConnection }),
 }))
 
 export const useSelectedCallback = () =>

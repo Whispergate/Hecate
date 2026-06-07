@@ -1,0 +1,358 @@
+/* ═══════════════════════════════════════════════════
+   src/components/ReplayPanel/ReplayPanel.module.css
+   ═══════════════════════════════════════════════════ */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+/* ── Header ──────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--beige-border);
+  flex-shrink: 0;
+}
+
+.headerLeft  { display: flex; align-items: baseline; gap: 10px; }
+.headerRight { display: flex; align-items: center;  gap: 12px; }
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--beige);
+  letter-spacing: 0.04em;
+}
+
+.meta { font-size: 11px; color: var(--bone-700); }
+
+.headerClock {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bone-500);
+}
+
+.ghostBtn {
+  background: var(--bg-raised);
+  border: 1px solid var(--beige-border);
+  border-radius: 3px;
+  color: var(--bone-600);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+.ghostBtn:hover { color: var(--bone-300); border-color: var(--crimson-600); }
+
+/* ── Body ────────────────────────────────────────── */
+
+.body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.graphWrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.svg { width: 100%; height: 100%; display: block; }
+
+.empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bone-700);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* ── Graph nodes ─────────────────────────────────── */
+
+.node { cursor: pointer; }
+
+.nodeLabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.nodeSub {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: var(--bone-800);
+}
+
+.cmdFlag {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+}
+
+.hubText {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: bold;
+  fill: var(--topo-text-accent);
+}
+
+.hubSub {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  fill: var(--bone-700);
+}
+
+.pulse { animation: replayPulse 1.4s ease-out infinite; }
+
+@keyframes replayPulse {
+  0%   { opacity: 0.55; }
+  100% { opacity: 0; }
+}
+
+/* ── Task feed ───────────────────────────────────── */
+
+.feed {
+  width: 316px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--beige-border);
+  background: var(--bg-base);
+}
+
+.feedHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--beige-border);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bone-800);
+  flex-shrink: 0;
+}
+
+.clearFocus {
+  background: none;
+  border: none;
+  color: var(--crimson-300);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.feedList { flex: 1; overflow: auto; }
+
+.feedEmpty {
+  padding: 24px 14px;
+  color: var(--bone-800);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.feedRow {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--beige-border) 45%, transparent);
+  padding: 7px 12px;
+  cursor: pointer;
+}
+.feedRow:hover { background: var(--bg-raised); }
+.feedRowNew { background: color-mix(in srgb, var(--crimson-900) 40%, transparent); }
+
+.feedDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.feedBody { min-width: 0; flex: 1; }
+
+.feedCmd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.feedCmdName { color: var(--bone-300); }
+.feedParams  { color: var(--bone-700); }
+
+.feedMeta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-800);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Transport bar ───────────────────────────────── */
+
+.transport {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 64px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--beige-border);
+  background: var(--bg-raised);
+}
+
+.controls { display: flex; gap: 3px; flex-shrink: 0; }
+
+.ctrlBtn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--beige-border);
+  border-radius: 3px;
+  color: var(--bone-500);
+  font-size: 11px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+.ctrlBtn:hover { color: var(--bone-200); border-color: var(--crimson-600); }
+
+.playBtn {
+  width: 34px;
+  background: var(--crimson-900);
+  border-color: var(--crimson-600);
+  color: var(--crimson-300);
+}
+.playBtn:hover { color: var(--bone-100); }
+
+.speeds { display: flex; gap: 2px; flex-shrink: 0; }
+
+.speedBtn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--beige-border);
+  border-radius: 3px;
+  color: var(--bone-600);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+.speedBtn:hover { color: var(--bone-300); }
+.speedActive {
+  background: var(--crimson-900);
+  border-color: var(--crimson-600);
+  color: var(--crimson-300);
+}
+
+/* ── Scrubber track ──────────────────────────────── */
+
+.track {
+  position: relative;
+  flex: 1;
+  height: 40px;
+  cursor: pointer;
+  background: var(--bg-base);
+  border: 1px solid var(--beige-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.hist {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  padding: 0 1px;
+}
+
+.bar {
+  flex: 1;
+  background: var(--bone-800);
+  opacity: 0.7;
+}
+
+.scrubFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: color-mix(in srgb, var(--crimson-700) 26%, transparent);
+  border-right: 1px solid var(--crimson-500);
+  pointer-events: none;
+}
+
+.initMark {
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform: translateX(-3px);
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-top: 5px solid var(--beige);
+  pointer-events: none;
+}
+
+.playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--crimson-400);
+  pointer-events: none;
+}
+
+.playheadGrip {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 8px;
+  border-radius: 0 0 2px 2px;
+  background: var(--crimson-400);
+}
+
+.clock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+  min-width: 140px;
+}
+
+.clockMain {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bone-300);
+}
+
+.clockSub {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-700);
+}

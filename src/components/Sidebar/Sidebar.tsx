@@ -2,7 +2,7 @@
    hecate/src/components/Sidebar/Sidebar.tsx
    ═══════════════════════════════════════════════════ */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useStore, useSelectedCallback } from '@/store'
 import type { Callback } from '@/store'
 import { integrityLabel, timeSince, parseTs, formatSleepInterval, formatSleepJitter } from './utils'
@@ -10,14 +10,56 @@ import { CallbackContextMenu } from '@/components/CallbackContextMenu/CallbackCo
 import { agentColor } from '@/agentColor'
 import styles from './Sidebar.module.css'
 
+// Fixed-height virtualization: every callback row is exactly one of these
+// heights, chosen by the `callbackDensity` setting. `.callbackItem` content must
+// stay within the height — it has overflow:hidden as a safety clip.
+const ROW_H_COMFORTABLE = 84
+const ROW_H_COMPACT     = 50
+const OVERSCAN          = 6
+
 interface CtxMenu { cb: Callback; x: number; y: number }
 type StatusFilter = 'alive' | 'idle' | 'dead'
+
+// One label/value row in the selected-callback detail panel. When `copy` is
+// provided the value renders as a click-to-copy button.
+function InfoRow({ label, value, copy, valueClass, title }: {
+  label: string; value: string; copy?: string; valueClass?: string; title?: string
+}) {
+  const [copied, setCopied] = useState(false)
+  const doCopy = () => {
+    if (!copy || !navigator.clipboard) return
+    navigator.clipboard.writeText(copy)
+      .then(() => { setCopied(true); setTimeout(() => setCopied(false), 1200) })
+      .catch(() => { /* clipboard unavailable */ })
+  }
+  return (
+    <div className={styles.infoRow}>
+      <span className={styles.infoKey}>{label}</span>
+      {copy ? (
+        <button
+          className={`${styles.infoVal} ${styles.copyVal} ${valueClass ?? ''}`}
+          onClick={doCopy}
+          title={title ?? `Copy ${label.toLowerCase()}`}
+        >
+          <span className={styles.copyText}>{value}</span>
+          <span className={styles.copyIcon}>{copied ? '✓' : '⧉'}</span>
+        </button>
+      ) : (
+        <span className={`${styles.infoVal} ${valueClass ?? ''}`} title={title}>{value}</span>
+      )}
+    </div>
+  )
+}
 
 export function Sidebar() {
   const { selectedCallbackId, setSelectedCallbackId, multiSelectedIds, setMultiSelectedIds, callbacks, callbackAnnotations, activeCallbackPorts } = useStore()
   const callbackAliveMs       = useStore((s) => s.settings.callbackAliveMs)
   const callbackIdleMs        = useStore((s) => s.settings.callbackIdleMs)
   const showCallbackDisplayId = useStore((s) => s.settings.showCallbackDisplayId)
+  const callbackDensity       = useStore((s) => s.settings.callbackDensity)
+  const updateSettings        = useStore((s) => s.updateSettings)
+  const compact               = callbackDensity === 'compact'
+  const ROW_H                 = compact ? ROW_H_COMPACT : ROW_H_COMFORTABLE
 
   const selected = useSelectedCallback()
   const [ctxMenu, setCtxMenu] = useState<CtxMenu | null>(null)
@@ -68,13 +110,16 @@ export function Sidebar() {
     return next
   })
 
-  const getStatus = (elapsed: number): StatusFilter =>
-    elapsed < callbackAliveMs ? 'alive' : elapsed < callbackIdleMs ? 'idle' : 'dead'
-
   const needle = filterText.toLowerCase()
 
   const sorted = useMemo(() => [...callbacks]
-    .map((cb) => ({ cb, elapsed: Date.now() - parseTs(cb.last_checkin).getTime() }))
+    .map((cb) => ({
+      cb,
+      // Streaming callbacks (epoch sentinel) sort as freshly-alive (elapsed = 0).
+      elapsed: cb.last_checkin?.startsWith('1970-01-01')
+        ? 0
+        : Date.now() - parseTs(cb.last_checkin).getTime(),
+    }))
     .sort((a, b) => {
       const rank = (e: number) => e < callbackAliveMs ? 0 : e < callbackIdleMs ? 1 : 2
       const dr = rank(a.elapsed) - rank(b.elapsed)
@@ -93,32 +138,78 @@ export function Sidebar() {
     return map
   }, [activeCallbackPorts])
 
-  const visible = sorted.filter(({ cb, elapsed }) => {
-    if (filterStatus.size > 0 && !filterStatus.has(getStatus(elapsed))) return false
+  const visible = useMemo(() => sorted.filter(({ cb, elapsed }) => {
+    if (filterStatus.size > 0) {
+      const st: StatusFilter = elapsed < callbackAliveMs ? 'alive'
+                             : elapsed < callbackIdleMs ? 'idle' : 'dead'
+      if (!filterStatus.has(st)) return false
+    }
     if (filterAgents.size > 0 && !filterAgents.has(cb.payload.payloadtype.name)) return false
     if (needle) {
       const haystack = [cb.host, cb.user, cb.ip, cb.os, cb.description ?? '', cb.domain ?? ''].join(' ').toLowerCase()
       if (!haystack.includes(needle)) return false
     }
     return true
-  })
+  }), [sorted, filterStatus, filterAgents, needle, callbackAliveMs, callbackIdleMs])
+
+  // ── List virtualization ──
+  // Only the rows in (and just around) the viewport are rendered, so the list
+  // stays cheap at thousands of callbacks even though it re-renders on every
+  // SUB_CALLBACKS push.
+  const listRef = useRef<HTMLDivElement>(null)
+  const [scrollTop, setScrollTop] = useState(0)
+  const [viewportH, setViewportH] = useState(600)
+
+  useEffect(() => {
+    const el = listRef.current
+    if (!el) return
+    const measure = () => setViewportH(el.clientHeight)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  // A changed filter result set — or a density change (rows resize) — should
+  // start back at the top so the pixel offset stays meaningful.
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: 0 })
+    setScrollTop(0)
+  }, [needle, filterStatus, filterAgents, callbackDensity])
+
+  const firstIdx = Math.max(0, Math.floor(scrollTop / ROW_H) - OVERSCAN)
+  const lastIdx  = Math.min(visible.length, Math.ceil((scrollTop + viewportH) / ROW_H) + OVERSCAN)
+  const windowed = visible.slice(firstIdx, lastIdx)
 
   return (
     <aside className={styles.sidebar}>
       {/* ── Callback list ── */}
-      <div className={styles.section}>
+      <div className={styles.listSection}>
         <div className={`sec-label ${styles.callbacksHeader}`}>
           <span>Callbacks ({visible.length}{visible.length !== callbacks.length ? `/${callbacks.length}` : ''})</span>
-          {multiSelectedIds.length > 1 && (
-            <span className={styles.multiBadge}>
-              {multiSelectedIds.length} selected
-              <button
-                className={styles.multiClear}
-                onClick={() => setMultiSelectedIds([])}
-                title="Clear multi-selection"
-              >✕</button>
-            </span>
-          )}
+          <div className={styles.headerRight}>
+            {multiSelectedIds.length > 1 && (
+              <span className={styles.multiBadge}>
+                {multiSelectedIds.length} selected
+                <button
+                  className={styles.multiClear}
+                  onClick={() => setMultiSelectedIds([])}
+                  title="Clear multi-selection"
+                >✕</button>
+              </span>
+            )}
+            <button
+              className={styles.densityBtn}
+              onClick={() => updateSettings({ callbackDensity: compact ? 'comfortable' : 'compact' })}
+              title={`Row density: ${callbackDensity} — click to switch`}
+            >
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                {compact
+                  ? <path d="M3 3.5h10M3 6.5h10M3 9.5h10M3 12.5h10" />
+                  : <path d="M3 4h10M3 8h10M3 12h10" />}
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* ── Filters ── */}
@@ -156,100 +247,122 @@ export function Sidebar() {
           )}
         </div>
 
-        {callbacks.length === 0 && (
-          <div className={styles.empty}>No callbacks yet</div>
-        )}
-        {callbacks.length > 0 && visible.length === 0 && (
-          <div className={styles.empty}>No matches</div>
-        )}
+        {/* ── Virtualized callback rows ── */}
+        <div
+          ref={listRef}
+          className={styles.listScroll}
+          onScroll={e => setScrollTop(e.currentTarget.scrollTop)}
+        >
+          {callbacks.length === 0 && (
+            <div className={styles.empty}>No callbacks yet</div>
+          )}
+          {callbacks.length > 0 && visible.length === 0 && (
+            <div className={styles.empty}>No matches</div>
+          )}
 
-        {visible.map(({ cb, elapsed }) => {
-          const alive = elapsed < callbackAliveMs
-          const idle  = !alive && elapsed < callbackIdleMs
-          const statusClass = alive ? styles.alive : idle ? styles.idle : styles.dead
-          const integrityBorder = cb.integrity_level >= 3 ? styles.integrityHigh
-                                : cb.integrity_level === 2 ? styles.integrityMed : ''
-          const integrityIcon   = cb.integrity_level >= 3 ? styles.integrityIconHigh
-                                : cb.integrity_level === 2 ? styles.integrityIconMed : ''
+          {visible.length > 0 && (
+            <div className={styles.listSpacer} style={{ height: visible.length * ROW_H }}>
+              {windowed.map(({ cb, elapsed }, i) => {
+                const idx   = firstIdx + i
+                const alive = elapsed < callbackAliveMs
+                const idle  = !alive && elapsed < callbackIdleMs
+                const statusClass = alive ? styles.alive : idle ? styles.idle : styles.dead
+                const integrityBorder = cb.integrity_level >= 3 ? styles.integrityHigh
+                                      : cb.integrity_level === 2 ? styles.integrityMed : ''
+                const integrityIcon   = cb.integrity_level >= 3 ? styles.integrityIconHigh
+                                      : cb.integrity_level === 2 ? styles.integrityIconMed : ''
 
-          const isMultiSelected = multiSelectedIds.includes(cb.id)
-          const annotColor  = callbackAnnotations[cb.display_id] ?? ''
-          const annotTitle  = cb.description || annotColor
-          const activePorts = portsByCallbackId.get(cb.id) ?? []
-          return (
-            <div
-              key={cb.id}
-              className={`${styles.callbackItem} ${cb.id === selectedCallbackId ? styles.active : ''} ${isMultiSelected && cb.id !== selectedCallbackId ? styles.multiSelected : ''} ${integrityBorder}`}
-              onClick={(e) => handleCallbackClick(e, cb.id)}
-              onContextMenu={(e) => openMenu(e, cb)}
-            >
-              <span className={`${styles.statusDot} ${statusClass}`} />
-              <div className={styles.cbHost}>
-                {showCallbackDisplayId && <span className={styles.cbId}>#{cb.display_id} </span>}
-                {cb.host}
-                {cb.locked && <span className={styles.lockBadge}>🔒</span>}
-                {cb.integrity_level >= 2 && <span className={integrityIcon}>▲</span>}
-                {activePorts.length > 0 && (
-                  <span
-                    className={styles.proxyChip}
-                    title={activePorts.map(p => `:${p}`).join(', ')}
-                  >
-                    {activePorts.length === 1 ? `:${activePorts[0]}` : `${activePorts.length}⇄`}
-                  </span>
-                )}
-                {annotColor && (
-                  <span
-                    className={styles.annotDot}
-                    style={{ background: annotColor }}
-                    title={annotTitle || annotColor}
-                  />
-                )}
-              </div>
-              <div className={styles.agentIconWrap} title={cb.payload.payloadtype.name}>
-                <span
-                  className={styles.agentIconFallback}
-                  style={{ color: agentColor(cb.payload.payloadtype.name) }}
-                >
-                  {cb.payload.payloadtype.name.slice(0, 2).toUpperCase()}
-                </span>
-                <img
-                  src={`/static/${cb.payload.payloadtype.name}_dark.svg`}
-                  className={styles.agentIconImg}
-                  onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-                  alt=""
-                />
-              </div>
-              <div className={styles.cbMeta}>
-                <span>{cb.payload.payloadtype.name} · {cb.os}</span>
-                <span>{timeSince(cb.last_checkin)}</span>
-              </div>
-              {cb.user && (
-                <div className={styles.cbUser}>
-                  <span
-                    className={styles.cbUserName}
-                    style={cb.impersonation_context?.trim() ? { opacity: 0.45 } : undefined}
-                  >
-                    {cb.user}
-                  </span>
-                  {cb.impersonation_context?.trim() && (
-                    <>
-                      <span className={styles.cbUserArrow}> → </span>
-                      <span className={styles.cbUserToken}>⚡ {cb.impersonation_context.trim()}</span>
-                    </>
-                  )}
-                </div>
-              )}
-              {cb.description && (
-                <div className={styles.cbDesc}>{cb.description}</div>
-              )}
+                const isMultiSelected = multiSelectedIds.includes(cb.id)
+                const annotColor  = callbackAnnotations[cb.display_id] ?? ''
+                const annotTitle  = cb.description || annotColor
+                const activePorts = portsByCallbackId.get(cb.id) ?? []
+                return (
+                  <div key={cb.id} className={styles.vrow} style={{ top: idx * ROW_H, height: ROW_H }}>
+                    <div
+                      className={`${styles.callbackItem} ${compact ? styles.compact : ''} ${cb.id === selectedCallbackId ? styles.active : ''} ${isMultiSelected && cb.id !== selectedCallbackId ? styles.multiSelected : ''} ${integrityBorder}`}
+                      onClick={(e) => handleCallbackClick(e, cb.id)}
+                      onContextMenu={(e) => openMenu(e, cb)}
+                    >
+                      <span className={`${styles.statusDot} ${statusClass}`} />
+                      <div className={styles.cbHost}>
+                        {showCallbackDisplayId && <span className={styles.cbId}>#{cb.display_id} </span>}
+                        {cb.host}
+                        {cb.locked && <span className={styles.lockBadge}>🔒</span>}
+                        {cb.integrity_level >= 2 && <span className={integrityIcon}>▲</span>}
+                        {activePorts.length > 0 && (
+                          <span
+                            className={styles.proxyChip}
+                            title={activePorts.map(p => `:${p}`).join(', ')}
+                          >
+                            {activePorts.length === 1 ? `:${activePorts[0]}` : `${activePorts.length}⇄`}
+                          </span>
+                        )}
+                        {annotColor && (
+                          <span
+                            className={styles.annotDot}
+                            style={{ background: annotColor }}
+                            title={annotTitle || annotColor}
+                          />
+                        )}
+                      </div>
+                      <div className={styles.agentIconWrap} title={cb.payload.payloadtype.name}>
+                        <span
+                          className={styles.agentIconFallback}
+                          style={{ color: agentColor(cb.payload.payloadtype.name) }}
+                        >
+                          {cb.payload.payloadtype.name.slice(0, 2).toUpperCase()}
+                        </span>
+                        <img
+                          src={`/static/${cb.payload.payloadtype.name}_dark.svg`}
+                          className={styles.agentIconImg}
+                          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                          alt=""
+                        />
+                      </div>
+                      {compact ? (
+                        <div className={styles.cbMeta}>
+                          <span>{cb.user || cb.payload.payloadtype.name}</span>
+                          <span>{timeSince(cb.last_checkin)}</span>
+                        </div>
+                      ) : (
+                        <>
+                          <div className={styles.cbMeta}>
+                            <span>{cb.payload.payloadtype.name} · {cb.os}</span>
+                            <span>{timeSince(cb.last_checkin)}</span>
+                          </div>
+                          {cb.user && (
+                            <div className={styles.cbUser}>
+                              <span
+                                className={styles.cbUserName}
+                                style={cb.impersonation_context?.trim() ? { opacity: 0.45 } : undefined}
+                              >
+                                {cb.user}
+                              </span>
+                              {cb.impersonation_context?.trim() && (
+                                <>
+                                  <span className={styles.cbUserArrow}> → </span>
+                                  <span className={styles.cbUserToken}>⚡ {cb.impersonation_context.trim()}</span>
+                                </>
+                              )}
+                            </div>
+                          )}
+                          {cb.description && (
+                            <div className={styles.cbDesc}>{cb.description}</div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-          )
-        })}
+          )}
+        </div>
       </div>
 
       {/* ── Selected callback detail ── */}
       {selected && (
-        <div className={`${styles.section} ${styles.detail}`}>
+        <div key={selected.id} className={styles.detail}>
           <div
             className={`sec-label ${styles.detailHeader}`}
             onContextMenu={(e) => openMenu(e, selected)}
@@ -259,49 +372,68 @@ export function Sidebar() {
             {selected.locked && <span className={styles.lockBadge}>🔒</span>}
           </div>
 
-          {selected.description && (
-            <div className={styles.descRow}>{selected.description}</div>
-          )}
+          <div className={styles.detailScroll}>
+            {selected.description && (
+              <div className={styles.descRow}>{selected.description}</div>
+            )}
 
-          {impersonatedUser && (
-            <div className={styles.infoRow}>
-              <span className={styles.infoKey}>Token</span>
-              <span className={`${styles.infoVal} ${styles.tokenVal}`} title={`Impersonating: ${impersonatedUser}`}>
-                ⚡ {impersonatedUser}
-              </span>
-            </div>
-          )}
+            <div className={styles.detailGroup}>Identity</div>
+            {impersonatedUser && (
+              <InfoRow
+                label="Token"
+                value={`⚡ ${impersonatedUser}`}
+                copy={impersonatedUser}
+                valueClass={styles.tokenVal}
+                title={`Impersonating: ${impersonatedUser}`}
+              />
+            )}
+            <InfoRow
+              label="User"
+              value={selected.user || '—'}
+              copy={selected.user || undefined}
+              valueClass={impersonatedUser ? styles.mutedVal : undefined}
+            />
+            <InfoRow label="Domain" value={selected.domain || '—'} />
+            <InfoRow
+              label="Integrity"
+              value={integrityLabel(selected.integrity_level)}
+              valueClass={selected.integrity_level >= 3 ? styles.hiVal : undefined}
+            />
 
-          {[
-            ['Integrity', integrityLabel(selected.integrity_level)],
-            ['User',      selected.user || '—'],
-            ['Domain',    selected.domain || '—'],
-            ['PID',       String(selected.pid)],
-            ['Sleep',     formatSleepInterval(selected.sleep_info, selected.tasks[0], selected.payload.c2profileparametersinstances)],
-            ['Jitter',    formatSleepJitter(selected.sleep_info, selected.tasks[0], selected.payload.c2profileparametersinstances)],
-            ['IP',        selected.ip],
-            ['OS',        selected.os],
-            ['Agent',     selected.payload.payloadtype.name],
-            ['C2',        selected.callbackc2profiles[0]?.c2profile.name ?? '—'],
-          ].map(([k, v]) => (
-            <div key={k} className={styles.infoRow}>
-              <span className={styles.infoKey}>{k}</span>
-              <span
-                className={`${styles.infoVal} ${k === 'Integrity' && selected.integrity_level >= 3 ? styles.hiVal : ''} ${k === 'User' && impersonatedUser ? styles.mutedVal : ''}`}
-              >
-                {v}
-              </span>
-            </div>
-          ))}
+            <div className={styles.detailGroup}>Process</div>
+            <InfoRow label="PID" value={String(selected.pid)} copy={String(selected.pid)} />
+            <InfoRow label="OS" value={selected.os || '—'} />
+            {selected.cwd?.trim() && (
+              <InfoRow
+                label="Dir"
+                value={selected.cwd}
+                copy={selected.cwd}
+                valueClass={styles.cwdVal}
+                title={selected.cwd}
+              />
+            )}
 
-          {selected.cwd?.trim() && (
-            <div className={styles.infoRow}>
-              <span className={styles.infoKey}>Dir</span>
-              <span className={`${styles.infoVal} ${styles.cwdVal}`} title={selected.cwd}>
-                {selected.cwd}
-              </span>
-            </div>
-          )}
+            <div className={styles.detailGroup}>Comms</div>
+            <InfoRow label="IP" value={selected.ip || '—'} copy={selected.ip || undefined} />
+            <InfoRow label="Agent" value={selected.payload.payloadtype.name} />
+            {selected.payload.description?.trim() && (
+              <InfoRow
+                label="Payload"
+                value={selected.payload.description}
+                copy={selected.payload.description}
+                title={selected.payload.description}
+              />
+            )}
+            <InfoRow label="C2" value={selected.callbackc2profiles[0]?.c2profile.name ?? '—'} />
+            <InfoRow
+              label="Sleep"
+              value={formatSleepInterval(selected.sleep_info, selected.tasks[0], selected.payload.c2profileparametersinstances)}
+            />
+            <InfoRow
+              label="Jitter"
+              value={formatSleepJitter(selected.sleep_info, selected.tasks[0], selected.payload.c2profileparametersinstances)}
+            />
+          </div>
         </div>
       )}
 

@@ -6,6 +6,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { useQuery, useLazyQuery }         from '@apollo/client'
 import { GET_ATTACK, GET_ATTACK_COMMANDS, GET_ATTACK_TASKS } from '@/apollo/operations'
 import { agentColor } from '@/agentColor'
+import { taskCmd } from '@/store'
 import styles from './AttackPanel.module.css'
 
 // ── Types ─────────────────────────────────────────────
@@ -35,6 +36,7 @@ interface OverlayTask {
   id:             number
   display_id:     number
   command_name:   string
+  command:        { cmd: string | null } | null
   display_params: string
   callback:       { display_id: number; host: string }
 }
@@ -176,7 +178,7 @@ function DetailPanel({
               {tasks.map((t) => (
                 <span key={t.id} className={styles.detailTask}>
                   <span className={styles.detailTaskId}>#{t.display_id}</span>
-                  <span className={styles.detailTaskCmd}>{t.command_name}{t.display_params ? ` ${t.display_params}` : ''}</span>
+                  <span className={styles.detailTaskCmd}>{taskCmd(t)}{t.display_params ? ` ${t.display_params}` : ''}</span>
                   <span className={styles.detailTaskHost}>{t.callback.host}</span>
                 </span>
               ))}

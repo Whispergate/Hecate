@@ -4,6 +4,7 @@
    ═══════════════════════════════════════════════════ */
 
 import { parseTs } from '@/components/Sidebar/utils'
+import { taskCmd } from '@/store'
 
 // ── Types ─────────────────────────────────────────────
 
@@ -11,6 +12,7 @@ export interface ReportTask {
   id:            number
   display_id:    number
   command_name:  string
+  command:       { cmd: string | null } | null
   display_params: string
   params:        string
   status:        string
@@ -232,7 +234,7 @@ function appendTaskTable(lines: string[], tasks: ReportTask[], opts: ReportOptio
 
   tasks.forEach(t => {
     const args  = displayArgs(t)
-    const cmd   = args ? `\`${t.command_name} ${args}\`` : `\`${t.command_name}\``
+    const cmd   = args ? `\`${taskCmd(t)} ${args}\`` : `\`${taskCmd(t)}\``
     const ttpStr = opts.includeTTPs
       ? t.tags.filter(tag => isMitreTtp(tag.tagtype.name)).map(tag => `\`${tag.tagtype.name}\``).join(' ') || '—'
       : ''
@@ -275,7 +277,7 @@ export function generateHtml(
   function taskRows(taskList: ReportTask[]): string {
     return taskList.map(t => {
       const args  = displayArgs(t)
-      const cmd   = args ? `${esc(t.command_name)} <span class="args">${esc(args)}</span>` : esc(t.command_name)
+      const cmd   = args ? `${esc(taskCmd(t))} <span class="args">${esc(args)}</span>` : esc(taskCmd(t))
       const ttpStr = opts.includeTTPs
         ? t.tags.filter(tag => isMitreTtp(tag.tagtype.name))
             .map(tag => `<span class="ttp">${esc(tag.tagtype.name)}</span>`).join(' ') || '—'

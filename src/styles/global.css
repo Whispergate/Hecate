@@ -20,6 +20,13 @@ html, body, #root {
   transform: scale(var(--ui-scale, 1));
   width: calc(100% / var(--ui-scale, 1));
   height: calc(100% / var(--ui-scale, 1));
+
+  /* Scaled viewport units. Raw vh/vw resolve against the real viewport, which
+     is then visually multiplied again by the #root transform — so 80vh would
+     overflow at scale > 1. Components that want "X% of the visible viewport"
+     should use calc(X * var(--svh)) / calc(X * var(--svw)) instead. */
+  --svh: calc(1vh / var(--ui-scale, 1));
+  --svw: calc(1vw / var(--ui-scale, 1));
 }
 
 body {
@@ -29,6 +36,15 @@ body {
   font-size: var(--font-base, 11px);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Native <select> option popups are painted by the OS outside #root, so the
+   transform: scale() above doesn't reach them. Setting font-size directly on
+   <option> lets the native popup track --ui-scale (honored by Chromium/Gecko
+   on Linux/Windows; Safari/macOS ignore styling on <option>). */
+option {
+  font-size: calc(var(--font-base, 11px) * var(--ui-scale, 1));
+  font-family: var(--font-mono);
 }
 
 /* ── Scrollbars ── */

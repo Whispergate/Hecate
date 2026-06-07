@@ -18,6 +18,7 @@ export const TASK_FIELDS = gql`
     id
     display_id
     command_name
+    command { cmd }
     display_params
     params
     agent_task_id
@@ -171,10 +172,14 @@ export const GET_PAYLOADS = gql`
       description
       os
       build_phase
+      build_message
+      build_stderr
+      build_stdout
       creation_time
       auto_generated
       operator    { username }
-      payloadtype { name }
+      payloadtype { name wrapper }
+      wrapped_payload: payload { uuid }
       filemetum   { id agent_file_id filename_text md5 sha1 }
       callbacks_aggregate { aggregate { count } }
       c2profileparametersinstances {
@@ -183,7 +188,7 @@ export const GET_PAYLOADS = gql`
       }
       buildparameterinstances {
         value
-        buildparameter { name }
+        buildparameter { name group_name ui_position }
       }
       payloadcommands { command { cmd } }
       payload_build_steps(order_by: { step_number: asc }) {
@@ -191,6 +196,7 @@ export const GET_PAYLOADS = gql`
         step_number
         step_name
         step_success
+        step_skip
         start_time
         end_time
         step_stdout
@@ -230,6 +236,7 @@ export const GET_PAYLOAD_TYPES = gql`
         crypto_type
         hide_conditions
         ui_position
+        group_name
       }
       payloadtypec2profiles {
         c2profile {
@@ -252,6 +259,114 @@ export const GET_PAYLOAD_TYPES = gql`
           }
         }
       }
+    }
+  }
+`
+
+// Saved C2 profile instance names for a given profile + operation
+export const GET_C2_PROFILE_INSTANCES = gql`
+  query GetC2ProfileInstances($c2_profile_id: Int!, $operation_id: Int!) {
+    c2profileparametersinstance(
+      where: {
+        c2_profile_id: { _eq: $c2_profile_id }
+        operation_id:  { _eq: $operation_id }
+        instance_name: { _is_null: false }
+      }
+      distinct_on: instance_name
+      order_by: { instance_name: asc }
+    ) {
+      instance_name
+    }
+  }
+`
+
+// Parameter values for a specific saved instance
+export const GET_C2_INSTANCE_VALUES = gql`
+  query GetC2InstanceValues($instance_name: String!, $c2_profile_id: Int!, $operation_id: Int!) {
+    c2profileparametersinstance(
+      where: {
+        instance_name: { _eq: $instance_name }
+        c2_profile_id: { _eq: $c2_profile_id }
+        operation_id:  { _eq: $operation_id }
+      }
+    ) {
+      value
+      c2profileparameter { name }
+    }
+  }
+`
+
+// C2 profile parameters + saved instance names (for the instances management modal)
+export const GET_C2_PROFILE_PARAMS = gql`
+  query GetC2ProfileParams($id: Int!) {
+    c2profile_by_pk(id: $id) {
+      id
+      name
+      c2profileparameters(
+        where: { deleted: { _eq: false }, crypto_type: { _eq: false } }
+        order_by: { name: asc }
+      ) {
+        id
+        name
+        parameter_type
+        default_value
+        description
+        required
+        choices
+      }
+      c2profileparametersinstances(
+        where: { instance_name: { _is_null: false } }
+        distinct_on: instance_name
+        order_by: { instance_name: asc }
+      ) {
+        instance_name
+      }
+    }
+  }
+`
+
+// Instance values by name (no operation_id — RLS from JWT scopes it)
+export const GET_C2_INSTANCE_VALUES_BY_NAME = gql`
+  query GetC2InstanceValuesByName($instance_name: String!, $c2_profile_id: Int!) {
+    c2profileparametersinstance(
+      where: {
+        instance_name: { _eq: $instance_name }
+        c2_profile_id: { _eq: $c2_profile_id }
+      }
+    ) {
+      value
+      c2profileparameter { name }
+    }
+  }
+`
+
+// Create / update a named C2 instance (Hasura action)
+export const CREATE_C2_INSTANCE = gql`
+  mutation CreateC2Instance($instance_name: String!, $c2_instance: String!, $c2profile_id: Int!) {
+    create_c2_instance(c2_instance: $c2_instance, instance_name: $instance_name, c2profile_id: $c2profile_id) {
+      status
+      error
+    }
+  }
+`
+
+// Delete all rows for a named instance
+export const DELETE_C2_INSTANCE = gql`
+  mutation DeleteC2Instance($name: String!, $c2_profile_id: Int!) {
+    delete_c2profileparametersinstance(
+      where: { instance_name: { _eq: $name }, c2_profile_id: { _eq: $c2_profile_id } }
+    ) {
+      affected_rows
+    }
+  }
+`
+
+// Import a previously exported instance JSON (Hasura action)
+export const IMPORT_C2_INSTANCE = gql`
+  mutation ImportC2Instance($c2_instance: jsonb!, $instance_name: String!, $c2profile_name: String!) {
+    import_c2_instance(c2_instance: $c2_instance, instance_name: $instance_name, c2profile_name: $c2profile_name) {
+      status
+      error
     }
   }
 `
@@ -351,16 +466,19 @@ export const CREATE_PAYLOAD = gql`
 export const SUB_PAYLOAD_BUILD = gql`
   subscription SubPayloadBuild($uuid: String!) {
     payload(where: { uuid: { _eq: $uuid } }) {
+      id
       build_phase
       build_message
       build_stderr
-      filemetum { agent_file_id }
+      build_stdout
+      filemetum { id agent_file_id }
       payload_build_steps(order_by: { step_number: asc }) {
         id
         step_number
         step_name
         step_description
         step_success
+        step_skip
         start_time
         end_time
         step_stdout
@@ -430,12 +548,53 @@ export const SUB_CONSUMING_SERVICES = gql`
       description
       type
       container_running
+      subscriptions
       semver
     }
   }
 `
 
 // ── Container/service actions ──────────────────────────
+
+// Soft-delete / restore a consuming container (webhook/logging/eventing/auth)
+export const TOGGLE_CONSUMING_DELETE = gql`
+  mutation ToggleConsumingDelete($id: Int!, $deleted: Boolean!) {
+    update_consuming_container_by_pk(pk_columns: { id: $id }, _set: { deleted: $deleted }) {
+      id
+    }
+  }
+`
+
+// Send a test event to a webhook consuming container
+export const TEST_WEBHOOK = gql`
+  mutation TestWebhook($service_type: String!) {
+    consumingServicesTestWebhook(service_type: $service_type) {
+      status
+      error
+    }
+  }
+`
+
+// Send a test event to a logging consuming container
+export const TEST_LOG = gql`
+  mutation TestLog($service_type: String!) {
+    consumingServicesTestLog(service_type: $service_type) {
+      status
+      error
+    }
+  }
+`
+
+// Fetch IDP metadata from an auth consuming container
+export const GET_IDP_METADATA = gql`
+  query GetIDPMetadata($container_name: String!, $idp_name: String!) {
+    consumingContainerGetIDPMetadata(container_name: $container_name, idp_name: $idp_name) {
+      status
+      error
+      metadata
+    }
+  }
+`
 
 export const START_STOP_C2 = gql`
   mutation StartStopC2($id: Int!, $action: String) {
@@ -478,6 +637,15 @@ export const CONTAINER_WRITE_FILE = gql`
   }
 `
 
+export const CONTAINER_REMOVE_FILE = gql`
+  mutation ContainerRemoveFile($container_name: String!, $filename: String!) {
+    containerRemoveFile(container_name: $container_name, filename: $filename) {
+      status
+      error
+    }
+  }
+`
+
 export const GET_AGENT_COMMANDS = gql`
   query GetAgentCommands($payload_name: String!) {
     command(
@@ -516,6 +684,7 @@ export const GET_REPORT_TASKS = gql`
       id
       display_id
       command_name
+      command { cmd }
       display_params
       params
       status
@@ -546,9 +715,36 @@ export const GET_COMMANDS = gql`
         required
         default_value
         choices
+        dynamic_query_function
         parameter_group_name
         limit_credentials_by_type
       }
+    }
+  }
+`
+
+// Resolve a command parameter's choices at runtime. Some ChooseOne/ChooseMultiple
+// params (e.g. assembly_inject's assembly_name, register_file's existingFile)
+// have no static choices — Apollo computes them via a dynamic_query_function RPC
+// (typically an RPC file-search for already-uploaded files). Mythic exposes this
+// as the `dynamic_query_function` Hasura action. `callback` is the display_id.
+export const GET_DYNAMIC_QUERY_PARAMS = gql`
+  mutation GetDynamicQueryParams(
+    $callback: Int!
+    $command: String!
+    $payload_type: String!
+    $parameter_name: String!
+  ) {
+    dynamic_query_function(
+      callback: $callback
+      command: $command
+      payload_type: $payload_type
+      parameter_name: $parameter_name
+    ) {
+      status
+      error
+      choices
+      parameter_name
     }
   }
 `
@@ -919,6 +1115,7 @@ export const GET_ATTACK_TASKS = gql`
         id
         display_id
         command_name
+        command { cmd }
         display_params
         callback { display_id host }
       }
@@ -951,24 +1148,71 @@ export const GET_REPORT_ATTACK_TASKS = gql`
   }
 `
 
-// All tasks for the operation — used by TimelinePanel swimlane view.
-// Lean shape: no tags, no response_count. Limit 2000.
+// Tasks for the operation — used by TimelinePanel + ReplayPanel.
+// Lean shape: no tags, no response_count.
+// order_by DESC + limit returns the MOST RECENT $limit tasks. With asc + limit
+// Hasura returns the OLDEST $limit instead — silently hiding all recent activity
+// once an operation exceeds $limit tasks. Both callers re-sort, so desc is fine.
 export const GET_TIMELINE_TASKS = gql`
   query GetTimelineTasks($operation_id: Int!, $limit: Int = 2000) {
     task(
       where:    { callback: { operation_id: { _eq: $operation_id } } }
-      order_by: { timestamp: asc }
+      order_by: { timestamp: desc }
       limit:    $limit
     ) {
       id
       display_id
       command_name
+      command { cmd }
       display_params
       status
       completed
       timestamp
       operator { username }
       callback  { id display_id host }
+    }
+  }
+`
+
+// ─────────────────────────────────────────────────────
+// SESSION REPLAY  (historical reconstruction of an operation)
+// ─────────────────────────────────────────────────────
+
+// Every callback in the operation with the moment it first checked in.
+// init_callback drives when a node "appears" on the replay graph.
+export const GET_REPLAY_CALLBACKS = gql`
+  query GetReplayCallbacks($operation_id: Int!) {
+    callback(
+      where:    { operation_id: { _eq: $operation_id } }
+      order_by: { init_callback: asc }
+    ) {
+      id
+      display_id
+      host
+      user
+      ip
+      init_callback
+      payload { payloadtype { name } }
+    }
+  }
+`
+
+// Every P2P / egress edge ever recorded for the operation, including closed
+// ones. start_timestamp / end_timestamp bound when each link existed so the
+// graph can be reconstructed for any point in time (unlike SUB_CALLBACK_GRAPH_EDGES
+// which filters to currently-open edges only).
+export const GET_REPLAY_EDGES = gql`
+  query GetReplayEdges($operation_id: Int!) {
+    callbackgraphedge(
+      where:    { operation_id: { _eq: $operation_id } }
+      order_by: { start_timestamp: asc }
+    ) {
+      id
+      source_id
+      destination_id
+      start_timestamp
+      end_timestamp
+      c2profile { id name is_p2p }
     }
   }
 `
@@ -983,6 +1227,7 @@ export const GET_CALLBACK_TASK_HISTORY = gql`
       limit:    $limit
     ) {
       command_name
+      command { cmd }
       display_params
     }
   }
@@ -1388,6 +1633,207 @@ export const GET_LINK_TARGETS = gql`
         c2profile { id name }
         c2profileparameter { crypto_type name }
       }
+    }
+  }
+`
+
+// ─────────────────────────────────────────────────────
+// EVENTING / WORKFLOWS
+// ─────────────────────────────────────────────────────
+
+export const GET_EVENT_GROUPS = gql`
+  query GetEventGroups {
+    eventgroup(where: { deleted: { _eq: false } }, order_by: { id: desc }) {
+      id
+      name
+      description
+      trigger
+      trigger_data
+      keywords
+      environment
+      active
+      approved_to_run
+      run_as
+      total_steps
+      total_order_steps
+      next_scheduled_run
+      created_at
+      updated_at
+      operator { username }
+    }
+  }
+`
+
+export const GET_EVENT_GROUP_DETAIL = gql`
+  query GetEventGroupDetail($id: Int!) {
+    eventgroup_by_pk(id: $id) {
+      id
+      name
+      description
+      trigger
+      trigger_data
+      keywords
+      environment
+      active
+      approved_to_run
+      run_as
+      total_steps
+      total_order_steps
+      next_scheduled_run
+      created_at
+      updated_at
+      operator { username }
+      eventsteps(order_by: { order: asc, id: asc }) {
+        id
+        name
+        description
+        action
+        action_data
+        inputs
+        outputs
+        environment
+        depends_on
+        order
+        continue_on_error
+      }
+    }
+  }
+`
+
+export const GET_EVENT_GROUP_INSTANCES = gql`
+  query GetEventGroupInstances($eventgroup_id: Int!) {
+    eventgroupinstance(
+      where: { eventgroup_id: { _eq: $eventgroup_id } }
+      order_by: { id: desc }
+      limit: 50
+    ) {
+      id
+      status
+      trigger
+      current_order_step
+      total_order_steps
+      created_at
+      updated_at
+      end_timestamp
+      operator { username }
+    }
+  }
+`
+
+export const SUB_EVENT_GROUP_INSTANCES = gql`
+  subscription SubEventGroupInstances($eventgroup_id: Int!, $now: timestamp!) {
+    eventgroupinstance_stream(
+      cursor: { initial_value: { updated_at: $now }, ordering: ASC }
+      batch_size: 50
+      where: { eventgroup_id: { _eq: $eventgroup_id } }
+    ) {
+      id
+      status
+      trigger
+      current_order_step
+      total_order_steps
+      created_at
+      updated_at
+      end_timestamp
+      operator { username }
+    }
+  }
+`
+
+export const SUB_EVENT_STEP_INSTANCES = gql`
+  subscription SubEventStepInstances($eventgroupinstance_id: Int!) {
+    eventstepinstance_stream(
+      cursor: { initial_value: { updated_at: "1970-01-01" }, ordering: ASC }
+      batch_size: 100
+      where: { eventgroupinstance_id: { _eq: $eventgroupinstance_id } }
+    ) {
+      id
+      status
+      order
+      stdout
+      stderr
+      inputs
+      outputs
+      action_data
+      created_at
+      updated_at
+      end_timestamp
+      eventstep { id name action order depends_on }
+    }
+  }
+`
+
+export const GET_EVENT_GROUP_FULL_INSTANCE = gql`
+  query GetEventGroupFullInstance($eventgroupinstance_id: Int!) {
+    eventgroupinstance_by_pk(id: $eventgroupinstance_id) {
+      id
+      status
+      trigger
+      trigger_metadata
+      environment
+      current_order_step
+      total_order_steps
+      created_at
+      updated_at
+      end_timestamp
+      eventgroup { id name trigger }
+      operator { username }
+    }
+  }
+`
+
+export const EVENTING_TRIGGER_MANUAL = gql`
+  mutation EventingTriggerManual($eventgroup_id: Int!, $env_data: jsonb) {
+    eventingTriggerManual(eventgroup_id: $eventgroup_id, env_data: $env_data) {
+      status
+      error
+    }
+  }
+`
+
+export const EVENTING_TRIGGER_CANCEL = gql`
+  mutation EventingTriggerCancel($eventgroupinstance_id: Int!) {
+    eventingTriggerCancel(eventgroupinstance_id: $eventgroupinstance_id) {
+      status
+      error
+    }
+  }
+`
+
+export const EVENTING_TRIGGER_UPDATE = gql`
+  mutation EventingTriggerUpdate($eventgroup_id: Int!, $active: Boolean, $deleted: Boolean, $updated_config: String) {
+    eventingTriggerUpdate(
+      eventgroup_id: $eventgroup_id
+      active: $active
+      deleted: $deleted
+      updated_config: $updated_config
+    ) {
+      status
+      error
+      active
+      deleted
+      name
+    }
+  }
+`
+
+export const EVENTING_TEST_FILE = gql`
+  query EventingTestFile($file_contents: String!) {
+    eventingTestFile(file_contents: $file_contents) {
+      status
+      error
+      parsed_workflow
+      formatted_output
+    }
+  }
+`
+
+export const EVENTING_EXPORT_WORKFLOW = gql`
+  query EventingExportWorkflow($eventgroup_id: Int!, $output_format: String!) {
+    eventingExportWorkflow(eventgroup_id: $eventgroup_id, include_steps: true, output_format: $output_format) {
+      status
+      error
+      workflow
     }
   }
 `

@@ -14,7 +14,7 @@
   background: var(--bg-raised);
   border: 1px solid var(--beige-border);
   border-radius: var(--radius-md);
-  width: min(360px, 94vw);
+  width: min(360px, calc(94 * var(--svw)));
   display: flex;
   flex-direction: column;
   overflow: hidden;

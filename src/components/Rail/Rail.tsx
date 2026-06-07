@@ -43,6 +43,15 @@ const ITEMS: { id: RailView; title: string; icon: React.ReactNode }[] = [
     ),
   },
   {
+    id: 'health',
+    title: 'Beacon Health',
+    icon: (
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1.5 8.5h3l1.5-4 2.5 7 1.8-5 1.2 2h3" />
+      </svg>
+    ),
+  },
+  {
     id: 'payloads',
     title: 'Payloads',
     icon: (
@@ -119,6 +128,30 @@ const ITEMS: { id: RailView; title: string; icon: React.ReactNode }[] = [
     ),
   },
   {
+    id: 'replay',
+    title: 'Session Replay',
+    icon: (
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="8" cy="8" r="6.2" />
+        <path d="M6.5 5.4l4.2 2.6-4.2 2.6z" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+  },
+  {
+    id: 'eventing',
+    title: 'Eventing Workflows',
+    icon: (
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="3.5" cy="3.5" r="1.5" />
+        <circle cx="3.5" cy="12.5" r="1.5" />
+        <circle cx="12.5" cy="8" r="1.5" />
+        <path d="M5 3.5h3M5 12.5h3" />
+        <path d="M8 3.5 Q10.5 5 11.2 7.2" />
+        <path d="M8 12.5 Q10.5 11 11.2 8.8" />
+      </svg>
+    ),
+  },
+  {
     id: 'attack',
     title: 'ATT&CK Matrix',
     icon: (
@@ -160,37 +193,41 @@ export function Rail() {
 
   return (
     <nav className={styles.rail}>
-      {ITEMS.map((item, idx) => (
-        <>
-          {idx === 4 && <div key="sep" className={styles.sep} />}
-          <div key={item.id} className={styles.btnWrap}>
-            <button
-              className={`${styles.btn} ${activeRailView === item.id ? styles.active : ''}`}
-              title={item.title}
-              onClick={() => setActiveRailView(item.id)}
-            >
-              {item.icon}
-            </button>
-            {item.id === 'logs' && unresolvedWarnings > 0 && (
-              <span className={styles.badge}>{unresolvedWarnings > 99 ? '99+' : unresolvedWarnings}</span>
-            )}
-            {item.id === 'proxies' && activePortCount > 0 && (
-              <span className={`${styles.badge} ${styles.badgeProxy}`}>{activePortCount}</span>
-            )}
-          </div>
-        </>
-      ))}
+      <div className={styles.scrollArea}>
+        {ITEMS.map((item, idx) => (
+          <>
+            {idx === 5 && <div key="sep" className={styles.sep} />}
+            <div key={item.id} className={styles.btnWrap}>
+              <button
+                className={`${styles.btn} ${activeRailView === item.id ? styles.active : ''}`}
+                title={item.title}
+                onClick={() => setActiveRailView(item.id)}
+              >
+                {item.icon}
+              </button>
+              {item.id === 'logs' && unresolvedWarnings > 0 && (
+                <span className={styles.badge}>{unresolvedWarnings > 99 ? '99+' : unresolvedWarnings}</span>
+              )}
+              {item.id === 'proxies' && activePortCount > 0 && (
+                <span className={`${styles.badge} ${styles.badgeProxy}`}>{activePortCount}</span>
+              )}
+            </div>
+          </>
+        ))}
+      </div>
 
-      {/* Push settings to bottom */}
-      <div className={styles.spacer} />
-      <div className={styles.sep} />
-      <button
-        className={`${styles.btn} ${isSettingsOpen ? styles.active : ''}`}
-        title="Settings"
-        onClick={() => setSettingsOpen(!isSettingsOpen)}
-      >
-        {SETTINGS_ICON}
-      </button>
+      {/* Settings pinned at the bottom — always visible even when the rail
+          can't fit all items (large font scale on short viewports). */}
+      <div className={styles.footer}>
+        <div className={styles.sep} />
+        <button
+          className={`${styles.btn} ${isSettingsOpen ? styles.active : ''}`}
+          title="Settings"
+          onClick={() => setSettingsOpen(!isSettingsOpen)}
+        >
+          {SETTINGS_ICON}
+        </button>
+      </div>
     </nav>
   )
 }

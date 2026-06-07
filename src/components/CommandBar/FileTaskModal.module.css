@@ -16,8 +16,8 @@
   background: var(--bg-raised);
   border: 1px solid var(--beige-border);
   border-radius: var(--radius-md);
-  width: min(460px, 94vw);
-  max-height: 80vh;
+  width: min(460px, calc(94 * var(--svw)));
+  max-height: calc(80 * var(--svh));
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -93,7 +93,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  max-height: calc(80vh - 96px); /* cap scrollable region; header+footer ≈96px */
+  max-height: calc(calc(80 * var(--svh)) - 96px); /* cap scrollable region; header+footer ≈96px */
 }
 
 .errorBanner {

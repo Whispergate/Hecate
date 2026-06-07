@@ -1,0 +1,169 @@
+/* src/components/TaskFeed/BrowserTable.module.css */
+
+.browser {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+}
+
+/* ── Toolbar ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--beige-border);
+  flex-shrink: 0;
+}
+
+.title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--beige);
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--bone-700);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  padding: 1px 5px;
+}
+
+.footerBtn {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--beige-border);
+  color: var(--bone-600);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  padding: 2px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+}
+.footerBtn + .footerBtn { margin-left: 4px; }
+.footerBtn:hover { color: #85b089; border-color: rgba(133,176,137,0.4); background: rgba(133,176,137,0.1); }
+
+/* ── Table ── */
+.tableWrap {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-raised);
+}
+.table thead tr { border-bottom: 1px solid var(--beige-border); }
+
+.table th {
+  text-align: left;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bone-700);
+  padding: 4px 8px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.thAct  { width: 100px; }
+.thGrow { width: auto; }
+
+/* ── Rows ── */
+.row {
+  border-bottom: 1px solid var(--beige-dim);
+  transition: background var(--t-fast);
+}
+.row:hover { background: var(--beige-dim); }
+
+.table td { padding: 3px 8px; vertical-align: middle; }
+
+.td {
+  color: var(--bone-300);
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tdCopy { cursor: pointer; }
+.tdCopy:hover { color: var(--bone-100); }
+.copiedTag { color: #85b089; margin-left: 4px; font-size: 8px; }
+
+/* ── Action buttons ── */
+.tdAct { white-space: nowrap; }
+
+.actBtn {
+  background: transparent;
+  border: 1px solid var(--beige-border);
+  color: var(--bone-700);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  cursor: pointer;
+  padding: 1px 8px;
+  border-radius: 2px;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+  white-space: nowrap;
+}
+.actBtn:hover:not(:disabled) { color: var(--bone-200); border-color: var(--beige-border-strong); background: var(--beige-dim); }
+.actBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.actDanger:hover:not(:disabled) { color: var(--crimson-300); border-color: rgba(181,40,40,0.4); background: rgba(181,40,40,0.1); }
+
+/* ── Menu (multi-action) ── */
+.menuWrap { position: relative; display: inline-block; }
+
+.menuBackdrop { position: fixed; inset: 0; z-index: 1000; }
+
+.menu {
+  position: fixed;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  min-width: 96px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--beige-border);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+}
+
+.menuItem {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--beige-dim);
+  color: var(--bone-400);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-align: left;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.menuItem:last-child { border-bottom: none; }
+.menuItem:hover:not(:disabled) { background: var(--beige-dim); color: var(--bone-100); }
+.menuItem:disabled { opacity: 0.35; cursor: not-allowed; }
+.menuItemDanger:hover:not(:disabled) { background: rgba(181,40,40,0.12); color: var(--crimson-300); }
+
+/* ── Empty ── */
+.empty {
+  padding: 20px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--bone-800);
+}

@@ -1,7 +1,7 @@
 /* hecate/src/views/Login.module.css */
 
 .page {
-  height: 100vh;
+  height: calc(100 * var(--svh));
   display: flex;
   align-items: center;
   justify-content: center;

@@ -4,7 +4,7 @@
    ═══════════════════════════════════════════════════ */
 
 import { memo } from 'react'
-import type { Task } from '@/store'
+import { taskCmd, type Task } from '@/store'
 import { KillTaskButton } from './KillTaskButton'
 import styles from './TaskList.module.css'
 
@@ -54,7 +54,7 @@ const TaskRow = memo(function TaskRow({ task, selected, onSelect }: RowProps) {
 
       {/* Command */}
       <span className={styles.rowBody}>
-        <span className={styles.rowCmd}>{task.command_name}</span>
+        <span className={styles.rowCmd}>{taskCmd(task)}</span>
         {displayArgs && (
           <span className={styles.rowArgs}> {displayArgs}</span>
         )}

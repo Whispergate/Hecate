@@ -1,6 +1,6 @@
 /* src/components/PayloadPanel/PayloadContextMenu.tsx */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useMutation } from '@apollo/client'
 import {
   UPDATE_PAYLOAD_DESCRIPTION,
@@ -26,31 +26,34 @@ function buildDefinition(p: Payload, filename: string): string {
     byProfile.get(prof)!.params[inst.c2profileparameter.name] = inst.value
   }
 
+  const isWrapper = p.payloadtype.wrapper
   return JSON.stringify({
     description:      p.description,
     payload_type:     p.payloadtype.name,
     selected_os:      p.os,
     filename,
-    commands:         p.payloadcommands.map(pc => pc.command.cmd),
+    commands:         isWrapper ? [] : p.payloadcommands.map(pc => pc.command.cmd),
     build_parameters: p.buildparameterinstances.map(b => ({ name: b.buildparameter.name, value: b.value })),
-    c2_profiles: [...byProfile.entries()].map(([name, v]) => ({
+    c2_profiles: isWrapper ? [] : [...byProfile.entries()].map(([name, v]) => ({
       c2_profile:            name,
       c2_profile_is_p2p:     v.is_p2p,
       c2_profile_parameters: v.params,
     })),
+    ...(isWrapper ? { wrapper: true, wrapped_payload: p.wrapped_payload?.uuid ?? '' } : {}),
   })
 }
 
 function exportConfig(p: Payload, filename: string) {
+  const isWrapper = p.payloadtype.wrapper
   const obj = {
     payload_type:     p.payloadtype.name,
     os:               p.os,
     description:      p.description,
     filename,
     uuid:             p.uuid,
-    commands:         p.payloadcommands.map(pc => pc.command.cmd),
+    commands:         isWrapper ? [] : p.payloadcommands.map(pc => pc.command.cmd),
     build_parameters: p.buildparameterinstances.map(b => ({ name: b.buildparameter.name, value: b.value })),
-    c2_profiles: (() => {
+    c2_profiles: isWrapper ? {} : (() => {
       const m = new Map<string, Record<string, string>>()
       for (const inst of p.c2profileparametersinstances) {
         const prof = inst.c2profileparameter.c2profile.name
@@ -59,6 +62,7 @@ function exportConfig(p: Payload, filename: string) {
       }
       return Object.fromEntries(m)
     })(),
+    ...(isWrapper ? { wrapper: true, wrapped_payload: p.wrapped_payload?.uuid ?? '' } : {}),
   }
   const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' })
   const url  = URL.createObjectURL(blob)
@@ -132,7 +136,7 @@ function compareParams(a: Payload, b: Payload): ParamRow[] {
 
 // ── component ─────────────────────────────────────────
 
-type View = 'menu' | 'editDesc' | 'rename' | 'iocs' | 'compare' | 'confirmBuild'
+type View = 'menu' | 'editDesc' | 'rename' | 'iocs' | 'compare' | 'confirmBuild' | 'buildMsg' | 'buildErr'
 
 interface Props {
   payload:          Payload
@@ -173,10 +177,27 @@ export function PayloadContextMenu({ payload, payloads, x, y, onClose, onRebuilt
     }
   }, [onClose, view])
 
+  const [pos, setPos] = useState<{ top: number; left: number }>({ top: y, left: x })
+
+  useLayoutEffect(() => {
+    const el = menuRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    const m = 8
+    // Clamp in real viewport coords (clientX/Y, innerWidth/Height, getBoundingClientRect
+    // all live there), then divide by --ui-scale because position: fixed inside the
+    // transformed #root resolves top/left in #root's local space.
+    const s = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-scale')) || 1
+    setPos({
+      top:  Math.max(m, Math.min(y, window.innerHeight - r.height - m)) / s,
+      left: Math.max(m, Math.min(x, window.innerWidth  - r.width  - m)) / s,
+    })
+  }, [x, y, view, compareId])
+
   const style: React.CSSProperties = {
     position: 'fixed',
-    top:  Math.min(y, window.innerHeight - 420),
-    left: x + 240 > window.innerWidth ? x - 240 : x,
+    top:  pos.top,
+    left: pos.left,
   }
 
   const copyToClipboard = (text: string, label: string) => {
@@ -387,6 +408,36 @@ export function PayloadContextMenu({ payload, payloads, x, y, onClose, onRebuilt
     </div>
   )
 
+  if (view === 'buildMsg' || view === 'buildErr') {
+    const isErr = view === 'buildErr'
+    // Mirrors Mythic's "Payload Build Messages" dialog: the message view shows
+    // build_message + build_stdout together; the error view shows build_stderr.
+    const msg    = payload.build_message ?? ''
+    const stdout = payload.build_stdout ?? ''
+    const text   = isErr
+      ? (payload.build_stderr ?? '')
+      : [
+          msg.trim()    && `Message:\n${msg}`,
+          stdout.trim() && `STDOUT:\n${stdout}`,
+        ].filter(Boolean).join('\n\n')
+    return (
+      <div ref={menuRef} className={styles.menu} style={{ ...style, minWidth: 360 }} onContextMenu={e => e.preventDefault()}>
+        <div className={styles.header}>{isErr ? 'Build stderr' : 'Build messages'}</div>
+        {text.trim()
+          ? <pre className={styles.logBox}>{text}</pre>
+          : <div className={styles.empty}>{isErr ? 'No build stderr' : 'No build messages'}</div>}
+        <div className={styles.rowActions}>
+          {text.trim() && (
+            <button className={styles.btnSecondary} onClick={() => copyToClipboard(text, isErr ? 'stderr' : 'message')}>
+              {copied === (isErr ? 'stderr' : 'message') ? 'Copied ✓' : 'Copy'}
+            </button>
+          )}
+          <button className={styles.btnSecondary} onClick={() => setView('menu')}>Back</button>
+        </div>
+      </div>
+    )
+  }
+
   // ── Main menu ─────────────────────────────────────
 
   return (
@@ -403,6 +454,15 @@ export function PayloadContextMenu({ payload, payloads, x, y, onClose, onRebuilt
       </button>
       <button className={styles.item} onClick={() => setView('compare')}>
         Compare configuration
+      </button>
+
+      <div className={styles.divider} />
+
+      <button className={styles.item} onClick={() => setView('buildMsg')}>
+        Show build messages
+      </button>
+      <button className={styles.item} onClick={() => setView('buildErr')}>
+        Show build stderr
       </button>
 
       <div className={styles.divider} />

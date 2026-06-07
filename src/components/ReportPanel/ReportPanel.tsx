@@ -6,7 +6,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useQuery }                        from '@apollo/client'
 import { GET_REPORT_TASKS, GET_REPORT_ATTACK_TASKS, GET_REPORT_ATTACK_COMMANDS } from '@/apollo/operations'
-import { useStore }                        from '@/store'
+import { useStore, taskCmd }               from '@/store'
 import { parseTs }                         from '@/components/Sidebar/utils'
 import {
   filterTasks,
@@ -81,7 +81,7 @@ function PreviewTaskRow({
       <td className={styles.ts}>{fmtTs(task.timestamp)}</td>
       <td className={styles.host}>{task.callback.host}</td>
       <td className={styles.cmd}>
-        <span className={styles.cmdName}>{task.command_name}</span>
+        <span className={styles.cmdName}>{taskCmd(task)}</span>
         {args && <span className={styles.cmdArgs}> {args}</span>}
       </td>
       {opts.includeOperators && <td className={styles.opCell}>{task.operator.username}</td>}

@@ -3,15 +3,21 @@
    ═══════════════════════════════════════════════════ */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useQuery, useMutation, useSubscription } from '@apollo/client'
+import { useQuery, useLazyQuery, useMutation, useSubscription } from '@apollo/client'
 import { uploadTaskFile } from '@/uploadTaskFile'
 import {
   GET_PAYLOAD_TYPES,
+  GET_PAYLOADS,
   GET_COMMANDS_FOR_TYPE,
   GET_WRAPPABLE_PAYLOADS,
+  GET_C2_PROFILE_INSTANCES,
+  GET_C2_INSTANCE_VALUES,
   CREATE_PAYLOAD,
   SUB_PAYLOAD_BUILD,
 } from '@/apollo/operations'
+import { useStore } from '@/store'
+import { parseTs } from '@/components/Sidebar/utils'
+import { agentColor } from '@/agentColor'
 import type { Payload } from './PayloadPanel'
 import styles from './CreatePayloadModal.module.css'
 
@@ -25,6 +31,7 @@ interface InitialConfig {
   c2Name:      string
   c2Params:    Record<string, string>
   commands:    string[]
+  wrappedUuid?: string
 }
 
 function decodeB64(b64: string | undefined | null): string {
@@ -53,6 +60,46 @@ function payloadToInitialConfig(payload: Payload): InitialConfig {
     c2Name,
     c2Params,
     commands:    payload.payloadcommands.map(pc => pc.command.cmd),
+    wrappedUuid: payload.wrapped_payload?.uuid ?? undefined,
+  }
+}
+
+function configFromJson(json: unknown): { typeName: string; config: InitialConfig } | null {
+  if (!json || typeof json !== 'object') return null
+  const j = json as Record<string, unknown>
+  const typeName = typeof j.payload_type === 'string' ? j.payload_type : null
+  if (!typeName) return null
+
+  const buildParams: Record<string, string> = {}
+  if (Array.isArray(j.build_parameters)) {
+    for (const bp of j.build_parameters as { name?: unknown; value?: unknown }[]) {
+      if (typeof bp.name === 'string')
+        buildParams[bp.name] = typeof bp.value === 'string' ? bp.value : JSON.stringify(bp.value ?? '')
+    }
+  }
+
+  const c2Arr = Array.isArray(j.c2_profiles)
+    ? j.c2_profiles as { c2_profile?: unknown; c2_profile_parameters?: Record<string, unknown> }[]
+    : []
+  const c2Name = typeof c2Arr[0]?.c2_profile === 'string' ? c2Arr[0].c2_profile : ''
+  const c2Params: Record<string, string> = {}
+  for (const [k, v] of Object.entries(c2Arr[0]?.c2_profile_parameters ?? {}))
+    c2Params[k] = typeof v === 'string' ? v : JSON.stringify(v)
+
+  return {
+    typeName,
+    config: {
+      os:          typeof j.selected_os  === 'string' ? j.selected_os  : '',
+      description: typeof j.description === 'string' ? j.description : '',
+      filename:    typeof j.filename    === 'string' ? j.filename    : '',
+      buildParams,
+      c2Name,
+      c2Params,
+      commands: Array.isArray(j.commands)
+        ? (j.commands as unknown[]).filter((c): c is string => typeof c === 'string')
+        : [],
+      wrappedUuid: typeof j.wrapped_payload === 'string' ? j.wrapped_payload : undefined,
+    },
   }
 }
 
@@ -86,6 +133,7 @@ interface Param {
   crypto_type:     boolean
   hide_conditions: HideCondition[]
   ui_position:     number
+  group_name?:     string
 }
 
 function evalHideConditions(param: Param, allValues: Record<string, string>): boolean {
@@ -524,6 +572,150 @@ function WrappedPayloadPicker({
   )
 }
 
+// ── Agent icon ─────────────────────────────────────────
+
+function AgentIcon({ name, size = 'sm' }: { name: string; size?: 'sm' | 'lg' }) {
+  const [failed, setFailed] = useState(false)
+  const color = agentColor(name)
+  return (
+    <span
+      className={size === 'lg' ? styles.agentIconLg : styles.agentIconSm}
+      style={{ '--agent-color': color } as React.CSSProperties}
+    >
+      {!failed
+        ? <img
+            src={`/static/${name.toLowerCase()}_dark.svg`}
+            alt=""
+            className={size === 'lg' ? styles.agentIconLgImg : styles.agentIconSmImg}
+            onError={() => setFailed(true)}
+          />
+        : name.charAt(0).toUpperCase()
+      }
+    </span>
+  )
+}
+
+// ── From existing payload list ─────────────────────────
+
+function PickExisting({ onSelect }: { onSelect: (p: Payload) => void }) {
+  const activeOp = useStore(s => s.activeOperation)
+  const [filter, setFilter] = useState('')
+
+  const { data, loading } = useQuery(GET_PAYLOADS, {
+    variables: { operation_id: activeOp?.id ?? 0 },
+    skip: !activeOp,
+    fetchPolicy: 'cache-and-network',
+  })
+
+  const payloads: Payload[] = (data?.payload ?? []).filter(
+    (p: Payload) => !p.auto_generated && p.build_phase === 'success'
+  )
+
+  const q = filter.toLowerCase()
+  const visible = filter
+    ? payloads.filter(p => {
+        const fname = decodeB64(p.filemetum?.filename_text)
+        return (
+          p.payloadtype.name.toLowerCase().includes(q) ||
+          (p.description ?? '').toLowerCase().includes(q) ||
+          (p.os ?? '').toLowerCase().includes(q) ||
+          fname.toLowerCase().includes(q)
+        )
+      })
+    : payloads
+
+  if (loading && !payloads.length) return <div className={styles.loading}>Loading payloads…</div>
+
+  return (
+    <div className={styles.existWrap}>
+      {payloads.length === 0 ? (
+        <div className={styles.noParams}>No successful payloads in this operation.</div>
+      ) : (
+        <>
+          <input
+            className={styles.cmdSearch}
+            type="text"
+            placeholder="filter payloads…"
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+          />
+          <div className={styles.existList}>
+            {visible.map(p => {
+              const fname = decodeB64(p.filemetum?.filename_text) || p.description || p.uuid.slice(0, 12)
+              const date = parseTs(p.creation_time).toLocaleDateString([], { month: 'short', day: '2-digit', year: '2-digit' })
+              return (
+                <button key={p.id} className={styles.existItem} onClick={() => onSelect(p)}>
+                  <div className={styles.existItemTop}>
+                    <AgentIcon name={p.payloadtype.name} size="sm" />
+                    <span className={styles.existItemAgent}>{p.payloadtype.name}</span>
+                    {p.os && <span className={styles.existItemOs}>{p.os}</span>}
+                    <span className={styles.existItemDate}>{date}</span>
+                  </div>
+                  <span className={styles.existItemFile}>{fname}</span>
+                  {p.description && <span className={styles.existItemDesc}>{p.description}</span>}
+                </button>
+              )
+            })}
+            {visible.length === 0 && <div className={styles.noParams}>No matching payloads.</div>}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── Import config from JSON ────────────────────────────
+
+function ImportConfig({ onImport }: {
+  onImport: (typeName: string, config: InitialConfig) => void
+}) {
+  const [err, setErr]   = useState<string | null>(null)
+  const [drag, setDrag] = useState(false)
+  const inputRef        = useRef<HTMLInputElement>(null)
+
+  function processFile(file: File) {
+    const reader = new FileReader()
+    reader.onload = e => {
+      try {
+        const json   = JSON.parse(e.target?.result as string)
+        const result = configFromJson(json)
+        if (!result) { setErr('Invalid config: missing payload_type field'); return }
+        setErr(null)
+        onImport(result.typeName, result.config)
+      } catch {
+        setErr('Failed to parse JSON — check file format')
+      }
+    }
+    reader.readAsText(file)
+  }
+
+  return (
+    <div className={styles.importWrap}>
+      <div
+        className={`${styles.importZone} ${drag ? styles.importZoneDrag : ''}`}
+        onDragOver={e => { e.preventDefault(); setDrag(true) }}
+        onDragLeave={() => setDrag(false)}
+        onDrop={e => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) processFile(f) }}
+        onClick={() => inputRef.current?.click()}
+      >
+        <span className={styles.importZoneIcon}>⬆</span>
+        <span className={styles.importZoneText}>
+          Drop payload config JSON here<br />or click to browse
+        </span>
+        <span className={styles.importZoneSub}>exported from Mythic: Payloads → Export Config</span>
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".json,application/json"
+        style={{ display: 'none' }}
+        onChange={e => { const f = e.target.files?.[0]; if (f) processFile(f) }}
+      />
+      {err && <div className={styles.importErr}>{err}</div>}
+    </div>
+  )
+}
+
 // ── Step 1: Pick agent ─────────────────────────────────
 
 function PickAgent({
@@ -539,6 +731,7 @@ function PickAgent({
           className={`${styles.agentCard} ${!t.container_running ? styles.agentOffline : ''}`}
           onClick={() => onPick(t)}
         >
+          <AgentIcon name={t.name} size="lg" />
           <div className={styles.agentCardTop}>
             <span className={styles.agentCardName}>{t.name}</span>
             {t.wrapper && <span className={styles.wrapperBadge}>WRAPPER</span>}
@@ -636,7 +829,7 @@ function Configure({
   const [allCmds,      setAllCmds]      = useState<Command[]>([])
   const [cmdsLoaded,   setCmdsLoaded]   = useState(false)
   const [cmdFilter,    setCmdFilter]    = useState('')
-  const [wrappedUuid,  setWrappedUuid]  = useState('')
+  const [wrappedUuid,  setWrappedUuid]  = useState(initialConfig?.wrappedUuid ?? '')
 
   const { data: cmdData } = useQuery(GET_COMMANDS_FOR_TYPE, {
     variables: { payload_type_id: type.id },
@@ -660,6 +853,41 @@ function Configure({
   const c2Profile = type.payloadtypec2profiles
     .find(p => p.c2profile.name === selectedC2)?.c2profile ?? null
 
+  // ── Saved C2 instances ────────────────────────────────
+  const activeOp = useStore(s => s.activeOperation)
+  const [selectedInstance, setSelectedInstance] = useState('')
+
+  const { data: instListData } = useQuery(GET_C2_PROFILE_INSTANCES, {
+    variables: { c2_profile_id: c2Profile?.id ?? 0, operation_id: activeOp?.id ?? 0 },
+    skip: !c2Profile || !activeOp,
+    fetchPolicy: 'cache-and-network',
+  })
+  const savedInstances: string[] = (instListData?.c2profileparametersinstance ?? []).map(
+    (r: { instance_name: string }) => r.instance_name
+  )
+
+  const [loadInstanceValues] = useLazyQuery(GET_C2_INSTANCE_VALUES, { fetchPolicy: 'network-only' })
+
+  useEffect(() => { setSelectedInstance('') }, [selectedC2])
+
+  const handleInstanceSelect = useCallback(async (name: string) => {
+    setSelectedInstance(name)
+    if (!name) {
+      setC2Params(defaultsForC2(c2Profile, selectedC2))
+      return
+    }
+    if (!c2Profile || !activeOp) return
+    const result = await loadInstanceValues({
+      variables: { instance_name: name, c2_profile_id: c2Profile.id, operation_id: activeOp.id },
+    })
+    const rows: { value: string; c2profileparameter: { name: string } }[] =
+      result?.data?.c2profileparametersinstance ?? []
+    if (!rows.length) return
+    const loaded: Record<string, string> = {}
+    for (const row of rows) loaded[row.c2profileparameter.name] = row.value
+    setC2Params(prev => ({ ...prev, ...loaded }))
+  }, [c2Profile, activeOp, selectedC2, defaultsForC2, loadInstanceValues])
+
   const setBuildParam  = useCallback((name: string, v: string) =>
     setBuildParams(prev => ({ ...prev, [name]: v })), [])
   const setC2Param     = useCallback((name: string, v: string) =>
@@ -675,7 +903,26 @@ function Configure({
       prev.size === allCmds.length ? new Set() : new Set(allCmds.map(c => c.cmd))
     ), [allCmds])
 
-  const visibleBuildParams = [...type.buildparameters].sort((a, b) => a.name.localeCompare(b.name))
+  // Group build parameters by group_name (preserving server order within groups).
+  // Falsy/missing group_name → "Default" group (no header). Mythic UI renders each
+  // group as a labelled section, with non-default groups acting as collapsible accordions.
+  const buildParamGroups = (() => {
+    const order: string[] = []
+    const map = new Map<string, Param[]>()
+    for (const p of type.buildparameters) {
+      const g = p.group_name || ''
+      if (!map.has(g)) { map.set(g, []); order.push(g) }
+      map.get(g)!.push(p)
+    }
+    for (const [, params] of map) {
+      params.sort((a, b) => (a.ui_position - b.ui_position) || a.name.localeCompare(b.name))
+    }
+    return order.map(name => ({ name, params: map.get(name)! }))
+  })()
+
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
+  const toggleGroup = (g: string) =>
+    setCollapsedGroups(prev => ({ ...prev, [g]: !prev[g] }))
 
   // Picked files waiting to be uploaded. Key format: "build:<name>" or "c2:<name>"
   // For File:        files[0] is uploaded, value becomes the UUID
@@ -774,19 +1021,57 @@ function Configure({
       </div>
 
       {/* Build parameters */}
-      {visibleBuildParams.length > 0 && (
+      {type.buildparameters.length > 0 && (
         <div className={styles.section}>
           <div className={styles.sectionLabel}>Build Parameters</div>
-          {visibleBuildParams.map(p => (
-            <ParamInput
-              key={p.id}
-              param={p}
-              value={buildParams[p.name] ?? ''}
-              onChange={v => setBuildParam(p.name, v)}
-              onPickFiles={files => setFiles(`build:${p.name}`, files)}
-              allValues={buildParams}
-            />
-          ))}
+          {buildParamGroups.map(({ name: groupName, params }) => {
+            const allHidden = params.every(p => evalHideConditions(p, buildParams))
+            if (allHidden) return null
+            const isDefault = groupName === '' || groupName.toLowerCase() === 'default'
+            const collapsed = !!collapsedGroups[groupName]
+            if (isDefault) {
+              return (
+                <div key={groupName || '__default__'} className={styles.paramGroup}>
+                  {params.map(p => (
+                    <ParamInput
+                      key={p.id}
+                      param={p}
+                      value={buildParams[p.name] ?? ''}
+                      onChange={v => setBuildParam(p.name, v)}
+                      onPickFiles={files => setFiles(`build:${p.name}`, files)}
+                      allValues={buildParams}
+                    />
+                  ))}
+                </div>
+              )
+            }
+            return (
+              <div key={groupName} className={styles.paramGroup}>
+                <button
+                  type="button"
+                  className={styles.paramGroupHeader}
+                  onClick={() => toggleGroup(groupName)}
+                >
+                  <span className={styles.paramGroupChevron}>{collapsed ? '▸' : '▾'}</span>
+                  <span className={styles.paramGroupName}>{groupName}</span>
+                </button>
+                {!collapsed && (
+                  <div className={styles.paramGroupBody}>
+                    {params.map(p => (
+                      <ParamInput
+                        key={p.id}
+                        param={p}
+                        value={buildParams[p.name] ?? ''}
+                        onChange={v => setBuildParam(p.name, v)}
+                        onPickFiles={files => setFiles(`build:${p.name}`, files)}
+                        allValues={buildParams}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 
@@ -824,6 +1109,21 @@ function Configure({
           </div>
           {c2Profile && (
             <div className={styles.c2Params}>
+              {savedInstances.length > 0 && (
+                <div className={styles.field}>
+                  <label className={styles.fieldLabel}>Saved Instance</label>
+                  <select
+                    className={styles.fieldSelect}
+                    value={selectedInstance}
+                    onChange={e => handleInstanceSelect(e.target.value)}
+                  >
+                    <option value="">— defaults —</option>
+                    {savedInstances.map(name => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               {[...c2Profile.c2profileparameters]
                 .filter(p => {
                   const dev = type.c2_parameter_deviations?.[selectedC2]?.[p.name]
@@ -1074,6 +1374,8 @@ export function CreatePayloadModal({
   const [initialConfig, setInitialConfig] = useState<InitialConfig | undefined>(undefined)
   const [buildUuid, setBuildUuid] = useState('')
   const [buildError, setBuildError] = useState('')
+  const [pickMode, setPickMode] = useState<'new' | 'existing' | 'import'>('new')
+  const [pickErr,  setPickErr]  = useState('')
 
   const { data, loading } = useQuery(GET_PAYLOAD_TYPES, {
     fetchPolicy: 'cache-and-network',
@@ -1092,6 +1394,30 @@ export function CreatePayloadModal({
   }, [initialPayload, types])
 
   const [createPayload, { loading: creating }] = useMutation(CREATE_PAYLOAD)
+
+  const handlePickExisting = useCallback((payload: Payload) => {
+    const match = types.find(t => t.name === payload.payloadtype.name)
+    if (!match) {
+      setPickErr(`Agent type "${payload.payloadtype.name}" not found — is its container running?`)
+      return
+    }
+    setPickErr('')
+    setSelType(match)
+    setInitialConfig(payloadToInitialConfig(payload))
+    setStep('configure')
+  }, [types])
+
+  const handlePickImport = useCallback((typeName: string, config: InitialConfig) => {
+    const match = types.find(t => t.name === typeName)
+    if (!match) {
+      setPickErr(`Agent type "${typeName}" not found — is its container running?`)
+      return
+    }
+    setPickErr('')
+    setSelType(match)
+    setInitialConfig(config)
+    setStep('configure')
+  }, [types])
 
   const handleBuild = useCallback(async (definition: string) => {
     setBuildError('')
@@ -1133,15 +1459,39 @@ export function CreatePayloadModal({
           )}
 
           {step === 'pick' && (
-            loading
-              ? <div className={styles.loading}>Loading agents…</div>
-              : <PickAgent types={types} onPick={t => { setSelType(t); setStep('configure') }} />
+            <>
+              <div className={styles.pickModeBar}>
+                {(['new', 'existing', 'import'] as const).map(mode => (
+                  <button
+                    key={mode}
+                    className={`${styles.pickModeTab} ${pickMode === mode ? styles.pickModeTabActive : ''}`}
+                    onClick={() => { setPickMode(mode); setPickErr('') }}
+                  >
+                    {mode === 'new' ? 'New Agent' : mode === 'existing' ? 'From Existing' : 'Import Config'}
+                  </button>
+                ))}
+              </div>
+
+              {pickErr && <div className={styles.errorBanner}>{pickErr}</div>}
+
+              {pickMode === 'new' && (
+                loading
+                  ? <div className={styles.loading}>Loading agents…</div>
+                  : <PickAgent types={types} onPick={t => { setSelType(t); setInitialConfig(undefined); setStep('configure') }} />
+              )}
+              {pickMode === 'existing' && (
+                <PickExisting onSelect={handlePickExisting} />
+              )}
+              {pickMode === 'import' && (
+                <ImportConfig onImport={handlePickImport} />
+              )}
+            </>
           )}
 
           {step === 'configure' && selType && (
             <Configure
               type={selType}
-              onBack={() => { setStep('pick'); setInitialConfig(undefined) }}
+              onBack={() => { setStep('pick'); setInitialConfig(undefined); setPickErr('') }}
               onBuild={handleBuild}
               initialConfig={initialConfig}
             />

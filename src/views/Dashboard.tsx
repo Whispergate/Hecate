@@ -20,10 +20,14 @@ import { CredentialsPanel }   from '@/components/CredentialsPanel/CredentialsPan
 import { EventLogPanel }      from '@/components/EventLogPanel/EventLogPanel'
 import { ProxiesPanel }            from '@/components/ProxiesPanel/ProxiesPanel'
 import { TimelinePanel }          from '@/components/TimelinePanel/TimelinePanel'
+import { ReplayPanel }            from '@/components/ReplayPanel/ReplayPanel'
+import { BeaconHealthPanel }      from '@/components/BeaconHealthPanel/BeaconHealthPanel'
 import { AttackPanel }            from '@/components/AttackPanel/AttackPanel'
+import { EventingPanel }          from '@/components/EventingPanel/EventingPanel'
 import { CallbackToastContainer }  from '@/components/Toast/CallbackToast'
 import { ProxyToastContainer }     from '@/components/Toast/ProxyToast'
 import { SettingsPanel }         from '@/components/SettingsPanel/SettingsPanel'
+import { CommandPalette }        from '@/components/CommandPalette/CommandPalette'
 import { SUB_CALLBACKS, SUB_OPERATION_ALERT_COUNT, SUB_CALLBACK_PORTS, SUB_CALLBACK_GRAPH_EDGES } from '@/apollo/operations'
 import { parseTs }       from '@/components/Sidebar/utils'
 import { useStore, useSelectedCallback } from '@/store'
@@ -176,7 +180,7 @@ export function Dashboard() {
   useWarningBadge()
 
   const activeRailView = useStore((s) => s.activeRailView)
-  const isFullPanel    = activeRailView === 'overview' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'proxies' || activeRailView === 'report' || activeRailView === 'files' || activeRailView === 'operations' || activeRailView === 'credentials' || activeRailView === 'logs' || activeRailView === 'timeline' || activeRailView === 'attack'
+  const isFullPanel    = activeRailView === 'overview' || activeRailView === 'health' || activeRailView === 'payloads' || activeRailView === 'services' || activeRailView === 'proxies' || activeRailView === 'report' || activeRailView === 'files' || activeRailView === 'operations' || activeRailView === 'credentials' || activeRailView === 'logs' || activeRailView === 'timeline' || activeRailView === 'replay' || activeRailView === 'attack' || activeRailView === 'eventing'
 
   return (
     <div className={styles.root}>
@@ -185,6 +189,7 @@ export function Dashboard() {
       <CallbackToastContainer />
       <ProxyToastContainer />
       <SettingsPanel />
+      <CommandPalette />
 
       <div className={styles.body}>
         <Rail />
@@ -192,6 +197,7 @@ export function Dashboard() {
         {isFullPanel ? (
           <div className={styles.fullPanel}>
             {activeRailView === 'overview'  && <OverviewPanel />}
+            {activeRailView === 'health'    && <BeaconHealthPanel />}
             {activeRailView === 'payloads'  && <PayloadPanel />}
             {activeRailView === 'services'  && <ServicesPanel />}
             {activeRailView === 'proxies'   && <ProxiesPanel />}
@@ -201,7 +207,9 @@ export function Dashboard() {
             {activeRailView === 'credentials'  && <CredentialsPanel />}
             {activeRailView === 'logs'         && <EventLogPanel />}
             {activeRailView === 'timeline'     && <TimelinePanel />}
+            {activeRailView === 'replay'       && <ReplayPanel />}
             {activeRailView === 'attack'       && <AttackPanel />}
+            {activeRailView === 'eventing'     && <EventingPanel />}
           </div>
         ) : (
           <>
