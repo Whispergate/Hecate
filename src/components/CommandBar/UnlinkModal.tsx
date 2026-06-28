@@ -37,7 +37,8 @@ interface GQLEdge {
 interface Props {
   callbackId: number   // internal callback.id — for edge query WHERE clause
   displayId:  number   // display_id — for task creation
-  onClose:    () => void
+  onClose:      () => void
+  onSubmitted?: (displayId: number) => void
 }
 
 // ── Helpers ──────────────────────────────────────────
@@ -64,7 +65,7 @@ function buildC2Params(
 
 // ── Component ─────────────────────────────────────────
 
-export function UnlinkModal({ callbackId, displayId, onClose }: Props) {
+export function UnlinkModal({ callbackId, displayId, onClose, onSubmitted }: Props) {
   const [edges,       setEdges]       = useState<GQLEdge[]>([])
   const [selectedIdx, setSelectedIdx] = useState(0)
   const [error,       setError]       = useState<string | null>(null)
@@ -126,6 +127,7 @@ export function UnlinkModal({ callbackId, displayId, onClose }: Props) {
       setError(res.data.createTask.error ?? 'Task failed')
       return
     }
+    onSubmitted?.(displayId)
     onClose()
   }
 

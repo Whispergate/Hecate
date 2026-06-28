@@ -83,9 +83,12 @@ export function CommandBar() {
   const [unlinkModal,  setUnlinkModal]  = useState(false)
   const [snippetOpen,  setSnippetOpen]  = useState(false)
 
-  const inputRef   = useRef<HTMLInputElement>(null)
-  const menuRef    = useRef<HTMLDivElement>(null)
-  const historyRef = useRef<Record<number, string[]>>({})
+  const inputRef            = useRef<HTMLInputElement>(null)
+  const menuRef             = useRef<HTMLDivElement>(null)
+  const historyRef          = useRef<Record<number, string[]>>({})
+  const displayIdRef        = useRef<number | null>(null)
+  const historyRefreshRef   = useRef<Set<number>>(new Set())
+  const selectedCbIdRef     = useRef<number | null>(null)
 
   const { selectedCallbackId, multiSelectedIds, callbacks } = useStore()
   const activeCallbackPorts = useStore(s => s.activeCallbackPorts)
@@ -93,6 +96,8 @@ export function CommandBar() {
   const cb        = callbacks.find(c => c.id === selectedCallbackId)
   const displayId = cb?.display_id ?? null
   const agentName = cb?.payload.payloadtype.name ?? ''
+  displayIdRef.current    = displayId
+  selectedCbIdRef.current = selectedCallbackId ?? null
 
   const cwdPath          = cb?.cwd?.trim() ?? ''
   const impersonatedUser = cb?.impersonation_context?.trim() ?? ''
@@ -101,14 +106,17 @@ export function CommandBar() {
   const [fetchHistory] = useLazyQuery(GET_CALLBACK_TASK_HISTORY, {
     fetchPolicy: 'network-only',
     onCompleted(data) {
-      if (!displayId) return
-      if (historyRef.current[displayId] !== undefined) return  // already seeded this session
+      const did = displayIdRef.current
+      if (!did) return
+      const forceRefresh = historyRefreshRef.current.has(did)
+      if (historyRef.current[did] !== undefined && !forceRefresh) return
+      historyRefreshRef.current.delete(did)
       const entries: string[] = (data?.task ?? []).map((t: { command_name: string; command?: { cmd: string | null } | null; display_params: string }) => {
         const name = taskCmd(t)
         const p = (t.display_params ?? '').trim()
         return p ? `${name} ${p}` : name
       })
-      historyRef.current[displayId] = entries
+      historyRef.current[did] = entries
     },
   })
 
@@ -182,6 +190,12 @@ export function CommandBar() {
   }
 
   // ── Per-callback history helpers ──────────────────────
+  function refreshHistory(cbDisplayId: number) {
+    historyRefreshRef.current.add(cbDisplayId)
+    const cbId = selectedCbIdRef.current
+    if (cbId != null) fetchHistory({ variables: { callback_id: cbId } })
+  }
+
   function pushHistory(cbDisplayId: number | undefined, cmd: string) {
     if (cbDisplayId == null) return
     const prev = historyRef.current[cbDisplayId] ?? []
@@ -205,7 +219,6 @@ export function CommandBar() {
 
     // Socks modal — intercept bare "socks" for primary callback
     if (command === 'socks' && !params && displayId) {
-      pushHistory(displayId, raw)
       setInput('')
       setSocksModal(true)
       return
@@ -213,7 +226,6 @@ export function CommandBar() {
 
     // rpfwd modal — dedicated modal for reverse port forward
     if (command === 'rpfwd' && !params && displayId) {
-      pushHistory(displayId, raw)
       setInput('')
       setRpfwdModal(true)
       return
@@ -221,7 +233,6 @@ export function CommandBar() {
 
     // link modal — requires P2P payload/callback selection
     if (command === 'link' && !params && displayId) {
-      pushHistory(displayId, raw)
       setInput('')
       setLinkModal(true)
       return
@@ -229,7 +240,6 @@ export function CommandBar() {
 
     // unlink modal — requires existing graph edge selection
     if (command === 'unlink' && !params && displayId) {
-      pushHistory(displayId, raw)
       setInput('')
       setUnlinkModal(true)
       return
@@ -248,7 +258,6 @@ export function CommandBar() {
       const hasMultipleGroups = new Set(cmdParams.map(p => p.parameter_group_name)).size > 1
 
       if (hasAnyFileParam || hasRequiredCred || isScriptOnly || hasRequiredParam || hasMultipleGroups) {
-        pushHistory(displayId, raw)
         setInput('')
         setModal({ command, params: cmdParams, displayId, callbackId: cb?.id ?? 0, defaultCwd: extractCwd(cb?.extra_info ?? '', cb?.description ?? '') })
         return
@@ -390,6 +399,7 @@ export function CommandBar() {
         payloadType={agentName}
         defaultCwd={modal.defaultCwd}
         onClose={() => { setModal(null); inputRef.current?.focus() }}
+        onSubmitted={(did, cmd) => { pushHistory(did, cmd); refreshHistory(did) }}
       />
     )}
     {socksModal && displayId && (
@@ -401,6 +411,7 @@ export function CommandBar() {
             .map(p => p.local_port)
         }
         onClose={() => { setSocksModal(false); inputRef.current?.focus() }}
+        onSubmitted={(did) => { pushHistory(did, 'socks'); refreshHistory(did) }}
       />
     )}
     {rpfwdModal && displayId && (
@@ -412,12 +423,14 @@ export function CommandBar() {
             .map(p => ({ local_port: p.local_port, remote_ip: p.remote_ip, remote_port: p.remote_port }))
         }
         onClose={() => { setRpfwdModal(false); inputRef.current?.focus() }}
+        onSubmitted={(did) => { pushHistory(did, 'rpfwd'); refreshHistory(did) }}
       />
     )}
     {linkModal && displayId && (
       <LinkModal
         displayId={displayId}
         onClose={() => { setLinkModal(false); inputRef.current?.focus() }}
+        onSubmitted={(did) => { pushHistory(did, 'link'); refreshHistory(did) }}
       />
     )}
     {unlinkModal && selectedCallbackId && displayId && (
@@ -425,6 +438,7 @@ export function CommandBar() {
         callbackId={selectedCallbackId}
         displayId={displayId}
         onClose={() => { setUnlinkModal(false); inputRef.current?.focus() }}
+        onSubmitted={(did) => { pushHistory(did, 'unlink'); refreshHistory(did) }}
       />
     )}
     {snippetOpen && (

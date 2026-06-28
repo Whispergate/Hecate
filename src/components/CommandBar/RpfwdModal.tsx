@@ -18,9 +18,10 @@ interface Props {
   displayId:    number
   activeRpfwds: ActiveRpfwd[]
   onClose:      () => void
+  onSubmitted?: (displayId: number) => void
 }
 
-export function RpfwdModal({ displayId, activeRpfwds, onClose }: Props) {
+export function RpfwdModal({ displayId, activeRpfwds, onClose, onSubmitted }: Props) {
   const defaultAction = activeRpfwds.length ? 'stop' : 'start'
 
   const [action,     setAction]     = useState<'start' | 'stop'>(defaultAction)
@@ -87,6 +88,7 @@ export function RpfwdModal({ displayId, activeRpfwds, onClose }: Props) {
       setError(res.data.createTask.error ?? 'Task failed')
       return
     }
+    onSubmitted?.(displayId)
     onClose()
   }
 
