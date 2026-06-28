@@ -1638,6 +1638,44 @@ export const GET_LINK_TARGETS = gql`
 `
 
 // ─────────────────────────────────────────────────────
+// CROSS-CALLBACK SEARCH
+// ─────────────────────────────────────────────────────
+
+// Searches command_name, display_params, and params across all callbacks in
+// the operation. response_text is base64-encoded so it can't be searched
+// server-side; output content is searched client-side after expansion.
+export const SEARCH_TASKS = gql`
+  query SearchTasks($operation_id: Int!, $pattern: String!, $limit: Int = 200) {
+    task(
+      where: {
+        callback: { operation_id: { _eq: $operation_id } }
+        _or: [
+          { command_name: { _ilike: $pattern } }
+          { display_params: { _ilike: $pattern } }
+          { params: { _ilike: $pattern } }
+        ]
+      }
+      order_by: { id: desc }
+      limit: $limit
+    ) {
+      id
+      display_id
+      command_name
+      command { cmd }
+      display_params
+      params
+      status
+      completed
+      timestamp
+      operator { username }
+      callback { id display_id host ip user }
+      response_count
+      tags { tagtype { name color } }
+    }
+  }
+`
+
+// ─────────────────────────────────────────────────────
 // EVENTING / WORKFLOWS
 // ─────────────────────────────────────────────────────
 

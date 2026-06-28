@@ -142,6 +142,8 @@ export interface HecateStore {
   updateSettings: (patch: Partial<HecateSettings>) => void
   isSettingsOpen: boolean
   setSettingsOpen: (v: boolean) => void
+  isSearchOpen: boolean
+  setSearchOpen: (v: boolean) => void
   toasts: CallbackToast[]
   addToast: (t: Omit<CallbackToast, 'id'>) => void
   removeToast: (id: number) => void
@@ -215,6 +217,8 @@ export const useStore = create<HecateStore>((set) => ({
   }),
   isSettingsOpen: false,
   setSettingsOpen: (isSettingsOpen) => set({ isSettingsOpen }),
+  isSearchOpen: false,
+  setSearchOpen: (isSearchOpen) => set({ isSearchOpen }),
   toasts: [],
   addToast: (t) => set((s) => ({ toasts: [...s.toasts, { ...t, id: Date.now() + Math.random() }] })),
   removeToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),

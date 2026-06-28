@@ -24,6 +24,7 @@ import { ReplayPanel }            from '@/components/ReplayPanel/ReplayPanel'
 import { BeaconHealthPanel }      from '@/components/BeaconHealthPanel/BeaconHealthPanel'
 import { AttackPanel }            from '@/components/AttackPanel/AttackPanel'
 import { EventingPanel }          from '@/components/EventingPanel/EventingPanel'
+import { SearchModal }            from '@/components/SearchPanel/SearchPanel'
 import { CallbackToastContainer }  from '@/components/Toast/CallbackToast'
 import { ProxyToastContainer }     from '@/components/Toast/ProxyToast'
 import { SettingsPanel }         from '@/components/SettingsPanel/SettingsPanel'
@@ -190,6 +191,7 @@ export function Dashboard() {
       <ProxyToastContainer />
       <SettingsPanel />
       <CommandPalette />
+      <SearchModal />
 
       <div className={styles.body}>
         <Rail />
