@@ -51,7 +51,7 @@ export interface Task {
   // but command.cmd keeps the name the operator actually issued. Prefer it for
   // display via taskCmd(); keep command_name for rich-output dispatch (it tracks
   // the real executed command, so the response shape matches).
-  command?: { cmd: string | null } | null
+  command?: { id?: number; cmd: string | null } | null
   agent_task_id: string
   status: string; completed: boolean; timestamp: string
   operator: { username: string }
