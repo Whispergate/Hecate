@@ -152,6 +152,11 @@ export function Sidebar() {
     return true
   }), [sorted, filterStatus, filterAgents, needle, callbackAliveMs, callbackIdleMs])
 
+  // Bridge filter → batch selection: one click selects every currently-shown
+  // callback into multiSelectedIds, which CommandBar already fans tasks out to.
+  const visibleIds = useMemo(() => visible.map(v => v.cb.id), [visible])
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every(id => multiSelectedIds.includes(id))
+
   // ── List virtualization ──
   // Only the rows in (and just around) the viewport are rendered, so the list
   // stays cheap at thousands of callbacks even though it re-renders on every
@@ -197,6 +202,15 @@ export function Sidebar() {
                   title="Clear multi-selection"
                 >✕</button>
               </span>
+            )}
+            {visible.length > 1 && (
+              <button
+                className={styles.selectAllBtn}
+                onClick={() => setMultiSelectedIds(allVisibleSelected ? [] : visibleIds)}
+                title={allVisibleSelected
+                  ? 'Deselect all shown'
+                  : `Select all ${visible.length} shown callbacks (then task them together)`}
+              >{allVisibleSelected ? 'none' : `all ${visible.length}`}</button>
             )}
             <button
               className={styles.densityBtn}

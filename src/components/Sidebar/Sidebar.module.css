@@ -314,6 +314,20 @@
   letter-spacing: 0.03em;
 }
 
+.selectAllBtn {
+  background: transparent;
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-sm);
+  color: var(--bone-700);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  cursor: pointer;
+  transition: color var(--t-fast), border-color var(--t-fast);
+}
+.selectAllBtn:hover { color: var(--bone-300); border-color: var(--beige-border-md); }
+
 .densityBtn {
   display: flex;
   align-items: center;
