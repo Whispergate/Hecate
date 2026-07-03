@@ -92,13 +92,18 @@ export interface BSResult {
 
 export interface BSTab extends BSResult { label?: string; name?: string }
 
-// Minimal task shape the scripts read (they mostly touch task.status).
+// Scripts read arbitrary task fields (status, completed, callback_id, host, …),
+// so we forward the whole task object rather than a hand-picked subset — a
+// missing field silently routes scripts down wrong branches (e.g. Kharon's ls
+// gates its table on task.completed).
 export interface BSTaskInput {
-  id:          number
-  display_id:  number
-  status:      string
+  id:           number
+  display_id:   number
+  status:       string
+  completed:    boolean
   command_name: string
   callback_id?: number
+  [key: string]: unknown
 }
 
 type ScriptFn = (task: BSTaskInput, responses: string[]) => BSResult
@@ -152,7 +157,9 @@ const ICONS: Record<string, string> = {
   list: '☰', delete: '🗑', inject: '💉', kill: '☠', camera: '📷',
 }
 
+// Unknown icon names (Mythic ships FontAwesome names we have no glyph for, e.g.
+// "skull") render as nothing rather than leaking the raw word into the label.
 export function iconGlyph(name?: string): string {
   if (!name) return ''
-  return ICONS[name.toLowerCase()] ?? name
+  return ICONS[name.toLowerCase()] ?? ''
 }

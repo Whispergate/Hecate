@@ -41,8 +41,9 @@ export function BrowserScriptOutput({ task, responses, fallback }: Props) {
   if (!fn) return <>{fallback}</>
 
   const result = runScript(fn, {
-    id: task.id, display_id: task.display_id, status: task.status,
-    command_name: task.command_name, callback_id: task.callback.id,
+    ...task,
+    callback_id: task.callback.id,
+    host: task.callback.host,
   }, responses)
   if (!result) return <>{fallback}</>
 

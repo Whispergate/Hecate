@@ -684,7 +684,7 @@ export const GET_REPORT_TASKS = gql`
       id
       display_id
       command_name
-      command { cmd }
+      command { id cmd }
       display_params
       params
       status
@@ -1115,7 +1115,7 @@ export const GET_ATTACK_TASKS = gql`
         id
         display_id
         command_name
-        command { cmd }
+        command { id cmd }
         display_params
         callback { display_id host }
       }
@@ -1128,7 +1128,7 @@ export const GET_ATTACK_TASKS = gql`
 export const GET_REPORT_ATTACK_COMMANDS = gql`
   query GetReportAttackCommands {
     attackcommand {
-      command { cmd }
+      command { id cmd }
       attack  { t_num }
     }
   }
@@ -1163,7 +1163,7 @@ export const GET_TIMELINE_TASKS = gql`
       id
       display_id
       command_name
-      command { cmd }
+      command { id cmd }
       display_params
       status
       completed
@@ -1227,7 +1227,7 @@ export const GET_CALLBACK_TASK_HISTORY = gql`
       limit:    $limit
     ) {
       command_name
-      command { cmd }
+      command { id cmd }
       display_params
     }
   }
@@ -1369,7 +1369,7 @@ export const GET_JOB_KILL_COMMAND = gql`
       callback_id: { _eq: $callback_id }
       command: { supported_ui_features: { _contains: "task:job_kill" } }
     }) {
-      command { cmd }
+      command { id cmd }
     }
   }
 `
@@ -1692,7 +1692,7 @@ export const SEARCH_TASKS = gql`
       id
       display_id
       command_name
-      command { cmd }
+      command { id cmd }
       display_params
       params
       status

@@ -124,7 +124,7 @@ function ButtonMenu({ button, ctx, onTask, onView }: {
           const r = e.currentTarget.getBoundingClientRect()
           setOpen(o => (o ? null : { x: r.left, y: r.bottom }))
         }}
-      >{iconGlyph(button.startIcon)} {button.name || 'actions'} ▾</button>
+      >{button.name || 'actions'} ▾</button>
       {open && createPortal(
         <>
           <div className={styles.menuBackdrop} onClick={() => setOpen(null)} />
@@ -136,7 +136,7 @@ function ButtonMenu({ button, ctx, onTask, onView }: {
                 disabled={o.disabled}
                 onClick={() => pick(o)}
                 title={o.hoverText || ''}
-              >{iconGlyph(o.startIcon)} {o.name}</button>
+              >{o.name}</button>
             ))}
           </div>
         </>,
@@ -152,7 +152,6 @@ function ButtonCell({ button, ctx, onView }: {
   button: BSButton; ctx: Ctx; onView: (s: DialogState) => void
 }) {
   const task = useUIFeatureTask(ctx)
-  const label = button.name ?? (button.startIcon ? iconGlyph(button.startIcon) : 'run')
 
   if (button.type === 'menu') {
     return <ButtonMenu button={button} ctx={ctx} onTask={task} onView={onView} />
@@ -167,7 +166,7 @@ function ButtonCell({ button, ctx, onView }: {
       disabled={button.disabled}
       title={button.hoverText || ''}
       onClick={onClick}
-    >{iconGlyph(button.startIcon)} {label}</button>
+    >{button.name || 'run'}</button>
   )
 }
 
