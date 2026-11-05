@@ -10,10 +10,11 @@ import styles          from './SocksModal.module.css'
 interface Props {
   displayId:   number
   activePorts: number[]   // active socks local_port values for this callback
-  onClose:     () => void
+  onClose:      () => void
+  onSubmitted?: (displayId: number) => void
 }
 
-export function SocksModal({ displayId, activePorts, onClose }: Props) {
+export function SocksModal({ displayId, activePorts, onClose, onSubmitted }: Props) {
   const [action,   setAction]   = useState<'start' | 'stop'>(
     activePorts.length ? 'stop' : 'start'
   )
@@ -58,6 +59,7 @@ export function SocksModal({ displayId, activePorts, onClose }: Props) {
       setError(res.data.createTask.error ?? 'Task failed')
       return
     }
+    onSubmitted?.(displayId)
     onClose()
   }
 

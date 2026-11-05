@@ -41,8 +41,9 @@ interface Props {
   displayId:   number
   callbackId:  number   // internal callback id (NOT display_id) — required by the dynamic_query_function action
   payloadType: string
-  defaultCwd:  string
-  onClose:     () => void
+  defaultCwd:   string
+  onClose:      () => void
+  onSubmitted?: (displayId: number, cmd: string) => void
 }
 
 // Params whose value should be taken from the selected file's name — hide from form
@@ -103,7 +104,7 @@ function labelGroup(name: string): string {
   return name.replace(/_/g, ' ')
 }
 
-export function FileTaskModal({ command, params, displayId, callbackId, payloadType, defaultCwd, onClose }: Props) {
+export function FileTaskModal({ command, params, displayId, callbackId, payloadType, defaultCwd, onClose, onSubmitted }: Props) {
   const { token } = useStore()
 
   const allGroups = getGroups(params)
@@ -169,8 +170,9 @@ export function FileTaskModal({ command, params, displayId, callbackId, payloadT
         .then(res => {
           if (cancelled) return
           const fn = res.data?.dynamic_query_function
-          if (fn?.status === 'success' && Array.isArray(fn.choices)) {
+          if (fn?.status === 'success' && Array.isArray(fn.choices) && fn.choices.length > 0) {
             setDynChoices(m => ({ ...m, [p.name]: fn.choices }))
+            setValues(v => (v[p.name] ?? '') === '' ? { ...v, [p.name]: fn.choices[0] } : v)
           }
         })
         .catch(() => { /* leave choices empty on failure */ })
@@ -286,6 +288,7 @@ export function FileTaskModal({ command, params, displayId, callbackId, payloadT
         return
       }
 
+      onSubmitted?.(displayId, command)
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')

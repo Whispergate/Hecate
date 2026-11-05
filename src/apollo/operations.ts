@@ -18,7 +18,7 @@ export const TASK_FIELDS = gql`
     id
     display_id
     command_name
-    command { cmd }
+    command { id cmd }
     display_params
     params
     agent_task_id
@@ -684,7 +684,7 @@ export const GET_REPORT_TASKS = gql`
       id
       display_id
       command_name
-      command { cmd }
+      command { id cmd }
       display_params
       params
       status
@@ -1115,7 +1115,7 @@ export const GET_ATTACK_TASKS = gql`
         id
         display_id
         command_name
-        command { cmd }
+        command { id cmd }
         display_params
         callback { display_id host }
       }
@@ -1128,7 +1128,7 @@ export const GET_ATTACK_TASKS = gql`
 export const GET_REPORT_ATTACK_COMMANDS = gql`
   query GetReportAttackCommands {
     attackcommand {
-      command { cmd }
+      command { id cmd }
       attack  { t_num }
     }
   }
@@ -1163,7 +1163,7 @@ export const GET_TIMELINE_TASKS = gql`
       id
       display_id
       command_name
-      command { cmd }
+      command { id cmd }
       display_params
       status
       completed
@@ -1227,7 +1227,7 @@ export const GET_CALLBACK_TASK_HISTORY = gql`
       limit:    $limit
     ) {
       command_name
-      command { cmd }
+      command { id cmd }
       display_params
     }
   }
@@ -1369,7 +1369,38 @@ export const GET_JOB_KILL_COMMAND = gql`
       callback_id: { _eq: $callback_id }
       command: { supported_ui_features: { _contains: "task:job_kill" } }
     }) {
-      command { cmd }
+      command { id cmd }
+    }
+  }
+`
+
+// ── Browser scripts ───────────────────────────────────
+// Mythic spec: every command ships a JS browserscript stored in the DB. The UI
+// fetches the active/for_new_ui script for a command, runs script(task, responses)
+// and renders the structured result. One generic path → works for every agent.
+export const GET_BROWSER_SCRIPT = gql`
+  query GetBrowserScript($command_id: Int!) {
+    browserscript(where: {
+      active: { _eq: true }
+      command_id: { _eq: $command_id }
+      for_new_ui: { _eq: true }
+    }) {
+      id
+      script
+    }
+  }
+`
+
+// Resolve which loaded command on a callback backs a browserscript button's
+// ui_feature (buttons task by ui_feature, not command name). callback_id is the
+// internal callback id, not display_id.
+export const GET_UI_FEATURE_COMMANDS = gql`
+  query GetUIFeatureCommands($callback_id: Int!, $ui_feature: jsonb!) {
+    loadedcommands(where: {
+      callback_id: { _eq: $callback_id }
+      command: { supported_ui_features: { _contains: $ui_feature } }
+    }) {
+      command { cmd commandparameters { id } }
     }
   }
 `
@@ -1633,6 +1664,44 @@ export const GET_LINK_TARGETS = gql`
         c2profile { id name }
         c2profileparameter { crypto_type name }
       }
+    }
+  }
+`
+
+// ─────────────────────────────────────────────────────
+// CROSS-CALLBACK SEARCH
+// ─────────────────────────────────────────────────────
+
+// Searches command_name, display_params, and params across all callbacks in
+// the operation. response_text is base64-encoded so it can't be searched
+// server-side; output content is searched client-side after expansion.
+export const SEARCH_TASKS = gql`
+  query SearchTasks($operation_id: Int!, $pattern: String!, $limit: Int = 200) {
+    task(
+      where: {
+        callback: { operation_id: { _eq: $operation_id } }
+        _or: [
+          { command_name: { _ilike: $pattern } }
+          { display_params: { _ilike: $pattern } }
+          { params: { _ilike: $pattern } }
+        ]
+      }
+      order_by: { id: desc }
+      limit: $limit
+    ) {
+      id
+      display_id
+      command_name
+      command { id cmd }
+      display_params
+      params
+      status
+      completed
+      timestamp
+      operator { username }
+      callback { id display_id host ip user }
+      response_count
+      tags { tagtype { name color } }
     }
   }
 `

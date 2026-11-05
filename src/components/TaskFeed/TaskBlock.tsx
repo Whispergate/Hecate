@@ -9,8 +9,7 @@ import { taskCmd, type Task }                               from '@/store'
 import { FileBrowser, parseLsOutput }                       from './FileBrowser'
 import { ProcessBrowser, parsePsOutput }                    from './ProcessBrowser'
 import { InjectionBrowser, parseInjectionTechniques }       from './InjectionBrowser'
-import { BrowserTable, parseConcatRows }                     from './BrowserTable'
-import { BROWSER_TABLE_CONFIGS }                             from './browserTableConfigs'
+import { BrowserScriptOutput }                                from './BrowserScriptOutput'
 import { ScreenshotView, parseScreenshotIds }                from './ScreenshotView'
 import styles                                               from './TaskFeed.module.css'
 
@@ -199,16 +198,17 @@ export const TaskBlock = memo(function TaskBlock({ task }: Props) {
               const injResult = parseInjectionTechniques(fullOutput)
               if (injResult) return <InjectionBrowser techniques={injResult} callbackDisplayId={task.callback.display_id} />
             }
-            const tableCfg = BROWSER_TABLE_CONFIGS[task.command_name]
-            if (tableCfg) {
-              const rows = parseConcatRows(fullOutput)
-              if (rows) return <BrowserTable config={tableCfg} rows={rows} callbackDisplayId={task.callback.display_id} />
-            }
             if (task.command_name === 'screenshot') {
               const shots = parseScreenshotIds(fullOutput)
               if (shots) return <ScreenshotView fileIds={shots} />
             }
-            return <pre ref={outputRef} className={styles.outputPre}>{fullOutput}</pre>
+            return (
+              <BrowserScriptOutput
+                task={task}
+                responses={lines.map(r => decodeResponse(r.response))}
+                fallback={<pre ref={outputRef} className={styles.outputPre}>{fullOutput}</pre>}
+              />
+            )
           })()}
         </div>
       )}

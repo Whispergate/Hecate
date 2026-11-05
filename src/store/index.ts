@@ -51,7 +51,7 @@ export interface Task {
   // but command.cmd keeps the name the operator actually issued. Prefer it for
   // display via taskCmd(); keep command_name for rich-output dispatch (it tracks
   // the real executed command, so the response shape matches).
-  command?: { cmd: string | null } | null
+  command?: { id?: number; cmd: string | null } | null
   agent_task_id: string
   status: string; completed: boolean; timestamp: string
   operator: { username: string }
@@ -142,6 +142,8 @@ export interface HecateStore {
   updateSettings: (patch: Partial<HecateSettings>) => void
   isSettingsOpen: boolean
   setSettingsOpen: (v: boolean) => void
+  isSearchOpen: boolean
+  setSearchOpen: (v: boolean) => void
   toasts: CallbackToast[]
   addToast: (t: Omit<CallbackToast, 'id'>) => void
   removeToast: (id: number) => void
@@ -215,6 +217,8 @@ export const useStore = create<HecateStore>((set) => ({
   }),
   isSettingsOpen: false,
   setSettingsOpen: (isSettingsOpen) => set({ isSettingsOpen }),
+  isSearchOpen: false,
+  setSearchOpen: (isSearchOpen) => set({ isSearchOpen }),
   toasts: [],
   addToast: (t) => set((s) => ({ toasts: [...s.toasts, { ...t, id: Date.now() + Math.random() }] })),
   removeToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),

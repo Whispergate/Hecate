@@ -48,7 +48,8 @@ interface GQLPayload {
 
 interface Props {
   displayId: number
-  onClose:   () => void
+  onClose:      () => void
+  onSubmitted?: (displayId: number) => void
 }
 
 // ── Internal data model ───────────────────────────────
@@ -139,7 +140,7 @@ function buildTargets(data: {
 
 // ── Component ─────────────────────────────────────────
 
-export function LinkModal({ displayId, onClose }: Props) {
+export function LinkModal({ displayId, onClose, onSubmitted }: Props) {
   const activeOperation = useStore(s => s.activeOperation)
 
   const [targets,      setTargets]      = useState<LinkTarget[]>([])
@@ -254,6 +255,7 @@ export function LinkModal({ displayId, onClose }: Props) {
       setError(res.data.createTask.error ?? 'Task failed')
       return
     }
+    onSubmitted?.(displayId)
     onClose()
   }
 

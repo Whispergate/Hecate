@@ -1,0 +1,140 @@
+/* src/components/TaskFeed/BrowserScript.module.css
+   Styling for the generic browserscript renderers (table, cells, buttons, view
+   dialogs, media/download/graph/tabs). Tokens shared with the rest of the UI. */
+
+.result { display: flex; flex-direction: column; min-width: 0; }
+
+.plain {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bone-300);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+/* ── Table ── */
+.browser { display: flex; flex-direction: column; min-height: 0; }
+
+.toolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--beige-border);
+  flex-shrink: 0;
+}
+.title {
+  font-family: var(--font-mono); font-size: 9px;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--beige);
+}
+.count {
+  font-family: var(--font-mono); font-size: 9px;
+  color: var(--bone-700); background: var(--bg-raised);
+  border: 1px solid var(--border-subtle); border-radius: 2px; padding: 1px 5px;
+}
+
+.tableWrap { flex: 1; overflow: auto; min-height: 0; }
+
+.table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 10px; }
+.table thead { position: sticky; top: 0; z-index: 1; background: var(--bg-raised); }
+.table thead tr { border-bottom: 1px solid var(--beige-border); }
+.table th {
+  text-align: left; font-size: 8px; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--bone-700); padding: 4px 8px; font-weight: 400; white-space: nowrap;
+}
+.thGrow { width: auto; }
+
+.row { border-bottom: 1px solid var(--beige-dim); transition: background var(--t-fast); }
+.row:hover { background: var(--beige-dim); }
+.table td { padding: 3px 8px; vertical-align: middle; }
+
+.td {
+  color: var(--bone-300); max-width: 360px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tdGrow { max-width: none; white-space: normal; }
+.tdCopy { cursor: pointer; }
+.tdCopy:hover { color: var(--bone-100); }
+.copiedTag { color: #85b089; margin-left: 4px; font-size: 8px; }
+.cellIcon { opacity: 0.9; }
+
+.tdAct { white-space: nowrap; }
+.actBtn {
+  background: transparent; border: 1px solid var(--beige-border);
+  color: var(--bone-700); font-family: var(--font-mono); font-size: 8px;
+  cursor: pointer; padding: 1px 8px; border-radius: 2px; white-space: nowrap;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+}
+.actBtn:hover:not(:disabled) { color: var(--bone-200); border-color: var(--beige-border-strong); background: var(--beige-dim); }
+.actBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Menu ── */
+.menuWrap { position: relative; display: inline-block; }
+.menuBackdrop { position: fixed; inset: 0; z-index: 1000; }
+.menu {
+  position: fixed; z-index: 1001; display: flex; flex-direction: column;
+  min-width: 140px; background: var(--bg-elevated);
+  border: 1px solid var(--beige-border); box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+}
+.menuItem {
+  background: transparent; border: none; border-bottom: 1px solid var(--beige-dim);
+  color: var(--bone-400); font-family: var(--font-mono); font-size: 9px;
+  text-align: left; padding: 5px 10px; cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.menuItem:last-child { border-bottom: none; }
+.menuItem:hover:not(:disabled) { background: var(--beige-dim); color: var(--bone-100); }
+.menuItem:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.empty {
+  padding: 20px; text-align: center; font-family: var(--font-mono);
+  font-size: 10px; color: var(--bone-800);
+}
+
+/* ── View dialog ── */
+.overlay {
+  position: fixed; inset: 0; z-index: 1100; display: flex;
+  align-items: center; justify-content: center; background: rgba(0,0,0,0.6);
+}
+.dialog {
+  display: flex; flex-direction: column; max-width: 80vw; max-height: 80vh;
+  min-width: 420px; background: var(--bg-elevated);
+  border: 1px solid var(--beige-border); box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+}
+.dialogHead {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; border-bottom: 1px solid var(--beige-border);
+  font-family: var(--font-mono); font-size: 10px; color: var(--beige);
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.dialogClose { background: transparent; border: none; color: var(--bone-600); cursor: pointer; font-size: 12px; }
+.dialogClose:hover { color: var(--bone-100); }
+.dialogBody { overflow: auto; padding: 8px 12px; min-height: 0; }
+.dialogPre { font-family: var(--font-mono); font-size: 11px; color: var(--bone-300); white-space: pre-wrap; word-break: break-word; margin: 0; }
+
+.kvTable { border-collapse: collapse; width: 100%; font-family: var(--font-mono); font-size: 10px; }
+.kvKey { color: var(--bone-600); padding: 3px 10px 3px 0; vertical-align: top; white-space: nowrap; }
+.kvVal { color: var(--bone-200); padding: 3px 0; white-space: pre-wrap; word-break: break-word; }
+
+/* ── Media / download / search / graph / tabs ── */
+.mediaWrap { padding: 6px 0; }
+.mediaImg { max-width: 100%; border: 1px solid var(--beige-border); display: block; }
+.dlRow { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.dlLink {
+  font-family: var(--font-mono); font-size: 10px; color: #85b089;
+  text-decoration: none; border: 1px solid rgba(133,176,137,0.4);
+  border-radius: 2px; padding: 2px 8px;
+}
+.dlLink:hover { background: rgba(133,176,137,0.1); }
+
+.graphBox { padding: 8px 12px; border: 1px solid var(--beige-border); margin: 6px 0; }
+.graphList { font-family: var(--font-mono); font-size: 10px; color: var(--bone-400); margin-top: 6px; display: flex; flex-direction: column; gap: 2px; }
+
+.tabs { display: flex; flex-direction: column; }
+.tabBar { display: flex; gap: 2px; border-bottom: 1px solid var(--beige-border); }
+.tabBtn {
+  background: transparent; border: none; border-bottom: 2px solid transparent;
+  color: var(--bone-600); font-family: var(--font-mono); font-size: 9px;
+  padding: 4px 10px; cursor: pointer;
+}
+.tabBtn:hover { color: var(--bone-200); }
+.tabActive { color: var(--beige); border-bottom-color: var(--beige); }

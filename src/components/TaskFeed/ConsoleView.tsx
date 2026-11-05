@@ -12,8 +12,7 @@ import { taskCmd, type Task }          from '@/store'
 import { FileBrowser, parseLsOutput }  from './FileBrowser'
 import { ProcessBrowser, parsePsOutput } from './ProcessBrowser'
 import { InjectionBrowser, parseInjectionTechniques } from './InjectionBrowser'
-import { BrowserTable, parseConcatRows }  from './BrowserTable'
-import { BROWSER_TABLE_CONFIGS }          from './browserTableConfigs'
+import { BrowserScriptOutput }           from './BrowserScriptOutput'
 import { ScreenshotView, parseScreenshotIds } from './ScreenshotView'
 import { KillTaskButton }              from './KillTaskButton'
 import styles                          from './ConsoleView.module.css'
@@ -75,9 +74,7 @@ function ConsoleEntry({ task, isLast, onOutputChange }: EntryProps) {
   const psResult   = (!lsResult && fullOutput) ? parsePsOutput(fullOutput) : null
   const injResult  = (!lsResult && !psResult && fullOutput && task.command_name === 'get_injection_techniques')
     ? parseInjectionTechniques(fullOutput) : null
-  const tableCfg   = (!lsResult && !psResult && !injResult) ? BROWSER_TABLE_CONFIGS[task.command_name] : undefined
-  const tableRows  = (tableCfg && fullOutput) ? parseConcatRows(fullOutput) : null
-  const shotIds    = (!tableRows && fullOutput && task.command_name === 'screenshot')
+  const shotIds    = (!lsResult && !psResult && !injResult && fullOutput && task.command_name === 'screenshot')
     ? parseScreenshotIds(fullOutput) : null
 
   const displayArgs = (task.display_params && task.display_params !== '{}' && task.display_params !== '')
@@ -147,26 +144,18 @@ function ConsoleEntry({ task, isLast, onOutputChange }: EntryProps) {
               </div>
             )}
           </div>
-        ) : (tableCfg && tableRows) ? (
-          <div className={styles.lsWrap}>
-            <button className={styles.lsToggle} onClick={() => setExpanded(x => !x)}>
-              <span className={styles.lsIcon}>▤</span>
-              <span className={styles.lsPath}>{typeof tableCfg.title === 'function' ? tableCfg.title(tableRows) : tableCfg.title}</span>
-              <span className={styles.lsMeta}>{tableRows.length} rows</span>
-              <span className={styles.lsChevron}>{expanded ? '▲' : '▼'}</span>
-            </button>
-            {expanded && (
-              <div className={styles.lsBrowserWrap}>
-                <BrowserTable config={tableCfg} rows={tableRows} callbackDisplayId={task.callback.display_id} />
-              </div>
-            )}
-          </div>
         ) : shotIds ? (
           <ScreenshotView fileIds={shotIds} />
         ) : (
-          <pre className={`${styles.output} ${isError ? styles.outputErr : ''}`}>
-            {fullOutput}
-          </pre>
+          <BrowserScriptOutput
+            task={task}
+            responses={lines.map(r => decodeResponse(r.response))}
+            fallback={
+              <pre className={`${styles.output} ${isError ? styles.outputErr : ''}`}>
+                {fullOutput}
+              </pre>
+            }
+          />
         )
       )}
 

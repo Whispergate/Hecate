@@ -52,6 +52,7 @@ export function CommandPalette() {
   const callbacks            = useStore((s) => s.callbacks)
   const setActiveRailView    = useStore((s) => s.setActiveRailView)
   const setSelectedCallbackId = useStore((s) => s.setSelectedCallbackId)
+  const setSearchOpen        = useStore((s) => s.setSearchOpen)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef  = useRef<HTMLDivElement>(null)
@@ -82,6 +83,14 @@ export function CommandPalette() {
 
   const items: PaletteItem[] = useMemo(() => {
     const out: PaletteItem[] = []
+    out.push({
+      kind:     'view',
+      id:       'action:search',
+      title:    'Search Tasks',
+      subtitle: 'cross-callback · Ctrl+Shift+F',
+      hay:      'search tasks output cross-callback find grep',
+      run:      () => setSearchOpen(true),
+    })
     for (const v of RAIL_VIEWS) {
       out.push({
         kind:     'view',
